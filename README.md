@@ -1,4 +1,4 @@
-# 📚 Library Management System
+# 📚 Library Management System.
 
 > A console-based Library Management System built with **C# .NET 8**, following **3-Tier Architecture** and **OOP** principles, connected to **SQL Server** via **ADO.NET**.
 
