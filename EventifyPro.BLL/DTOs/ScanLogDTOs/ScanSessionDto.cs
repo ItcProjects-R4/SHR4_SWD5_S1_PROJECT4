@@ -4,9 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EventifyPro.BLL.DTOs
+namespace EventifyPro.BLL.DTOs.ScanLogDTOs
 {
-    internal class Class1
-    {
-    }
+    public record ScanSessionDto(
+     int EventId,
+     string ScannedById
+ );
 }
