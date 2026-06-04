@@ -33,6 +33,7 @@ public class EventifyDbContext : IdentityDbContext<ApplicationUser, IdentityRole
     public DbSet<WaitingList> WaitingLists { get; set; }
     public DbSet<ScanLog> ScanLogs { get; set; }
     public DbSet<OutboxMessage> OutboxMessages { get; set; }
+    public DbSet<Feedback> Feedback { get; set; }
 
     #endregion
 

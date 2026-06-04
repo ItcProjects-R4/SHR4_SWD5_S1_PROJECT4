@@ -1,0 +1,92 @@
+@model EventifyPro.Web.ViewModels.OrganizerScanners.CreateScannerViewModel
+@{
+    Layout = "_AuthLayout";
+    ViewData["Title"] = "Create Scanner Account - Eventify Pro";
+}
+
+<main class="auth-container">
+    <section class="auth-card" aria-labelledby="createScannerTitle">
+        <div class="auth-card-header">
+            <span class="auth-kicker">Organizer tools</span>
+            <h1 id="createScannerTitle">Create scanner account</h1>
+            <p>Only organizers can create scanner accounts for event entry validation.</p>
+        </div>
+
+        @if (TempData["SuccessMessage"] is string message)
+        {
+            <div class="alert-success">@message</div>
+        }
+
+        <form asp-controller="OrganizerScanners" asp-action="Create" method="post" class="auth-form">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+
+            <div class="input-group">
+                <input asp-for="FullName" placeholder=" " autocomplete="name" required />
+                <label asp-for="FullName">Scanner full name</label>
+                <span asp-validation-for="FullName" class="field-validation"></span>
+            </div>
+
+            <div class="input-group">
+                <input asp-for="Email" placeholder=" " autocomplete="email" required />
+                <label asp-for="Email">Scanner email</label>
+                <span asp-validation-for="Email" class="field-validation"></span>
+            </div>
+
+            <div class="input-group">
+                <input asp-for="Password" id="scannerPassword" placeholder=" " autocomplete="new-password" required />
+                <label asp-for="Password">Temporary password</label>
+                <button type="button" class="show-password" data-toggle-password="scannerPassword" aria-label="Show password">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <span asp-validation-for="Password" class="field-validation"></span>
+            </div>
+
+            <p class="info-text">
+                Share these credentials only with the trusted scanner assigned to your event entrance.
+            </p>
+
+            <div class="auth-actions">
+                <a asp-controller="Home" asp-action="Index" class="link-btn">Back to home</a>
+                <button type="submit" class="primary-btn">Create Scanner</button>
+            </div>
+        </form>
+    </section>
+
+    <aside class="auth-illustration" aria-hidden="true">
+        <div class="illustration-content">
+            <div class="floating-icons">
+                <div class="floating-icon icon-1"><i class="fas fa-qrcode"></i></div>
+                <div class="floating-icon icon-2"><i class="fas fa-check-double"></i></div>
+                <div class="floating-icon icon-3"><i class="fas fa-ticket-alt"></i></div>
+                <div class="floating-icon icon-4"><i class="fas fa-shield-alt"></i></div>
+                <div class="floating-icon icon-5"><i class="fas fa-users"></i></div>
+            </div>
+            <div class="illustration-card">
+                <div class="card-shine"></div>
+                <i class="fas fa-qrcode main-icon"></i>
+                <h2>Gate Ready</h2>
+                <p>Create trusted scanner accounts without opening public scanner registration.</p>
+            </div>
+        </div>
+    </aside>
+</main>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll("[data-toggle-password]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const input = document.getElementById(button.dataset.togglePassword);
+            const icon = button.querySelector("i");
+
+            if (!input || !icon) return;
+
+            const showPassword = input.type === "password";
+            input.type = showPassword ? "text" : "password";
+            icon.className = showPassword ? "fas fa-eye-slash" : "fas fa-eye";
+            button.setAttribute("aria-label", showPassword ? "Hide password" : "Show password");
+          });
+        });
+    </script>
+    <partial name="_ValidationScriptsPartial" />
+}

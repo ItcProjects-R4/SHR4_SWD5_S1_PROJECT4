@@ -1,0 +1,208 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Frequently Asked Questions";
+}
+
+<section class="page-header footer-page-header">
+    <div class="container">
+        <span class="section-tag-enhanced"><i class="fas fa-question-circle"></i> Support Center</span>
+        <h1>Frequently Asked Questions</h1>
+        <p>Everything you need to know about booking, managing, and scanning tickets on Eventify Pro.</p>
+        
+        <div class="page-header-meta">
+            <span class="meta-item"><i class="fas fa-clock"></i> Updated 2 hours ago</span>
+            <span class="meta-item"><i class="fas fa-shield-alt"></i> Secure System</span>
+        </div>
+    </div>
+</section>
+
+<section class="content-page section enhanced-bg-glow">
+    <div class="container">
+        <div class="faq-enhanced-container">
+            
+            <!-- Category Tabs Selector -->
+            <div class="faq-categories">
+                <button type="button" class="faq-cat-btn active" data-faq-cat="all">
+                    <i class="fas fa-layer-group"></i> All Questions
+                </button>
+                <button type="button" class="faq-cat-btn" data-faq-cat="attendees">
+                    <i class="fas fa-user"></i> For Attendees
+                </button>
+                <button type="button" class="faq-cat-btn" data-faq-cat="organizers">
+                    <i class="fas fa-user-tie"></i> For Organizers
+                </button>
+                <button type="button" class="faq-cat-btn" data-faq-cat="scanning">
+                    <i class="fas fa-qrcode"></i> Scanning & Security
+                </button>
+            </div>
+
+            <!-- Accordion FAQ List -->
+            <div class="faq-list-enhanced">
+                
+                <!-- ATTENDEES GROUP -->
+                <details class="faq-accordion" data-category="attendees" open>
+                    <summary class="faq-summary">
+                        <span class="faq-summary-content">
+                            <i class="fas fa-ticket-alt"></i>
+                            How do attendees receive their tickets after booking?
+                        </span>
+                        <span class="faq-chevron"><i class="fas fa-chevron-down"></i></span>
+                    </summary>
+                    <div class="faq-answer">
+                        <p>After finding your desired event and selecting your ticket tier (e.g., VIP, Regular, or Free), click the <strong>Book Now</strong> button. You will be redirected to our secure Stripe checkout interface to complete the transaction.</p>
+                        <p>Upon a successful payment, <strong>Eventify Pro automatically generates a unique encrypted QR code</strong> and immediately sends a comprehensive confirmation email. This email contains your transaction receipt, event dates, directions, and the secure QR code ticket which you will present at the event entrance.</p>
+                    </div>
+                </details>
+
+                <details class="faq-accordion" data-category="attendees" open>
+                    <summary class="faq-summary">
+                        <span class="faq-summary-content">
+                            <i class="fas fa-envelope-open-text"></i>
+                            What should I do if I didn't receive my ticket email?
+                        </span>
+                        <span class="faq-chevron"><i class="fas fa-chevron-down"></i></span>
+                    </summary>
+                    <div class="faq-answer">
+                        <p>If your confirmation email hasn't arrived within 5 minutes, please perform the following checks:</p>
+                        <ol style="margin-left: 20px; margin-bottom: 12px; display: grid; gap: 6px;">
+                            <li>Check your **Spam**, **Junk**, or **Promotions** folder in your email client.</li>
+                            <li>Ensure that you entered your email address without spelling errors during purchase.</li>
+                            <li>Log in to your <strong>Eventify Pro Account</strong>, navigate to the <strong>My Tickets</strong> tab from the navigation bar, where all your booked tickets and active QR codes are instantly visible and ready for download.</li>
+                        </ol>
+                        <p>If you still face issues, you can reach support at the Help Center with your name, phone, and checkout details for manual verification.</p>
+                    </div>
+                </details>
+
+                <details class="faq-accordion" data-category="attendees">
+                    <summary class="faq-summary">
+                        <span class="faq-summary-content">
+                            <i class="fas fa-undo"></i>
+                            Can I cancel my ticket or request a refund?
+                        </span>
+                        <span class="faq-chevron"><i class="fas fa-chevron-down"></i></span>
+                    </summary>
+                    <div class="faq-answer">
+                        <p>Refund policies are <strong>set entirely by individual event organizers</strong> rather than Eventify Pro directly. Each event page details the organizer's refund conditions (e.g., "Refunds allowed up to 7 days before event" or "No refunds").</p>
+                        <p>To request a refund, please contact the organizer directly through the event page contact details. If the organizer approves your refund request, our system will process it immediately, and the funds will be automatically credited back to your original payment card via Stripe within <strong>5 to 10 business days</strong>.</p>
+                    </div>
+                </details>
+
+                <!-- ORGANIZERS GROUP -->
+                <details class="faq-accordion" data-category="organizers">
+                    <summary class="faq-summary">
+                        <span class="faq-summary-content">
+                            <i class="fas fa-calendar-plus"></i>
+                            How can organizers create events and define ticket types?
+                        </span>
+                        <span class="faq-chevron"><i class="fas fa-chevron-down"></i></span>
+                    </summary>
+                    <div class="faq-answer">
+                        <p>Once you are registered as an <strong>Organizer</strong> on Eventify Pro, you gain full access to the Organizer Dashboard. Click on <strong>Create Event</strong>, fill in the comprehensive event form including the title, description, category, venue details (physical address or online link), start/end dates, and high-quality banner images.</p>
+                        <p>In the ticket settings section, you can add multiple custom ticket tiers:
+                        <ul style="margin-left: 20px; margin-top: 8px; display: grid; gap: 6px;">
+                            <li><strong>Regular Tickets:</strong> Standard access with standard pricing.</li>
+                            <li><strong>VIP Tickets:</strong> Premium price tier with custom capacity limits and premium description details.</li>
+                            <li><strong>Free Tickets:</strong> Perfect for community meetups, workshops, or RSVPs.</li>
+                        </ul>
+                        </p>
+                        <p>The system automatically monitors sales in real-time, preventing overbooking by locking tickets when the capacity limits are met.</p>
+                    </div>
+                </details>
+
+                <details class="faq-accordion" data-category="organizers">
+                    <summary class="faq-summary">
+                        <span class="faq-summary-content">
+                            <i class="fas fa-money-bill-wave"></i>
+                            How do organizers receive ticket payouts?
+                        </span>
+                        <span class="faq-chevron"><i class="fas fa-chevron-down"></i></span>
+                    </summary>
+                    <div class="faq-answer">
+                        <p>Eventify Pro utilizes Stripe to handle all financial processing securely. When attendees purchase event tickets, payments are collected and held securely in our merchant system.</p>
+                        <p>Organizers must connect their bank accounts or direct deposit details securely within their Organizer Profile. Payouts are automatically triggered and transferred directly to your bank account after the event is successfully completed, ensuring total financial protection for both organizers and attendees. Platform transaction fees are deducted automatically from the ticket price.</p>
+                    </div>
+                </details>
+
+                <details class="faq-accordion" data-category="organizers">
+                    <summary class="faq-summary">
+                        <span class="faq-summary-content">
+                            <i class="fas fa-chart-bar"></i>
+                            Can organizers track real-time analytics and ticket sales?
+                        </span>
+                        <span class="faq-chevron"><i class="fas fa-chevron-down"></i></span>
+                    </summary>
+                    <div class="faq-answer">
+                        <p>Yes, absolutely! The <strong>Organizer Dashboard</strong> provides a highly comprehensive analytical suite. You can view real-time charts illustrating ticket sales volumes, total revenue, remaining seat capacities, and daily attendee booking frequencies.</p>
+                        <p>Additionally, you can view the complete attendee list, export booking records, check payment validation states, and monitor real-time entry scanning status on the day of the event directly from your control panel.</p>
+                    </div>
+                </details>
+
+                <!-- SCANNING & SECURITY -->
+                <details class="faq-accordion" data-category="scanning">
+                    <summary class="faq-summary">
+                        <span class="faq-summary-content">
+                            <i class="fas fa-mobile-alt"></i>
+                            How does the entry QR scanning system work on event day?
+                        </span>
+                        <span class="faq-chevron"><i class="fas fa-chevron-down"></i></span>
+                    </summary>
+                    <div class="faq-answer">
+                        <p>To ensure rapid, secure guest entry, Eventify Pro features a specialized **Scanner** role. Organizers can designate event staff to "Scanner" accounts from their dashboard.</p>
+                        <p>On the day of the event, the staff logs in using their mobile device. They click **Scan QR**, which opens the camera. By scanning the QR code on the attendee's ticket, the system instantly decodes the token, checks the database, and returns immediate visual feedback in under 1 second:
+                        <ul style="margin-left: 20px; margin-top: 8px; display: grid; gap: 6px;">
+                            <li><span style="color: var(--success); font-weight:700;">GREEN CHECKMARK:</span> Valid ticket. Attendee is checked in.</li>
+                            <li><span style="color: var(--error); font-weight:700;">RED X (DUPLICATE):</span> Ticket has already been scanned. Displays the exact scan timestamp.</li>
+                            <li><span style="color: var(--error); font-weight:700;">RED X (INVALID):</span> QR code is unrecognized or belongs to another event.</li>
+                        </ul>
+                        </p>
+                    </div>
+                </details>
+
+                <details class="faq-accordion" data-category="scanning">
+                    <summary class="faq-summary">
+                        <span class="faq-summary-content">
+                            <i class="fas fa-lock"></i>
+                            Are my booking and personal data secure?
+                        </span>
+                        <span class="faq-chevron"><i class="fas fa-chevron-down"></i></span>
+                    </summary>
+                    <div class="faq-answer">
+                        <p>Yes, security is our primary design system goal. Eventify Pro never stores credit card details directly on our servers. All payments are processed using **Stripe**, which is fully PCI-DSS Level 1 compliant. All network traffic is encrypted via HTTPS with SSL protocols.</p>
+                        <p>Furthermore, role-based controls separate administrative access, preventing any unauthorized users from viewing booking records, email lists, or financial data. QR codes are mathematically signed to prevent counterfeiting, making it impossible to forge fake tickets.</p>
+                    </div>
+                </details>
+
+            </div>
+
+            <!-- Bottom CTA Banner -->
+            <div class="faq-footer-banner">
+                <div class="faq-footer-content">
+                    <h3>Still have questions?</h3>
+                    <p>Our dedicated support team is ready to assist you 24/7 with any inquiries.</p>
+                </div>
+                <a asp-controller="Home" asp-action="HelpCenter" class="btn-white">Go to Help Center <i class="fas fa-arrow-right"></i></a>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.faq-cat-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.faq-cat-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                const cat = btn.dataset.faqCat;
+                document.querySelectorAll('.faq-accordion').forEach(item => {
+                    if (cat === 'all' || item.dataset.category === cat) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
+}

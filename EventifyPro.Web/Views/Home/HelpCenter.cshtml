@@ -1,0 +1,58 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Help Center";
+}
+
+<section class="page-header footer-page-header">
+    <div class="container">
+        <span class="section-tag-enhanced"><i class="fas fa-headset"></i> Support Desk</span>
+        <h1>Help Center</h1>
+        <p>Need assistance with Eventify Pro? Our dedicated tech support team is here to help you solve any issues.</p>
+        
+        <div class="page-header-meta">
+            <span class="meta-item"><i class="fas fa-history"></i> Rapid Response</span>
+            <span class="meta-item"><i class="fas fa-user-shield"></i> Organizer & Attendee Support</span>
+        </div>
+    </div>
+</section>
+
+<section class="content-page section enhanced-bg-glow">
+    <div class="container">
+        <div class="help-center-glow-grid">
+            
+            <!-- Email Support Card -->
+            <div class="help-card-enhanced">
+                <span class="help-card-badge badge-support-fast">Responds under 2 Hours</span>
+                <div class="help-icon-enhanced"><i class="fas fa-envelope-open-text"></i></div>
+                <h3>Technical Email Support</h3>
+                <p>Have inquiries regarding Organizer payout structures, Stripe integration errors, account verification, or scanning device setups? Drop us a line. Our backend specialists will analyze your logs and assist you directly.</p>
+                <a href="mailto:muhammedmahmoudgoda66@gmail.com" class="help-action-btn">
+                    <i class="fas fa-paper-plane"></i> Email Support
+                </a>
+            </div>
+
+            <!-- Phone Support Card -->
+            <div class="help-card-enhanced">
+                <span class="help-card-badge badge-support-hours">Available 9 AM - 6 PM EST</span>
+                <div class="help-icon-enhanced"><i class="fas fa-phone-volume"></i></div>
+                <h3>Urgent Phone Support</h3>
+                <p>Is your event starting right now and you're experiencing ticket check-in errors or duplicate QR scanning alerts? Call our emergency tech support line immediately for real-time diagnostic checks and backend override actions.</p>
+                <a href="tel:+201064665247" class="help-action-btn">
+                    <i class="fas fa-phone-alt"></i> Call +20 106 466 5247
+                </a>
+            </div>
+
+            <!-- FAQs Card -->
+            <div class="help-card-enhanced">
+                <span class="help-card-badge badge-support-direct">Instant Resolution</span>
+                <div class="help-icon-enhanced"><i class="fas fa-search-dollar"></i></div>
+                <h3>Self-Service FAQs</h3>
+                <p>Want fast answers about how Stripe handles ticket transactions, how duplicate ticket check-ins are blocked, or how attendees retrieve lost QR codes? Skip the queue and read our interactive knowledge base right now.</p>
+                <a asp-controller="Home" asp-action="FAQs" class="help-action-btn">
+                    <i class="fas fa-question-circle"></i> Open FAQs Database
+                </a>
+            </div>
+
+        </div>
+    </div>
+</section>

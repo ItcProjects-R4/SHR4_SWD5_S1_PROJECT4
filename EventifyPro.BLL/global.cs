@@ -1,1 +1,27 @@
-﻿
+global using System.ComponentModel.DataAnnotations;
+global using System.Linq.Expressions;
+global using Microsoft.AspNetCore.Http;
+global using Microsoft.AspNetCore.Identity;
+global using Microsoft.Extensions.DependencyInjection;
+global using Eventify.Domain.Constants;
+global using Eventify.Domain.Entities;
+global using Eventify.Domain.Enums;
+global using Eventify.Shared.Constants;
+global using Eventify.Shared.Wrappers;
+global using Eventify.Shared.Helpers;
+global using EventifyPro.DAL.Repositories.Interfaces;
+global using EventifyPro.BLL.DTOs.Auth;
+global using EventifyPro.BLL.DTOs.Event;
+global using EventifyPro.BLL.DTOs.Booking;
+global using EventifyPro.BLL.DTOs.Ticket;
+global using EventifyPro.BLL.DTOs.Payment;
+global using EventifyPro.BLL.DTOs.Refund;
+global using EventifyPro.BLL.DTOs.Review;
+global using EventifyPro.BLL.DTOs.Scanner;
+global using EventifyPro.BLL.DTOs.TicketType;
+global using EventifyPro.BLL.DTOs.User;
+global using EventifyPro.BLL.DTOs.Category;
+global using EventifyPro.BLL.DTOs.Dashboard;
+global using EventifyPro.BLL.DTOs.WaitingList;
+global using EventifyPro.BLL.Services.Interfaces;
+

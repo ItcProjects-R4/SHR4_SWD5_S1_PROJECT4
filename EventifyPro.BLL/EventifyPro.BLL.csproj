@@ -1,15 +1,25 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\EventifyPro.DAL\EventifyPro.DAL.csproj" />
-    <ProjectReference Include="..\EventifyPro.Domain\EventifyPro.Domain.csproj" />
-    <ProjectReference Include="..\EventifyPro.Shared\EventifyPro.Shared.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\EventifyPro.DAL\EventifyPro.DAL.csproj" />
+		<ProjectReference Include="..\EventifyPro.Domain\EventifyPro.Domain.csproj" />
+		<ProjectReference Include="..\EventifyPro.Shared\EventifyPro.Shared.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Mapster" Version="10.0.7" />
+		<PackageReference Include="Mapster.DependencyInjection" Version="10.0.7" />
+		<PackageReference Include="SharpGrip.FluentValidation.AutoValidation.Mvc" Version="2.0.0" />
+	</ItemGroup>
 
 </Project>

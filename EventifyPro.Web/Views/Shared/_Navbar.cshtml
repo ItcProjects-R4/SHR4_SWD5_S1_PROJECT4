@@ -1,0 +1,30 @@
+﻿<div class="bg-animation">
+    <div class="bg-blob blob-1"></div>
+    <div class="bg-blob blob-2"></div>
+    <div class="bg-blob blob-3"></div>
+</div>
+
+<nav class="navbar">
+    <div class="nav-container">
+        <a asp-controller="Home" asp-action="Index" class="logo">
+            <div class="logo-icon"><i class="fas fa-ticket-alt"></i></div>
+            <span>Eventify <b>Pro</b></span>
+        </a>
+        <ul class="nav-links">
+            <li><a asp-controller="Home" asp-action="Index" class="active">Home</a></li>
+            <li><a asp-controller="Events" asp-action="Index">Events</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#how">How it Works</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+        <div class="nav-buttons">
+            <a asp-controller="Account" asp-action="Login" class="btn-ghost">Sign In</a>
+            <a asp-controller="Account" asp-action="Register" class="btn-primary">
+                Get Started <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+        <div class="menu-toggle" id="menuToggle">
+            <span></span><span></span><span></span>
+        </div>
+    </div>
+</nav>

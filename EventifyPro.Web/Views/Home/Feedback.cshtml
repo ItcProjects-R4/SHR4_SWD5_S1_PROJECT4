@@ -1,0 +1,131 @@
+@model FeedbackViewModel
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Tell Us What You Think";
+}
+
+<section class="page-header footer-page-header">
+    <div class="container">
+        <span class="section-tag-enhanced"><i class="fas fa-comments"></i> Public Review</span>
+        <h1>Tell Us What You Think</h1>
+        <p>Share your platform experience. Your feedback directly shapes the development and features of Eventify Pro.</p>
+        
+        <div class="page-header-meta">
+            <span class="meta-item"><i class="fas fa-eye"></i> Moderated by Admins</span>
+            <span class="meta-item"><i class="fas fa-trophy"></i> Rewards Active Reviewers</span>
+        </div>
+    </div>
+</section>
+
+<section class="content-page section enhanced-bg-glow">
+    <div class="container">
+        <div class="feedback-grid-enhanced">
+            
+            <!-- Left Info Panel -->
+            <div class="feedback-copy-enhanced">
+                <span class="section-tag-enhanced"><i class="fas fa-heart"></i> Your Opinion Matters</span>
+                <h2>Help Us Build the Perfect Ticketing Platform</h2>
+                <p>Whether you are an Attendee booking music festivals, an Organizer managing massive conference capacities, or a Scanner validating tickets at the entrance gates—we want to hear about your experience.</p>
+                
+                <div class="feedback-points-list">
+                    
+                    <div class="feedback-point-item">
+                        <i class="fas fa-shield-alt"></i>
+                        <div class="feedback-point-content">
+                            <h4>Admin Approval System</h4>
+                            <p>To ensure high quality and respectful communication, all submissions are reviewed by an Administrator before appearing publicly on our landing page.</p>
+                        </div>
+                    </div>
+
+                    <div class="feedback-point-item">
+                        <i class="fas fa-bolt"></i>
+                        <div class="feedback-point-content">
+                            <h4>Feature Roadmap Guidance</h4>
+                            <p>Your suggestions go directly to our engineering team to improve ticket delivery flows, Stripe invoice formatting, and scanner mobile performance.</p>
+                        </div>
+                    </div>
+
+                    <div class="feedback-point-item">
+                        <i class="fas fa-star"></i>
+                        <div class="feedback-point-content">
+                            <h4>Featured Testimonials</h4>
+                            <p>Premium, high-quality reviews are featured prominently at the top of our homepage, showcasing your brand as a leading event organizer.</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Right Form Card -->
+            <div class="feedback-form-enhanced-card">
+                <form asp-controller="Home" asp-action="SubmitFeedback" method="post">
+                    @Html.AntiForgeryToken()
+
+                    @if (TempData["FeedbackSuccess"] is string feedbackSuccess)
+                    {
+                        <div class="alert-success-enhanced">
+                            <i class="fas fa-check"></i>
+                            <div>
+                                <strong>Thank you!</strong> @feedbackSuccess
+                            </div>
+                        </div>
+                    }
+
+                    <div asp-validation-summary="ModelOnly" class="validation-message" style="margin-bottom:15px;"></div>
+
+                    <!-- Visual Star Rating (Embellishment for WOW factor) -->
+                    <div class="form-group-enhanced">
+                        <span class="star-rating-label"><i class="fas fa-star-half-alt"></i> Overall Platform Rating</span>
+                        <div class="star-rating-container">
+                            <input type="radio" id="star5" name="PlatformRating" value="5" checked />
+                            <label for="star5" title="5 stars"><i class="fas fa-star"></i></label>
+                            
+                            <input type="radio" id="star4" name="PlatformRating" value="4" />
+                            <label for="star4" title="4 stars"><i class="fas fa-star"></i></label>
+                            
+                            <input type="radio" id="star3" name="PlatformRating" value="3" />
+                            <label for="star3" title="3 stars"><i class="fas fa-star"></i></label>
+                            
+                            <input type="radio" id="star2" name="PlatformRating" value="2" />
+                            <label for="star2" title="2 stars"><i class="fas fa-star"></i></label>
+                            
+                            <input type="radio" id="star1" name="PlatformRating" value="1" />
+                            <label for="star1" title="1 star"><i class="fas fa-star"></i></label>
+                        </div>
+                    </div>
+
+                    <!-- Name Field -->
+                    <div class="form-group-enhanced">
+                        <label asp-for="Name">Your Display Name</label>
+                        <input asp-for="Name" class="form-input-enhanced" placeholder="Enter your full name or company name" required />
+                        <span asp-validation-for="Name" class="validation-message"></span>
+                    </div>
+
+                    <!-- Email Field -->
+                    <div class="form-group-enhanced">
+                        <label asp-for="Email">Your Email Address</label>
+                        <input asp-for="Email" type="email" class="form-input-enhanced" placeholder="name@example.com (kept private)" required />
+                        <span asp-validation-for="Email" class="validation-message"></span>
+                    </div>
+
+                    <!-- Feedback Message Field -->
+                    <div class="form-group-enhanced">
+                        <label asp-for="Message">Your Comprehensive Feedback</label>
+                        <textarea asp-for="Message" class="form-input-enhanced form-textarea-enhanced" placeholder="Tell us about event creation, booking tickets, Stripe checkouts, scanner gate operations, or customer support..." required></textarea>
+                        <span asp-validation-for="Message" class="validation-message"></span>
+                    </div>
+
+                    <button type="submit" class="btn-submit-enhanced">
+                        <i class="fas fa-paper-plane"></i> Submit Secure Review
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

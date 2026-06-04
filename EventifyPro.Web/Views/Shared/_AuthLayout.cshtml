@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="@Url.Content("~/css/auth.css")" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
+          rel="stylesheet" />
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+    <div class="auth-page">
+        <header class="auth-header">
+            <a asp-controller="Home" asp-action="Index" class="logo" aria-label="Eventify Pro home">
+                <div class="logo-icon"><i class="fas fa-ticket-alt"></i></div>
+                <span>Eventify <b>Pro</b></span>
+            </a>
+            <a asp-controller="Home" asp-action="Index" class="back-link">
+                <i class="fas fa-arrow-left"></i> Back to Home
+            </a>
+        </header>
+
+        @RenderBody()
+
+        <footer class="auth-footer">
+            <select aria-label="Language">
+                <option>English (United States)</option>
+                <option>Arabic</option>
+                <option>French</option>
+            </select>
+            <ul>
+                <li><a asp-controller="Home" asp-action="HelpCenter">Help</a></li>
+                <li><a asp-controller="Home" asp-action="Privacy">Privacy</a></li>
+                <li><a asp-controller="Home" asp-action="Terms">Terms</a></li>
+            </ul>
+        </footer>
+    </div>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

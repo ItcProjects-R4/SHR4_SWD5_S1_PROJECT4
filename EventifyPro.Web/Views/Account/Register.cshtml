@@ -1,0 +1,382 @@
+@model RegisterViewModel
+@{
+    Layout = "_AuthLayout";
+    ViewData["Title"] = "Create Account - Eventify Pro";
+}
+
+<main class="auth-container">
+    <section class="auth-card wide register-wizard-card" aria-labelledby="registerTitle">
+        <div class="auth-card-header">
+            <span class="auth-kicker">Start building</span>
+            <h1 id="registerTitle">Create your account</h1>
+            <p>Join Eventify Pro as an attendee or organizer.</p>
+        </div>
+
+        <div class="wizard-progress" aria-label="Registration steps">
+            <button class="wizard-dot active" type="button" data-step-target="0">1</button>
+            <button class="wizard-dot" type="button" data-step-target="1">2</button>
+            <button class="wizard-dot" type="button" data-step-target="2">3</button>
+            <button class="wizard-dot" type="button" data-step-target="3">4</button>
+        </div>
+
+        <form asp-controller="Account" asp-action="Register" method="post" class="auth-form register-wizard-form" id="registerWizardForm">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+
+            <section class="wizard-step active" data-step="0">
+                <div class="step-heading">
+                    <span>Step 1</span>
+                    <h2>Choose account type</h2>
+                    <p>Public registration is available for attendees and organizers only.</p>
+                </div>
+
+                <div class="role-options wizard-role-options">
+                    <label class="role-option">
+                        <input asp-for="Role" type="radio" value="@RoleNames.Attendee" />
+                        <span class="role-card-mini">
+                            <i class="fas fa-user"></i>
+                            <span>Attend Events</span>
+                        </span>
+                    </label>
+                    <label class="role-option">
+                        <input asp-for="Role" type="radio" value="@RoleNames.Organizer" />
+                        <span class="role-card-mini">
+                            <i class="fas fa-user-tie"></i>
+                            <span>Organize Events</span>
+                        </span>
+                    </label>
+                </div>
+                <span asp-validation-for="Role" class="field-validation"></span>
+            </section>
+
+            <section class="wizard-step" data-step="1">
+                <div class="step-heading">
+                    <span>Step 2</span>
+                    <h2>Your basic info</h2>
+                    <p>Use your real name and an email you can access.</p>
+                </div>
+
+                <div class="form-row">
+                    <div class="input-group">
+                        <input asp-for="FirstName" id="firstName" placeholder=" " autocomplete="given-name" required />
+                        <label asp-for="FirstName">First name</label>
+                        <span asp-validation-for="FirstName" class="field-validation"></span>
+                    </div>
+                    <div class="input-group">
+                        <input asp-for="LastName" id="lastName" placeholder=" " autocomplete="family-name" required />
+                        <label asp-for="LastName">Last name</label>
+                        <span asp-validation-for="LastName" class="field-validation"></span>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <input asp-for="Email" id="registerEmail" placeholder=" " autocomplete="email" required />
+                    <label asp-for="Email">Email address</label>
+                    <span asp-validation-for="Email" class="field-validation"></span>
+                </div>
+
+                <div class="divider">
+                    <span>or sign up with</span>
+                </div>
+
+                <div class="social-buttons">
+                    <button class="social-btn" type="button">
+                        <svg class="brand-icon google-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                            <path fill="#FBBC05" d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.84z" />
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06L5.84 9.9C6.71 7.3 9.14 5.38 12 5.38z" />
+                        </svg>
+                        Google
+                    </button>
+                    <button class="social-btn" type="button">
+                        <svg class="brand-icon microsoft-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path fill="#F25022" d="M2 2h9.5v9.5H2V2z" />
+                            <path fill="#7FBA00" d="M12.5 2H22v9.5h-9.5V2z" />
+                            <path fill="#00A4EF" d="M2 12.5h9.5V22H2v-9.5z" />
+                            <path fill="#FFB900" d="M12.5 12.5H22V22h-9.5v-9.5z" />
+                        </svg>
+                        Microsoft
+                    </button>
+                </div>
+            </section>
+
+            <section class="wizard-step" data-step="2">
+                <div class="step-heading">
+                    <span>Step 3</span>
+                    <h2>Pick a username</h2>
+                    <p>This is your public handle inside Eventify Pro.</p>
+                </div>
+
+                <div class="input-with-action">
+                    <div class="input-group">
+                        <input asp-for="UserName" id="userName" placeholder=" " autocomplete="username" required />
+                        <label asp-for="UserName">Username</label>
+                    </div>
+                    <button class="secondary-btn" type="button" id="checkUserNameBtn">
+                        <i class="fas fa-search"></i> Check
+                    </button>
+                </div>
+                <span asp-validation-for="UserName" class="field-validation"></span>
+                <p class="availability-message" id="userNameStatus" aria-live="polite"></p>
+            </section>
+
+            <section class="wizard-step" data-step="3">
+                <div class="step-heading">
+                    <span>Step 4</span>
+                    <h2>Secure your account</h2>
+                    <p>Create a strong password to protect your events and tickets.</p>
+                </div>
+
+                <div class="form-row">
+                    <div class="input-group">
+                        <input asp-for="Password" id="registerPassword" placeholder=" " autocomplete="new-password" required />
+                        <label asp-for="Password">Password</label>
+                        <button type="button" class="show-password" data-toggle-password="registerPassword" aria-label="Show password">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <span asp-validation-for="Password" id="password-error" class="field-validation text-danger"></span>
+                    </div>
+                    <div class="input-group">
+                        <input asp-for="ConfirmPassword" id="confirmPassword" placeholder=" " autocomplete="new-password" required />
+                        <label asp-for="ConfirmPassword">Confirm password</label>
+                        <button type="button" class="show-password" data-toggle-password="confirmPassword" aria-label="Show password">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <span asp-validation-for="ConfirmPassword" id="confirm-password-error" class="field-validation text-danger"></span>
+                    </div>
+                </div>
+                <p class="hint">Use 8 or more characters with letters, numbers, and symbols.</p>
+
+                <div class="checkbox-group">
+                    <label class="custom-checkbox">
+                        <input asp-for="AcceptTerms" required />
+                        <span class="checkmark"></span>
+                        <span>I agree to the <a asp-controller="Home" asp-action="Terms" target="_blank">Terms & Conditions</a> and <a asp-controller="Home" asp-action="Privacy" target="_blank">Privacy Policy</a></span>
+                    </label>
+                    <span asp-validation-for="AcceptTerms" class="field-validation"></span>
+                </div>
+            </section>
+
+            <div class="wizard-actions">
+                <button class="link-btn wizard-back" type="button" id="prevStepBtn">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <button class="primary-btn wizard-next" type="button" id="nextStepBtn">
+                    Next <i class="fas fa-arrow-right"></i>
+                </button>
+                <button class="primary-btn wizard-submit" type="submit" id="createAccountBtn">
+                    Create Account
+                </button>
+            </div>
+
+            <p class="signin-switch">
+                Already have an account?
+                <a asp-controller="Account" asp-action="Login">Sign in instead</a>
+            </p>
+        </form>
+    </section>
+
+    <aside class="auth-illustration" aria-hidden="true">
+        <div class="illustration-content">
+            <div class="floating-icons">
+                <div class="floating-icon icon-1"><i class="fas fa-rocket"></i></div>
+                <div class="floating-icon icon-2"><i class="fas fa-gift"></i></div>
+                <div class="floating-icon icon-3"><i class="fas fa-trophy"></i></div>
+                <div class="floating-icon icon-4"><i class="fas fa-star"></i></div>
+                <div class="floating-icon icon-5"><i class="fas fa-heart"></i></div>
+            </div>
+            <div class="illustration-card">
+                <div class="card-shine"></div>
+                <i class="fas fa-rocket main-icon"></i>
+                <h2>Join Us Today!</h2>
+                <p>Create events, sell tickets, and welcome attendees with confidence.</p>
+            </div>
+        </div>
+    </aside>
+</main>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const steps = [...document.querySelectorAll(".wizard-step")];
+            const dots = [...document.querySelectorAll(".wizard-dot")];
+            const prevBtn = document.getElementById("prevStepBtn");
+            const nextBtn = document.getElementById("nextStepBtn");
+            const submitBtn = document.getElementById("createAccountBtn");
+            const form = document.getElementById("registerWizardForm");
+            const userNameInput = document.getElementById("userName");
+            const userNameStatus = document.getElementById("userNameStatus");
+            const checkUserNameBtn = document.getElementById("checkUserNameBtn");
+            const passwordInput = document.getElementById("registerPassword");
+            const confirmInput = document.getElementById("confirmPassword");
+            const passwordError = document.getElementById("password-error");
+            const confirmError = document.getElementById("confirm-password-error");
+            const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[\x40$!%*#?&])[A-Za-z\d\x40$!%*#?&]{8,}$/;
+
+            let currentStep = 0;
+            let userNameAvailable = false;
+
+            const showStep = (index) => {
+                currentStep = Math.max(0, Math.min(index, steps.length - 1));
+
+                steps.forEach((step, i) => step.classList.toggle("active", i === currentStep));
+                dots.forEach((dot, i) => {
+                    dot.classList.toggle("active", i === currentStep);
+                    dot.classList.toggle("completed", i < currentStep);
+                });
+
+                prevBtn.style.visibility = currentStep === 0 ? "hidden" : "visible";
+                nextBtn.style.display = currentStep === steps.length - 1 ? "none" : "inline-flex";
+                submitBtn.style.display = currentStep === steps.length - 1 ? "inline-flex" : "none";
+            };
+
+            const setStatus = (text, state) => {
+                userNameStatus.textContent = text;
+                userNameStatus.className = `availability-message ${state}`;
+            };
+
+            const validateStep = (stepIndex) => {
+                const activeStep = steps[stepIndex];
+                const fields = [...activeStep.querySelectorAll("input[required]")];
+
+                for (const field of fields) {
+                    if (!field.checkValidity()) {
+                        showStep(stepIndex);
+                        setTimeout(() => field.reportValidity(), 0);
+                        return false;
+                    }
+                }
+
+                if (stepIndex === 2 && !userNameAvailable) {
+                    showStep(stepIndex);
+                    setStatus("Please check that your username is available first.", "error");
+                    return false;
+                }
+
+                return true;
+            };
+
+            const validateCurrentStep = () => validateStep(currentStep);
+
+            const canMoveToStep = (targetStep) => {
+                if (targetStep <= currentStep) {
+                    return true;
+                }
+
+                for (let stepIndex = currentStep; stepIndex < targetStep; stepIndex++) {
+                    if (!validateStep(stepIndex)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            };
+
+            const validatePassword = () => {
+                if (!passwordInput.value) {
+                    passwordError.textContent = "";
+                    return false;
+                }
+
+                if (!passwordRegex.test(passwordInput.value)) {
+                    passwordError.textContent = "Must be 8+ characters with letters, numbers & special characters.";
+                    return false;
+                }
+
+                passwordError.textContent = "";
+                return true;
+            };
+
+            const validateConfirmPassword = () => {
+                if (!confirmInput.value) {
+                    confirmError.textContent = "";
+                    return false;
+                }
+
+                if (passwordInput.value !== confirmInput.value) {
+                    confirmError.textContent = "Passwords do not match.";
+                    return false;
+                }
+
+                confirmError.textContent = "";
+                return true;
+            };
+
+            document.querySelectorAll("[data-toggle-password]").forEach((button) => {
+                button.addEventListener("click", () => {
+                    const input = document.getElementById(button.dataset.togglePassword);
+                    const icon = button.querySelector("i");
+                    if (!input || !icon) return;
+
+                    const showPassword = input.type === "password";
+                    input.type = showPassword ? "text" : "password";
+                    icon.className = showPassword ? "fas fa-eye-slash" : "fas fa-eye";
+                    button.setAttribute("aria-label", showPassword ? "Hide password" : "Show password");
+                });
+            });
+
+            checkUserNameBtn.addEventListener("click", async () => {
+                const userName = userNameInput.value.trim();
+                userNameAvailable = false;
+
+                if (!userName || !userNameInput.checkValidity()) {
+                    userNameInput.reportValidity();
+                    return;
+                }
+
+                setStatus("Checking username...", "checking");
+
+                try {
+                    const response = await fetch(`/Account/CheckUserName?userName=${encodeURIComponent(userName)}`);
+                    const result = await response.json();
+                    userNameAvailable = result.available === true;
+                    setStatus(result.message, userNameAvailable ? "success" : "error");
+                } catch {
+                    setStatus("Could not check username right now. Please try again.", "error");
+                }
+            });
+
+            userNameInput.addEventListener("input", () => {
+                userNameAvailable = false;
+                setStatus("", "");
+            });
+
+            nextBtn.addEventListener("click", () => {
+                if (validateCurrentStep()) {
+                    showStep(currentStep + 1);
+                }
+            });
+
+            prevBtn.addEventListener("click", () => showStep(currentStep - 1));
+
+            dots.forEach((dot) => {
+                dot.addEventListener("click", () => {
+                    const target = Number(dot.dataset.stepTarget);
+                    if (canMoveToStep(target)) {
+                        showStep(target);
+                    }
+                });
+            });
+
+            passwordInput.addEventListener("input", () => {
+                validatePassword();
+                if (confirmInput.value) validateConfirmPassword();
+            });
+            confirmInput.addEventListener("input", validateConfirmPassword);
+
+            form.addEventListener("submit", (e) => {
+                const isPasswordValid = validatePassword();
+                const isConfirmValid = validateConfirmPassword();
+
+                if (!isPasswordValid || !isConfirmValid) {
+                    e.preventDefault();
+                    showStep(3);
+                }
+            });
+
+            showStep(0);
+        });
+    </script>
+    <partial name="_ValidationScriptsPartial" />
+}

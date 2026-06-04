@@ -1,8 +1,812 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@model HomeIndexViewModel
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Eventify Pro - Smart Event Management Platform";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<section class="hero" id="home">
+    <div class="hero-slideshow">
+        <div class="hero-slide active" style="background-image: url('@Url.Content("~/Images/Home/Home1.png")')"></div>
+        <div class="hero-slide" style="background-image: url('@Url.Content("~/Images/Home/Home2.png")')"></div>
+        <div class="hero-slide" style="background-image: url('@Url.Content("~/Images/Home/Home3.png")')"></div>
+    </div>
+    <div class="hero-overlay"></div>
+    <div class="hero-container">
+        <div class="hero-content">
+            <div class="hero-badge">
+                <i class="fas fa-bolt"></i>
+                <span>#1 Event Management Platform</span>
+            </div>
+            <h1 class="hero-title">
+                Create <span class="gradient-text">Unforgettable</span> <br />Events
+                Effortlessly
+            </h1>
+            <p class="hero-description">
+                The complete platform for creating and managing events, concerts,
+                conferences, and workshops. Sell tickets online and verify them with
+                QR Code seamlessly.
+            </p>
+            <div class="hero-buttons">
+                <a asp-controller="Account" asp-action="Register" class="btn-primary btn-large">
+                    <i class="fas fa-rocket"></i> Start Free Trial
+                </a>
+                <a href="#" class="btn-outline btn-large" id="watchDemoBtn">
+                    <i class="fas fa-play-circle"></i> Watch Demo
+                </a>
+            </div>
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <h3 class="counter" data-target="50000">0</h3>
+                    <p>Tickets Sold</p>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <h3 class="counter" data-target="2500">0</h3>
+                    <p>Active Organizers</p>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <h3 class="counter" data-target="850">0</h3>
+                    <p>Successful Events</p>
+                </div>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="hero-card card-main">
+                <div class="card-image">
+                    <i class="fas fa-music"></i>
+                    <div class="card-tag">VIP</div>
+                </div>
+                <div class="card-content">
+                    <h4>Summer Music Festival 2026</h4>
+                    <div class="card-info">
+                        <span><i class="fas fa-calendar"></i> June 15</span>
+                        <span><i class="fas fa-map-marker-alt"></i> Cairo</span>
+                    </div>
+                    <div class="card-footer">
+                        <span class="price">$50</span>
+                        <button class="btn-book">Book Now</button>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-card card-floating card-1">
+                <i class="fas fa-qrcode"></i>
+                <div>
+                    <h5>QR Code</h5>
+                    <p>Secure Ticket</p>
+                </div>
+            </div>
+            <div class="hero-card card-floating card-2">
+                <i class="fas fa-check-circle"></i>
+                <div>
+                    <h5>Payment Done</h5>
+                    <p>Successfully</p>
+                </div>
+            </div>
+            <div class="hero-card card-floating card-3">
+                <i class="fas fa-users"></i>
+                <div>
+                    <h5>+1,250</h5>
+                    <p>Confirmed</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="hero-slideshow-dots">
+        <button class="hero-slideshow-dot active" aria-label="Slide 1"></button>
+        <button class="hero-slideshow-dot" aria-label="Slide 2"></button>
+        <button class="hero-slideshow-dot" aria-label="Slide 3"></button>
+    </div>
+
+</section>
+
+<section class="features section" id="features">
+    <div class="container">
+        <div class="section-header">
+            <span class="section-tag">Features</span>
+            <h2>
+                Everything You Need <span class="gradient-text">in One Place</span>
+            </h2>
+            <p>
+                Powerful and smart tools to manage your events from start to finish
+            </p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card reveal">
+                <div class="feature-icon icon-1">
+                    <i class="fas fa-calendar-plus"></i>
+                </div>
+                <h3>Event Creation</h3>
+                <p>
+                    Create professional events easily with full customization for
+                    details, images.
+                </p>
+                <a href="#" class="feature-link" data-feature="event-creation">
+                    Learn More <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon icon-2">
+                    <i class="fas fa-ticket-alt"></i>
+                </div>
+                <h3>Multiple Ticket Types</h3>
+                <p>
+                    Create VIP, regular, or free tickets with different prices and
+                    features for each type
+                </p>
+                <a href="#" class="feature-link" data-feature="ticket-types">
+                    Learn More <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon icon-3"><i class="fas fa-qrcode"></i></div>
+                <h3>Secure QR Code</h3>
+                <p>
+                    Each ticket has a unique encrypted QR Code that prevents fraud and
+                    reuse
+                </p>
+                <a href="#" class="feature-link" data-feature="qr-code">
+                    Learn More <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon icon-4">
+                    <i class="fas fa-credit-card"></i>
+                </div>
+                <h3>Secure Payments</h3>
+                <p>
+                    Stripe integration for secure online payments with support for all
+                    major cards
+                </p>
+                <a href="#" class="feature-link" data-feature="payments">
+                    Learn More <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon icon-5">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3>Smart Dashboard</h3>
+                <p>
+                    Track sales, statistics, and attendance in real-time with an
+                    easy-to-use interface
+                </p>
+                <a href="#" class="feature-link" data-feature="dashboard">
+                    Learn More <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon icon-6">
+                    <i class="fas fa-envelope-open-text"></i>
+                </div>
+                <h3>Auto Notifications</h3>
+                <p>
+                    Send booking confirmations and reminders to attendees via email
+                    automatically
+                </p>
+                <a href="#" class="feature-link" data-feature="notifications">
+                    Learn More <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="how-it-works section" id="how">
+    <div class="container">
+        <div class="section-header">
+            <span class="section-tag">How It Works</span>
+            <h2>
+                4 Simple Steps to <span class="gradient-text">Event Success</span>
+            </h2>
+            <p>
+                From creation to event day, we're with you every step of the way
+            </p>
+        </div>
+        <div class="steps-container">
+            <div class="step-line"></div>
+            <div class="step reveal">
+                <div class="step-number">1</div>
+                <div class="step-icon"><i class="fas fa-pen-fancy"></i></div>
+                <h3>Create Your Event</h3>
+                <p>
+                    Add details, images, location, and define ticket types and prices
+                </p>
+            </div>
+            <div class="step reveal">
+                <div class="step-number">2</div>
+                <div class="step-icon"><i class="fas fa-share-alt"></i></div>
+                <h3>Share with Audience</h3>
+                <p>Users browse events and book tickets effortlessly</p>
+            </div>
+            <div class="step reveal">
+                <div class="step-number">3</div>
+                <div class="step-icon"><i class="fas fa-money-bill-wave"></i></div>
+                <h3>Receive Payments</h3>
+                <p>Secure payments via Stripe and QR tickets sent automatically</p>
+            </div>
+            <div class="step reveal">
+                <div class="step-number">4</div>
+                <div class="step-icon"><i class="fas fa-check-double"></i></div>
+                <h3>Verify at Entry</h3>
+                <p>Scanner verifies QR Code instantly to validate tickets</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="roles section">
+    <div class="container">
+        <div class="section-header">
+            <span class="section-tag">Users</span>
+            <h2>A Platform <span class="gradient-text">for Everyone</span></h2>
+            <p>Four types of users, each with their own special permissions</p>
+        </div>
+        <div class="roles-grid">
+            <div class="role-card reveal">
+                <div class="role-avatar"><i class="fas fa-user-shield"></i></div>
+                <h3>Admin</h3>
+                <p>Complete system management and full control</p>
+                <ul>
+                    <li><i class="fas fa-check"></i> Manage Users</li>
+                    <li><i class="fas fa-check"></i> System Monitoring</li>
+                    <li><i class="fas fa-check"></i> Full Analytics</li>
+                </ul>
+            </div>
+            <div class="role-card reveal">
+                <div class="role-avatar"><i class="fas fa-user-tie"></i></div>
+                <h3>Organizer</h3>
+                <p>Create and manage events and sell tickets</p>
+                <ul>
+                    <li><i class="fas fa-check"></i> Create Events</li>
+                    <li><i class="fas fa-check"></i> Manage Tickets</li>
+                    <li><i class="fas fa-check"></i> Track Sales</li>
+                </ul>
+            </div>
+            <div class="role-card reveal">
+                <div class="role-avatar"><i class="fas fa-user"></i></div>
+                <h3>Attendee</h3>
+                <p>Browse events and book tickets easily</p>
+                <ul>
+                    <li><i class="fas fa-check"></i> Browse Events</li>
+                    <li><i class="fas fa-check"></i> Book Tickets</li>
+                    <li><i class="fas fa-check"></i> My Tickets</li>
+                </ul>
+            </div>
+            <div class="role-card reveal">
+                <div class="role-avatar"><i class="fas fa-qrcode"></i></div>
+                <h3>Scanner</h3>
+                <p>Verify tickets at event entrance</p>
+                <ul>
+                    <li><i class="fas fa-check"></i> Scan QR Code</li>
+                    <li><i class="fas fa-check"></i> Instant Verify</li>
+                    <li><i class="fas fa-check"></i> Update Status</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="landing-feedback section enhanced-bg-glow" id="feedback">
+    <div class="container">
+        <div class="section-header">
+            <span class="section-tag-enhanced"><i class="fas fa-comments"></i> Testimonials</span>
+            <h2>What Users <span class="gradient-text">Say About Us</span></h2>
+            <p>Authentic reviews from Attendees, Organizers, and gate Scanners using Eventify Pro.</p>
+        </div>
+
+        @if (Model.ApprovedFeedback.Any())
+        {
+            <div class="feedback-carousel-enhanced" data-feedback-carousel data-page-size="3">
+                <div class="landing-feedback-grid-enhanced">
+                    @foreach (var feedback in Model.ApprovedFeedback)
+                    {
+                        string displayName = feedback.DisplayName ?? "User";
+                        string initials = displayName.Length > 0 ? displayName.Substring(0, 1).ToUpper() : "U";
+
+                        <article class="landing-feedback-card-enhanced" data-feedback-card>
+                            <div>
+                                <div class="testimonial-rating">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <p>"@feedback.Message"</p>
+                            </div>
+                            <div class="feedback-author-enhanced">
+                                <div class="feedback-avatar-gradient">
+                                    @initials
+                                </div>
+                                <div class="feedback-author-info">
+                                    <h3>@feedback.DisplayName</h3>
+                                    <span>@feedback.CreatedAt.ToString("MMM dd, yyyy")</span>
+                                </div>
+                            </div>
+                        </article>
+                    }
+                </div>
+
+                <div class="carousel-controls-enhanced">
+                    <button type="button" class="btn-nav-enhanced" data-feedback-prev aria-label="Previous feedback">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <div class="carousel-dots" data-feedback-dots>
+                        <!-- Dots will be dynamically generated by Javascript -->
+                    </div>
+                    <button type="button" class="btn-nav-enhanced" data-feedback-next aria-label="Next feedback">
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="landing-feedback-empty-enhanced">
+                <i class="fas fa-comment-dots"></i>
+                <p>No approved reviews yet. Be the first to share your ticketing experience!</p>
+                <a asp-controller="Home" asp-action="Feedback" class="btn-primary">Write a Review <i class="fas fa-arrow-right"></i></a>
+            </div>
+        }
+    </div>
+</section>
+
+<section class="cta section">
+    <div class="container">
+        <div class="cta-box">
+            <div class="cta-content">
+                <h2>
+                    Ready to Launch Your
+                    <span class="gradient-text">Next Event?</span>
+                </h2>
+                <p>
+                    Join thousands of successful organizers and create unforgettable
+                    events
+                </p>
+                <div class="cta-buttons">
+                    <a asp-controller="Account" asp-action="Register" class="btn-primary btn-large">
+                        <i class="fas fa-rocket"></i> Start Free
+                    </a>
+                    <a asp-controller="Home" asp-action="HelpCenter" class="btn-outline btn-large">
+                        <i class="fas fa-phone"></i> Contact Us
+                    </a>
+                </div>
+            </div>
+            <div class="cta-decoration">
+                <i class="fas fa-ticket-alt"></i>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="feature-modal" id="featureModal" aria-hidden="true">
+    <div class="feature-modal-backdrop" data-close-modal></div>
+    <div class="feature-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="featureModalTitle">
+        <button class="feature-modal-close" type="button" aria-label="Close" data-close-modal>
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="feature-modal-icon" id="featureModalIcon">
+            <i class="fas fa-calendar-plus"></i>
+        </div>
+        <span class="section-tag">Feature Details</span>
+        <h3 id="featureModalTitle">Event Creation</h3>
+        <p id="featureModalText"></p>
+        <ul class="feature-modal-list" id="featureModalList"></ul>
+        <a asp-controller="Account" asp-action="Register" class="btn-primary">
+            Try This Feature <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
 </div>
+
+<div class="demo-modal" id="demoModal" aria-hidden="true">
+    <div class="feature-modal-backdrop" data-close-demo></div>
+    <div class="demo-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="demoModalTitle">
+        <button class="feature-modal-close" type="button" aria-label="Close" data-close-demo>
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="demo-preview">
+            <i class="fas fa-play"></i>
+        </div>
+        <span class="section-tag">Platform Demo</span>
+        <h3 id="demoModalTitle">See Eventify Pro in Action</h3>
+        <p>
+            A quick walkthrough of creating an event, selling tickets, sending QR codes,
+            and scanning attendees at the entrance.
+        </p>
+        <div class="demo-steps">
+            <div><i class="fas fa-calendar-plus"></i><span>Create event</span></div>
+            <div><i class="fas fa-ticket-alt"></i><span>Sell tickets</span></div>
+            <div><i class="fas fa-qrcode"></i><span>Scan QR</span></div>
+        </div>
+        <a asp-controller="Account" asp-action="Register" class="btn-primary">
+            Start Free Trial <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const watchDemoBtn = document.getElementById("watchDemoBtn");
+        const demoModal = document.getElementById("demoModal");
+
+        const openDemoModal = () => {
+          if (!demoModal) return;
+
+          demoModal.classList.add("active");
+          demoModal.setAttribute("aria-hidden", "false");
+          document.body.classList.add("modal-open");
+        };
+
+        const closeDemoModal = () => {
+          if (!demoModal) return;
+
+          demoModal.classList.remove("active");
+          demoModal.setAttribute("aria-hidden", "true");
+          document.body.classList.remove("modal-open");
+        };
+
+        if (watchDemoBtn) {
+          watchDemoBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            openDemoModal();
+          });
+        }
+
+        document.querySelectorAll("[data-close-demo]").forEach((element) => {
+          element.addEventListener("click", closeDemoModal);
+        });
+
+        const featureDetails = {
+          "event-creation": {
+            icon: "fas fa-calendar-plus",
+            title: "Event Creation",
+            text: "Build a complete event page with title, description, images, date, location, capacity, and ticket settings from one clear form.",
+            points: ["Add full event details", "Upload event images", "Set location and capacity"],
+          },
+          "ticket-types": {
+            icon: "fas fa-ticket-alt",
+            title: "Multiple Ticket Types",
+            text: "Offer different ticket levels so attendees can choose the right experience, from free entry to VIP access.",
+            points: ["Create VIP and regular tickets", "Control prices and quantities", "Support free ticket options"],
+          },
+          "qr-code": {
+            icon: "fas fa-qrcode",
+            title: "Secure QR Code",
+            text: "Every confirmed booking receives a unique QR code that can be checked at the entrance to reduce fraud and duplicate use.",
+            points: ["Unique code per ticket", "Fast entrance validation", "Prevents repeated scans"],
+          },
+          payments: {
+            icon: "fas fa-credit-card",
+            title: "Secure Payments",
+            text: "Let attendees pay online through a smooth checkout flow with card support and automatic booking confirmation.",
+            points: ["Online card payments", "Automatic confirmations", "Clear order summary"],
+          },
+          dashboard: {
+            icon: "fas fa-chart-line",
+            title: "Smart Dashboard",
+            text: "Give organizers a focused dashboard to track ticket sales, revenue, attendance, and event performance in real time.",
+            points: ["Track sales live", "Monitor attendance", "View event analytics"],
+          },
+          notifications: {
+            icon: "fas fa-envelope-open-text",
+            title: "Auto Notifications",
+            text: "Send booking confirmations, reminders, and important updates automatically so attendees stay informed.",
+            points: ["Email confirmations", "Event reminders", "Important update messages"],
+          },
+        };
+
+        const featureModal = document.getElementById("featureModal");
+        const featureModalIcon = document.getElementById("featureModalIcon");
+        const featureModalTitle = document.getElementById("featureModalTitle");
+        const featureModalText = document.getElementById("featureModalText");
+        const featureModalList = document.getElementById("featureModalList");
+
+        const openFeatureModal = (featureKey) => {
+          const feature = featureDetails[featureKey];
+          if (!feature || !featureModal) return;
+
+          featureModalIcon.innerHTML = `<i class="${feature.icon}"></i>`;
+          featureModalTitle.textContent = feature.title;
+          featureModalText.textContent = feature.text;
+          featureModalList.innerHTML = feature.points
+            .map((point) => `<li><i class="fas fa-check"></i>${point}</li>`)
+            .join("");
+
+          featureModal.classList.add("active");
+          featureModal.setAttribute("aria-hidden", "false");
+          document.body.classList.add("modal-open");
+        };
+
+        const closeFeatureModal = () => {
+          if (!featureModal) return;
+
+          featureModal.classList.remove("active");
+          featureModal.setAttribute("aria-hidden", "true");
+          document.body.classList.remove("modal-open");
+        };
+
+        document.querySelectorAll(".feature-link[data-feature]").forEach((link) => {
+          link.addEventListener("click", function (e) {
+            e.preventDefault();
+            openFeatureModal(this.dataset.feature);
+          });
+        });
+
+        document.querySelectorAll("[data-close-modal]").forEach((element) => {
+          element.addEventListener("click", closeFeatureModal);
+        });
+
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") {
+            closeFeatureModal();
+            closeDemoModal();
+          }
+        });
+
+        const counters = document.querySelectorAll(".counter");
+        const animateCounter = (counter) => {
+          const target = +counter.getAttribute("data-target");
+          const speed = 200;
+          const update = () => {
+            const count = +counter.innerText.replace(/,/g, "").replace("+", "");
+            const inc = target / speed;
+            if (count < target) {
+              counter.innerText = Math.ceil(count + inc).toLocaleString();
+              setTimeout(update, 15);
+            } else {
+              counter.innerText = target.toLocaleString() + "+";
+            }
+          };
+          update();
+        };
+
+        if (counters.length > 0) {
+          const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                animateCounter(entry.target);
+                observer.unobserve(entry.target);
+              }
+            });
+          });
+          counters.forEach((c) => observer.observe(c));
+        }
+
+        const navbar = document.querySelector(".navbar");
+        if (navbar && !navbar.classList.contains("scrolled")) {
+          window.addEventListener("scroll", () => {
+            navbar.classList.toggle("scrolled", window.scrollY > 50);
+          });
+        }
+
+        const menuToggle = document.getElementById("menuToggle");
+        if (menuToggle) {
+          menuToggle.addEventListener("click", function () {
+            this.classList.toggle("active");
+            document.querySelector(".nav-links").classList.toggle("active");
+            document.querySelector(".nav-buttons").classList.toggle("active");
+            document.body.classList.toggle("mobile-menu-open");
+          });
+        }
+
+        const filterBtns = document.querySelectorAll(".filter-btn");
+        filterBtns.forEach((btn) => {
+          btn.addEventListener("click", function () {
+            filterBtns.forEach((b) => b.classList.remove("active"));
+            this.classList.add("active");
+          });
+        });
+
+        const revealElements = document.querySelectorAll(
+          ".reveal, .feature-card, .step, .role-card, .event-card-large",
+        );
+        if (revealElements.length > 0) {
+          const revealObserver = new IntersectionObserver(
+            (entries) => {
+              entries.forEach((e) => {
+                if (e.isIntersecting) {
+                  e.target.classList.add("revealed");
+                  e.target.style.opacity = "1";
+                  e.target.style.transform = "translateY(0)";
+                }
+              });
+            },
+            { threshold: 0.1 },
+          );
+
+          revealElements.forEach((el, i) => {
+            if (!el.classList.contains("revealed")) {
+              el.style.opacity = "0";
+              el.style.transform = "translateY(40px)";
+              el.style.transition = `opacity 0.6s ease ${i * 0.05}s, transform 0.6s ease ${i * 0.05}s`;
+            }
+            revealObserver.observe(el);
+          });
+        }
+
+        document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+          anchor.addEventListener("click", function (e) {
+            const href = this.getAttribute("href");
+            if (href === "#" || href.length <= 1) return;
+            const target = document.querySelector(href);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+          });
+        });
+
+        document.querySelectorAll(".btn-fav").forEach((btn) => {
+          btn.addEventListener("click", function (e) {
+            e.preventDefault();
+            const icon = this.querySelector("i");
+            if (icon.classList.contains("far")) {
+              icon.classList.remove("far");
+              icon.classList.add("fas");
+              this.style.color = "#EF4444";
+              this.style.background = "#FEE2E2";
+            } else {
+              icon.classList.remove("fas");
+              icon.classList.add("far");
+              this.style.color = "";
+              this.style.background = "";
+            }
+          });
+        });
+
+        document.querySelectorAll("form").forEach((form) => {
+          form.addEventListener("submit", function (e) {
+            const requiredInputs = this.querySelectorAll("[required]");
+            let valid = true;
+            requiredInputs.forEach((input) => {
+              if (!input.value.trim()) {
+                input.style.borderColor = "#EF4444";
+                valid = false;
+              } else {
+                input.style.borderColor = "";
+              }
+            });
+            if (!valid) {
+              e.preventDefault();
+            }
+          });
+        });
+
+        document.querySelectorAll(".newsletter").forEach((form) => {
+          form.addEventListener("submit", function (e) {
+            e.preventDefault();
+            const input = this.querySelector("input");
+            if (input.value.trim()) {
+              const btn = this.querySelector("button");
+              const original = btn.innerHTML;
+              btn.innerHTML = '<i class="fas fa-check"></i>';
+              input.value = "";
+              setTimeout(() => {
+                btn.innerHTML = original;
+              }, 2000);
+            }
+          });
+        });
+
+        document.querySelectorAll("[data-feedback-carousel]").forEach((carousel) => {
+          const cards = Array.from(carousel.querySelectorAll("[data-feedback-card]"));
+          const pageSize = Number(carousel.dataset.pageSize || 5);
+          const dotsContainer = carousel.querySelector("[data-feedback-dots]");
+          const prevBtn = carousel.querySelector("[data-feedback-prev]");
+          const nextBtn = carousel.querySelector("[data-feedback-next]");
+          let page = 0;
+          const totalPages = Math.max(1, Math.ceil(cards.length / pageSize));
+
+          // Generate dynamic pagination dots
+          if (dotsContainer) {
+            dotsContainer.innerHTML = "";
+            for (let i = 0; i < totalPages; i++) {
+              const dot = document.createElement("button");
+              dot.type = "button";
+              dot.className = "carousel-dot" + (i === 0 ? " active" : "");
+              dot.setAttribute("aria-label", `Go to slide ${i + 1}`);
+              dot.addEventListener("click", () => {
+                page = i;
+                renderFeedbackPage();
+              });
+              dotsContainer.appendChild(dot);
+            }
+          }
+
+          const renderFeedbackPage = () => {
+            const grid = carousel.querySelector(".landing-feedback-grid-enhanced");
+            if (grid) {
+              grid.style.opacity = "0";
+              grid.style.transition = "opacity 0.2s ease";
+            }
+
+            setTimeout(() => {
+              cards.forEach((card, index) => {
+                const visible = index >= page * pageSize && index < (page + 1) * pageSize;
+                card.style.display = visible ? "flex" : "none";
+              });
+
+              // Update active dot indicators
+              if (dotsContainer) {
+                const dots = dotsContainer.querySelectorAll(".carousel-dot");
+                dots.forEach((dot, index) => {
+                  dot.classList.toggle("active", index === page);
+                });
+              }
+
+              if (prevBtn) {
+                prevBtn.disabled = page === 0;
+              }
+
+              if (nextBtn) {
+                nextBtn.disabled = page >= totalPages - 1;
+              }
+
+              if (grid) {
+                grid.style.opacity = "1";
+              }
+            }, 180);
+          };
+
+          if (prevBtn) {
+            prevBtn.addEventListener("click", () => {
+              page = Math.max(0, page - 1);
+              renderFeedbackPage();
+            });
+          }
+
+          if (nextBtn) {
+            nextBtn.addEventListener("click", () => {
+              page = Math.min(totalPages - 1, page + 1);
+              renderFeedbackPage();
+            });
+          }
+
+          renderFeedbackPage();
+        });
+
+        // ===== Hero Background Slideshow =====
+        (() => {
+            const slides = document.querySelectorAll('.hero-slide');
+            const dots = document.querySelectorAll('.hero-slideshow-dot');
+            if (slides.length < 2) return;
+
+            let currentSlide = 0;
+            const INTERVAL = 5000; // 5 seconds
+
+            const goToSlide = (index) => {
+                slides[currentSlide].classList.remove('active');
+                dots[currentSlide].classList.remove('active');
+                currentSlide = index;
+                slides[currentSlide].classList.add('active');
+                dots[currentSlide].classList.add('active');
+            };
+
+            // Auto-cycle
+            let timer = setInterval(() => {
+                goToSlide((currentSlide + 1) % slides.length);
+            }, INTERVAL);
+
+            // Dot click handlers
+            dots.forEach((dot, i) => {
+                dot.addEventListener('click', () => {
+                    clearInterval(timer);
+                    goToSlide(i);
+                    timer = setInterval(() => {
+                        goToSlide((currentSlide + 1) % slides.length);
+                    }, INTERVAL);
+                });
+            });
+        })();
+
+        window.addEventListener("load", () => {
+          document.body.style.opacity = "0";
+          document.body.style.transition = "opacity 0.4s ease";
+          setTimeout(() => {
+            document.body.style.opacity = "1";
+          }, 50);
+        });
+    </script>
+}
