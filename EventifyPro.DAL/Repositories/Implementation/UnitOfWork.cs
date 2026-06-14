@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore.Storage;
-
 namespace EventifyPro.DAL.Repositories.Implementation;
 
 /// <summary>
@@ -10,7 +8,7 @@ namespace EventifyPro.DAL.Repositories.Implementation;
 /// Implements the Unit of Work pattern to coordinate between multiple repositories
 /// and provide a single SaveChangesAsync() method for atomic transactions.
 /// </remarks>
-public class UnitOfWork : IUnitOfWork
+public class UnitOfWork : IUnitOfWork, IDisposable
 {
     private readonly EventifyDbContext _dbContext;
     private IEventRepository? _eventRepository;
@@ -243,6 +241,18 @@ public class UnitOfWork : IUnitOfWork
         if (_dbContext != null)
         {
             await _dbContext.DisposeAsync();
+        }
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Synchronously disposes the UnitOfWork and its DbContext.
+    /// </summary>
+    public void Dispose()
+    {
+        if (_dbContext != null)
+        {
+            _dbContext.Dispose();
         }
         GC.SuppressFinalize(this);
     }

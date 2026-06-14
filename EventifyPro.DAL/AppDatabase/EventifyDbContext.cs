@@ -30,10 +30,10 @@ public class EventifyDbContext : IdentityDbContext<ApplicationUser, IdentityRole
     public DbSet<Payment> Payments { get; set; }
     public DbSet<Refund> Refunds { get; set; }
     public DbSet<Review> Reviews { get; set; }
+    public DbSet<Feedback> Feedback { get; set; }
     public DbSet<WaitingList> WaitingLists { get; set; }
     public DbSet<ScanLog> ScanLogs { get; set; }
     public DbSet<OutboxMessage> OutboxMessages { get; set; }
-    public DbSet<Feedback> Feedback { get; set; }
 
     #endregion
 

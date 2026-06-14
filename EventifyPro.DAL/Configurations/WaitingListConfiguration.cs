@@ -37,7 +37,8 @@ public class WaitingListConfiguration : IEntityTypeConfiguration<WaitingList>
         builder.Property(w => w.Status)
             .IsRequired()
             .HasConversion<byte>()
-            .HasDefaultValueSql("0");
+            .HasDefaultValue(WaitingListStatus.Waiting)
+            .HasSentinel((WaitingListStatus)255);
 
         builder.Property(w => w.JoinedAt)
             .IsRequired()
@@ -53,6 +54,8 @@ public class WaitingListConfiguration : IEntityTypeConfiguration<WaitingList>
                 "CK_WaitingList_ExpiresAt",
                 "NotifiedAt IS NULL OR ExpiresAt IS NULL OR ExpiresAt > NotifiedAt");
         });
+
+        builder.HasQueryFilter(w => !w.Event.IsDeleted);
 
         // Relationships
         // EventId with Restrict to prevent multiple cascade paths

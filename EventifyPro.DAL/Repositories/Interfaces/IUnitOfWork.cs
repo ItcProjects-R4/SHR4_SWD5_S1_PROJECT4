@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore.Storage;
-
 namespace EventifyPro.DAL.Repositories.Interfaces;
 
 /// <summary>
@@ -19,7 +17,7 @@ namespace EventifyPro.DAL.Repositories.Interfaces;
 /// await unitOfWork.SaveChangesAsync();
 /// </code>
 /// </remarks>
-public interface IUnitOfWork : IAsyncDisposable
+public interface IUnitOfWork : IAsyncDisposable, IDisposable
 {
     /// <summary>
     /// Gets the repository for Event entities.

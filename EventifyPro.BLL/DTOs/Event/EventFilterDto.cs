@@ -40,6 +40,11 @@ public record EventFilterDto
     public string? Status { get; init; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether to filter for featured events.
+    /// </summary>
+    public bool? IsFeatured { get; init; }
+
+    /// <summary>
     /// Gets or sets the page number for pagination.
     /// </summary>
     public int PageNumber { get; init; } = 1;

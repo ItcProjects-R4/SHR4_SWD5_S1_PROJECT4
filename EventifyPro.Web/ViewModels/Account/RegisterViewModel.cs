@@ -14,8 +14,8 @@ public class RegisterViewModel
     [Required, EmailAddress]
     public string Email { get; set; } = string.Empty;
 
-    [Required, StringLength(40, MinimumLength = 3)]
-    [RegularExpression("^[a-zA-Z0-9_\\.]+$", ErrorMessage = "Username can contain letters, numbers, dots, and underscores only.")]
+    [Required, StringLength(40, MinimumLength = 4, ErrorMessage = "Username must be at least 4 characters long.")]
+    [RegularExpression("^[a-zA-Z0-9_]+$", ErrorMessage = "Username can contain letters, numbers, and underscores only.")]
     public string UserName { get; set; } = string.Empty;
 
     [Required, MinLength(8), DataType(DataType.Password)]

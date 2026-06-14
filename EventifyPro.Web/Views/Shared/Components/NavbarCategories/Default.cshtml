@@ -1,0 +1,79 @@
+@model IEnumerable<EventifyPro.BLL.DTOs.Category.CategoryDto>
+
+<style>
+    .dropdown-divider-title {
+        font-size: 9.5px;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: var(--text-light);
+        letter-spacing: 0.8px;
+        padding: 10px 16px 4px;
+        border-top: 1px solid var(--border);
+        margin-top: 4px;
+    }
+    
+    .dropdown-main-link {
+        font-weight: 700;
+        color: var(--primary) !important;
+    }
+    
+    .dropdown-sub-link {
+        font-size: 13px !important;
+        padding: 8px 16px !important;
+    }
+    
+    .dropdown-menu-footer {
+        padding: 4px 16px 8px;
+        border-top: 1px dashed var(--border);
+        margin-top: 6px;
+    }
+</style>
+
+<li class="nav-dropdown">
+    <button type="button" class="nav-dropdown-toggle" aria-expanded="false" aria-haspopup="true">
+        Events <i class="fas fa-chevron-down"></i>
+    </button>
+    <div class="nav-dropdown-menu">                   
+        <a asp-controller="Events" asp-action="Index" class="dropdown-main-link">
+            <i class="fas fa-calendar-check"></i>
+            <span>All Events (@(Model != null ? Model.Sum(c => c.EventCount) : 0))</span>
+        </a>
+        
+        @if (Model != null && Model.Any())
+        {
+            <div class="dropdown-divider-title">Browse by Category</div>
+            @foreach (var category in Model)
+            {
+                // Map category name to icon dynamically
+                string nameLower = category.Name.ToLower();
+                string iconClass = "fa-folder-open";
+
+                if (nameLower.Contains("sport") || nameLower.Contains("fit") || nameLower.Contains("run"))
+                    iconClass = "fa-running";
+                else if (nameLower.Contains("music") || nameLower.Contains("concert") || nameLower.Contains("song"))
+                    iconClass = "fa-music";
+                else if (nameLower.Contains("tech") || nameLower.Contains("code") || nameLower.Contains("soft"))
+                    iconClass = "fa-laptop-code";
+                else if (nameLower.Contains("business") || nameLower.Contains("startup") || nameLower.Contains("conf"))
+                    iconClass = "fa-briefcase";
+                else if (nameLower.Contains("art") || nameLower.Contains("paint") || nameLower.Contains("design"))
+                    iconClass = "fa-palette";
+                else if (nameLower.Contains("food") || nameLower.Contains("drink") || nameLower.Contains("cook"))
+                    iconClass = "fa-utensils";
+                else if (nameLower.Contains("education") || nameLower.Contains("learn") || nameLower.Contains("course"))
+                    iconClass = "fa-graduation-cap";
+
+                <a asp-controller="Categories" asp-action="Details" asp-route-id="@category.Id" class="dropdown-sub-link">
+                    <i class="fas @iconClass"></i>
+                    <span>@category.Name (@category.EventCount)</span>
+                </a>
+            }
+        }
+        
+        <div class="dropdown-menu-footer">
+            <a asp-controller="Categories" asp-action="Index" class="btn-ghost btn-small" style="justify-content: center; width: 100%; font-size: 11.5px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 8px;">
+                Browse Categories <i class="fas fa-arrow-right" style="font-size: 9px; margin-left: 4px;"></i>
+            </a>
+        </div>
+    </div>
+</li>

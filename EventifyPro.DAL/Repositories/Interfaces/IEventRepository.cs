@@ -1,5 +1,3 @@
-using Eventify.Shared.Wrappers;
-
 namespace EventifyPro.DAL.Repositories.Interfaces;
 
 public interface IEventRepository : IGenericRepository<Event>
@@ -29,7 +27,13 @@ public interface IEventRepository : IGenericRepository<Event>
         DateTime? to,
         int pageNumber,
         int pageSize,
+        bool? isFeatured = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Events waiting for admin review.
+    /// </summary>
+    Task<IReadOnlyList<Event>> GetPendingReviewAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// All events for an organizer ordered by StartDate descending — for Organizer Dashboard.

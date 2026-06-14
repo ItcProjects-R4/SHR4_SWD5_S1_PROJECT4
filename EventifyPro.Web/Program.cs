@@ -1,12 +1,4 @@
-using Eventify.Domain.Entities;
-using EventifyPro.BLL.Extensions;
-using EventifyPro.BLL.Services.Implementations;
-using EventifyPro.BLL.Services.Interfaces;
-using EventifyPro.DAL.AppDatabase;
 using EventifyPro.DAL.Seeders;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-
 namespace EventifyPro.Web;
 
 public class Program
@@ -15,33 +7,19 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        // Add MVC, MemoryCache, and Mapster
         builder.Services.AddControllersWithViews();
+        builder.Services.AddMemoryCache();
         builder.Services.AddMapsterMappings();
 
-        builder.Services.AddDbContext<EventifyDbContext>(options =>
-            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-        builder.Services
-            .AddIdentity<ApplicationUser, IdentityRole>(options =>
-            {
-                options.Password.RequiredLength = 8;
-                options.Password.RequireDigit = true;
-                options.Password.RequireLowercase = true;
-                options.Password.RequireUppercase = true;
-                options.Password.RequireNonAlphanumeric = false;
-                options.User.RequireUniqueEmail = true;
-                options.SignIn.RequireConfirmedAccount = false;
-            })
-            .AddEntityFrameworkStores<EventifyDbContext>()
-            .AddDefaultTokenProviders();
-
-        builder.Services.ConfigureApplicationCookie(options =>
-        {
-            options.LoginPath = "/Account/Login";
-            options.AccessDeniedPath = "/Account/AccessDenied";
-        });
-
-        builder.Services.AddScoped<IAuthService, AuthService>();
+        // Add all configurations and services from the DI extension methods
+        builder.Services.AddDatabaseConfiguration(builder.Configuration);
+        builder.Services.AddIdentityConfiguration();
+        builder.Services.AddApplicationCookieConfiguration();
+        builder.Services.AddRepositories();
+        builder.Services.AddApplicationServices();
+        builder.Services.AddPaymentServices(builder.Configuration);
+        builder.Services.AddApplicationBackgroundServices();
 
         var app = builder.Build();
 
@@ -69,6 +47,7 @@ public class Program
         // Roles must be seeded first — SeedAdminAsync depends on the Admin role existing.
         await DataSeeder.SeedRolesAsync(app.Services);
         await DataSeeder.SeedAdminAsync(app.Services);
+        await DataSeeder.SeedEventsAndCategoriesAsync(app.Services);
 
         app.MapControllerRoute(
             name: "default",

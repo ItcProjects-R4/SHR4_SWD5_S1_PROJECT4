@@ -1,6 +1,3 @@
-using EventifyPro.BLL.DTOs.Review;
-using Mapster;
-
 namespace EventifyPro.BLL.Mappings;
 
 #pragma warning disable CS8603 // Mapster Ignore expressions can target nullable members safely.

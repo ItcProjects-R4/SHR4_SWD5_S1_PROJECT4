@@ -7,4 +7,5 @@ public interface IBookingService
     Task<Result> CancelAsync(int bookingId, string userId, string reason, CancellationToken cancellationToken = default);
     Task<Result<BookingDetailDto>> GetBookingDetailAsync(int bookingId, string userId, CancellationToken cancellationToken = default);
     Task<PagedResult<BookingSummaryDto>> GetUserBookingsAsync(string userId, int pageNumber, int pageSize, CancellationToken cancellationToken = default);
+    Task<int> ExpirePendingBookingsAsync(CancellationToken cancellationToken = default);
 }

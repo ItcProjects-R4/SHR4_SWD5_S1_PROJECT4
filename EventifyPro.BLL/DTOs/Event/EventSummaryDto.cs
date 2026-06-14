@@ -40,6 +40,10 @@ public record EventSummaryDto
     /// </summary>
     public string Status { get; init; } = string.Empty;
 
+    public string? ReviewNotes { get; init; }
+
+    public DateTime? ReviewedAt { get; init; }
+
     /// <summary>
     /// Gets or sets the maximum capacity of the event.
     /// </summary>
@@ -54,4 +58,5 @@ public record EventSummaryDto
     /// Gets or sets the name of the event category.
     /// </summary>
     public string CategoryName { get; init; } = string.Empty;
+    public decimal MinPrice { get; init; }
 }

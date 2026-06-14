@@ -50,6 +50,12 @@ public record EventDetailDto
     /// </summary>
     public string Status { get; init; } = string.Empty;
 
+    public string? ReviewNotes { get; init; }
+
+    public string? ReviewedByAdminId { get; init; }
+
+    public DateTime? ReviewedAt { get; init; }
+
     /// <summary>
     /// Gets or sets the maximum capacity of the event.
     /// </summary>

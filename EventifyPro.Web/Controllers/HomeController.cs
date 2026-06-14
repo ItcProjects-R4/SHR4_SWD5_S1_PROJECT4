@@ -2,6 +2,8 @@ using Eventify.Domain.Entities;
 using EventifyPro.DAL.AppDatabase;
 using EventifyPro.Web.Models;
 using EventifyPro.Web.ViewModels;
+using EventifyPro.Web.ViewModels.Feedback;
+using EventifyPro.Web.ViewModels.Home;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;

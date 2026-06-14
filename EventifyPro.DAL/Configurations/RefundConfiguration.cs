@@ -52,6 +52,8 @@ public class RefundConfiguration : IEntityTypeConfiguration<Refund>
         builder.Property(r => r.ProcessedAt)
             .IsRequired(false);
 
+        builder.HasQueryFilter(r => !r.Booking.Event.IsDeleted && !r.Payment.Booking.Event.IsDeleted);
+
         // Foreign Keys and Relationships
         builder.HasOne(r => r.Payment)
             .WithMany(p => p.Refunds)

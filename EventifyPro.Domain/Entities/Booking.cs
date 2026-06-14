@@ -1,5 +1,3 @@
-﻿using Eventify.Domain.Enums;
-
 namespace Eventify.Domain.Entities;
 
 /// <summary>
@@ -36,6 +34,11 @@ public class Booking
     /// </summary>
     /// <value>The sum of all booking items in the booking.</value>
     public decimal TotalAmount { get; set; }
+
+    /// <summary>
+    /// Gets or sets the platform/service fee charged for this booking.
+    /// </summary>
+    public decimal ServiceFee { get; set; }
 
     /// <summary>
     /// Gets or sets the current status of the booking.

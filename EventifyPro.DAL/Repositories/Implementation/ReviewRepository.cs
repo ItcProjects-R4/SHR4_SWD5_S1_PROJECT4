@@ -1,6 +1,3 @@
-using Eventify.DAL.Extensions;
-using Eventify.Shared.Wrappers;
-
 namespace EventifyPro.DAL.Repositories.Implementation;
 
 /// <summary>

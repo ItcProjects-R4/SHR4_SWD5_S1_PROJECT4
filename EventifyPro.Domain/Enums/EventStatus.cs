@@ -4,9 +4,8 @@
 /// Represents the status of an event from creation through completion or cancellation.
 /// </summary>
 /// <remarks>
-/// Events start as drafts for organizer preparation, transition to published for public availability,
-/// and eventually reach a terminal state of completion or cancellation. Cancelled events are not
-/// available for new bookings.
+/// Events created by organizers wait for admin review before becoming public.
+/// Approved events are published for booking; rejected events keep review notes for organizer edits.
 /// </remarks>
 public enum EventStatus : byte
 {
@@ -17,5 +16,9 @@ public enum EventStatus : byte
     /// <summary>The event has been cancelled and no new bookings are accepted.</summary>
     Cancelled = 2,
     /// <summary>The event has occurred and is marked as completed.</summary>
-    Completed = 3
+    Completed = 3,
+    /// <summary>The event is waiting for admin review.</summary>
+    PendingReview = 4,
+    /// <summary>The event was rejected by an admin and needs organizer changes.</summary>
+    Rejected = 5
 }

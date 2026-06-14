@@ -1,6 +1,7 @@
 using Eventify.Domain.Constants;
 using EventifyPro.DAL.AppDatabase;
 using EventifyPro.Web.ViewModels;
+using EventifyPro.Web.ViewModels.Admin;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

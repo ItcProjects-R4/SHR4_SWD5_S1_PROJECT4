@@ -1,7 +1,3 @@
-using Eventify.Domain.Enums;
-using EventifyPro.BLL.DTOs.WaitingList;
-using Mapster;
-
 namespace EventifyPro.BLL.Mappings;
 
 #pragma warning disable CS8603 // Mapster Ignore expressions can target nullable members safely.

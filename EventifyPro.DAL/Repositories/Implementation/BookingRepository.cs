@@ -1,6 +1,3 @@
-using Eventify.DAL.Extensions;
-using Eventify.Shared.Wrappers;
-
 namespace EventifyPro.DAL.Repositories.Implementation;
 
 public class BookingRepository : GenericRepository<Booking>, IBookingRepository
@@ -15,7 +12,6 @@ public class BookingRepository : GenericRepository<Booking>, IBookingRepository
             .Include(b => b.Payment)
             .Include(b => b.User)
             .FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
-    // No AsNoTracking — caller may update status after loading
 
     public async Task<Booking?> GetByReferenceAsync(string reference, CancellationToken cancellationToken = default)
         => await _dbSet

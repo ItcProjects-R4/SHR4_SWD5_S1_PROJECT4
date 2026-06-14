@@ -32,6 +32,7 @@ public class BookingItemConfiguration : IEntityTypeConfiguration<BookingItem>
             .IsRequired()
             .HasColumnType("decimal(10,2)");
 
+        builder.HasQueryFilter(bi => !bi.Booking.Event.IsDeleted && !bi.TicketType.Event.IsDeleted);
 
         builder.HasOne(bi => bi.Booking)
             .WithMany(b => b.Items)

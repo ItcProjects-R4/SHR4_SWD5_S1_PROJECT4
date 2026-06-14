@@ -1,6 +1,4 @@
-﻿using Eventify.Domain.Enums;
-
-namespace Eventify.Domain.Entities;
+﻿namespace Eventify.Domain.Entities;
 
 /// <summary>
 /// Represents a user's request to be notified when tickets become available for an event.

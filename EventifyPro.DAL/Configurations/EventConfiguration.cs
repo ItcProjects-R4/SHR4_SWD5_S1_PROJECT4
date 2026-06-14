@@ -47,18 +47,36 @@ public class EventConfiguration : IEntityTypeConfiguration<Event>
         builder.Property(e => e.Status)
             .IsRequired()
             .HasConversion<byte>()
-            .HasDefaultValueSql("0");
+            .HasDefaultValue(EventStatus.PendingReview)
+            .HasSentinel((EventStatus)255);
+
+        builder.Property(e => e.ReviewNotes)
+            .HasMaxLength(1000);
+
+        builder.Property(e => e.ReviewedByAdminId)
+            .HasMaxLength(450);
+
+        builder.Property(e => e.ReviewedAt);
 
         builder.Property(e => e.MaxCapacity);
+
+        builder.Property(e => e.MaxTicketsPerUser);
 
         builder.ToTable(t =>
         {
             t.HasCheckConstraint(
                 "CK_Events_MaxCapacity",
                 "MaxCapacity IS NULL OR MaxCapacity > 0");
+            t.HasCheckConstraint(
+                "CK_Events_MaxTicketsPerUser",
+                "MaxTicketsPerUser IS NULL OR MaxTicketsPerUser > 0");
         });
 
         builder.Property(e => e.IsDeleted)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(e => e.IsFeatured)
             .IsRequired()
             .HasDefaultValue(false);
 
@@ -76,6 +94,11 @@ public class EventConfiguration : IEntityTypeConfiguration<Event>
             .HasForeignKey(e => e.OrganizerId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne(e => e.ReviewedByAdmin)
+            .WithMany()
+            .HasForeignKey(e => e.ReviewedByAdminId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasOne(e => e.Category)
             .WithMany(c => c.Events)
             .HasForeignKey(e => e.CategoryId)
@@ -90,6 +113,9 @@ public class EventConfiguration : IEntityTypeConfiguration<Event>
 
         builder.HasIndex(e => new { e.Status, e.StartDate })
             .HasDatabaseName("IX_Events_Status_StartDate");
+
+        builder.HasIndex(e => e.ReviewedByAdminId)
+            .HasDatabaseName("IX_Events_ReviewedByAdminId");
 
         builder.HasIndex(e => e.City)
             .HasDatabaseName("IX_Events_City");

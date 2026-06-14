@@ -31,4 +31,9 @@ public record CategoryDto
     /// Gets or sets the date and time when the category was last updated.
     /// </summary>
     public DateTime? UpdatedAt { get; init; }
+
+    /// <summary>
+    /// Gets or sets the number of published events in this category.
+    /// </summary>
+    public int EventCount { get; init; }
 }

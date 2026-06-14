@@ -67,6 +67,11 @@ public record BookingDetailDto
     public decimal TotalAmount { get; init; }
 
     /// <summary>
+    /// Gets or sets the platform/service fee charged for this booking.
+    /// </summary>
+    public decimal ServiceFee { get; init; }
+
+    /// <summary>
     /// Gets or sets the status of the booking (e.g., Confirmed, Cancelled, Pending).
     /// </summary>
     public string Status { get; init; } = string.Empty;

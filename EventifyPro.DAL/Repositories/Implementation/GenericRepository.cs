@@ -1,7 +1,3 @@
-using System.Linq.Expressions;
-using Eventify.DAL.Extensions;
-using Eventify.Shared.Wrappers;
-
 namespace EventifyPro.DAL.Repositories;
 
 public class GenericRepository<T> : IGenericRepository<T> where T : class

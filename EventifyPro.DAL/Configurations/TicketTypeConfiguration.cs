@@ -74,6 +74,8 @@ public class TicketTypeConfiguration : IEntityTypeConfiguration<TicketType>
         builder.Property(t => t.UpdatedAt)
             .HasDefaultValue(null);
 
+        builder.HasQueryFilter(t => !t.Event.IsDeleted);
+
         // Relationships
         builder.HasOne(t => t.Event)
             .WithMany(e => e.TicketTypes)

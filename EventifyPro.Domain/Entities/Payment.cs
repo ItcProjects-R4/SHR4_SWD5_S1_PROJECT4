@@ -1,6 +1,4 @@
-﻿using Eventify.Domain.Enums;
-
-namespace Eventify.Domain.Entities;
+﻿namespace Eventify.Domain.Entities;
 
 /// <summary>
 /// Represents a payment made for a booking.

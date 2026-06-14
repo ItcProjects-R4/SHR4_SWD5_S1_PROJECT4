@@ -40,6 +40,8 @@ public class ScanLogConfiguration : IEntityTypeConfiguration<ScanLog>
         builder.Property(s => s.Notes)
             .HasMaxLength(200);
 
+        builder.HasQueryFilter(s => !s.ScanEvent.IsDeleted);
+
         // Relationships
         builder.HasOne(s => s.Ticket)
             .WithMany(t => t.ScanLogs)

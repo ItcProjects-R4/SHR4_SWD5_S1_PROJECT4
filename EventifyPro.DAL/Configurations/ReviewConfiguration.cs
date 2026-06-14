@@ -30,7 +30,7 @@ public class ReviewConfiguration : IEntityTypeConfiguration<Review>
             .IsRequired()
             .HasDefaultValue(false);
 
-        builder.HasQueryFilter(r => !r.IsHidden);
+        builder.HasQueryFilter(r => !r.IsHidden && !r.Event.IsDeleted);
 
         builder.Property(r => r.CreatedAt)
             .IsRequired()

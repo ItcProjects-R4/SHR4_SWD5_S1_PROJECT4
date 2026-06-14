@@ -5,426 +5,1132 @@
     ViewData["Title"] = "Eventify Pro - Smart Event Management Platform";
 }
 
-<section class="hero" id="home">
-    <div class="hero-slideshow">
-        <div class="hero-slide active" style="background-image: url('@Url.Content("~/Images/Home/Home1.png")')"></div>
-        <div class="hero-slide" style="background-image: url('@Url.Content("~/Images/Home/Home2.png")')"></div>
-        <div class="hero-slide" style="background-image: url('@Url.Content("~/Images/Home/Home3.png")')"></div>
-    </div>
-    <div class="hero-overlay"></div>
-    <div class="hero-container">
-        <div class="hero-content">
-            <div class="hero-badge">
-                <i class="fas fa-bolt"></i>
-                <span>#1 Event Management Platform</span>
-            </div>
-            <h1 class="hero-title">
-                Create <span class="gradient-text">Unforgettable</span> <br />Events
-                Effortlessly
-            </h1>
-            <p class="hero-description">
-                The complete platform for creating and managing events, concerts,
-                conferences, and workshops. Sell tickets online and verify them with
-                QR Code seamlessly.
-            </p>
-            <div class="hero-buttons">
-                <a asp-controller="Account" asp-action="Register" class="btn-primary btn-large">
-                    <i class="fas fa-rocket"></i> Start Free Trial
-                </a>
-                <a href="#" class="btn-outline btn-large" id="watchDemoBtn">
-                    <i class="fas fa-play-circle"></i> Watch Demo
-                </a>
-            </div>
-            <div class="hero-stats">
-                <div class="stat-item">
-                    <h3 class="counter" data-target="50000">0</h3>
-                    <p>Tickets Sold</p>
-                </div>
-                <div class="stat-divider"></div>
-                <div class="stat-item">
-                    <h3 class="counter" data-target="2500">0</h3>
-                    <p>Active Organizers</p>
-                </div>
-                <div class="stat-divider"></div>
-                <div class="stat-item">
-                    <h3 class="counter" data-target="850">0</h3>
-                    <p>Successful Events</p>
-                </div>
-            </div>
-        </div>
-        <div class="hero-visual">
-            <div class="hero-card card-main">
-                <div class="card-image">
-                    <i class="fas fa-music"></i>
-                    <div class="card-tag">VIP</div>
-                </div>
-                <div class="card-content">
-                    <h4>Summer Music Festival 2026</h4>
-                    <div class="card-info">
-                        <span><i class="fas fa-calendar"></i> June 15</span>
-                        <span><i class="fas fa-map-marker-alt"></i> Cairo</span>
-                    </div>
-                    <div class="card-footer">
-                        <span class="price">$50</span>
-                        <button class="btn-book">Book Now</button>
-                    </div>
-                </div>
-            </div>
-            <div class="hero-card card-floating card-1">
-                <i class="fas fa-qrcode"></i>
-                <div>
-                    <h5>QR Code</h5>
-                    <p>Secure Ticket</p>
-                </div>
-            </div>
-            <div class="hero-card card-floating card-2">
-                <i class="fas fa-check-circle"></i>
-                <div>
-                    <h5>Payment Done</h5>
-                    <p>Successfully</p>
-                </div>
-            </div>
-            <div class="hero-card card-floating card-3">
-                <i class="fas fa-users"></i>
-                <div>
-                    <h5>+1,250</h5>
-                    <p>Confirmed</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="hero-slideshow-dots">
-        <button class="hero-slideshow-dot active" aria-label="Slide 1"></button>
-        <button class="hero-slideshow-dot" aria-label="Slide 2"></button>
-        <button class="hero-slideshow-dot" aria-label="Slide 3"></button>
-    </div>
+@if (Model.IsAuthenticated)
+{
+    <!-- Dynamic Attendee Dashboard -->
+    <style>
+        /* Dashboard Premium Styles */
+        .dashboard-header {
+            background: var(--gradient);
+            border-radius: 30px;
+            padding: 50px;
+            color: var(--white);
+            margin-top: 30px;
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+        }
 
-</section>
+        .dashboard-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
+            z-index: 1;
+        }
 
-<section class="features section" id="features">
-    <div class="container">
-        <div class="section-header">
-            <span class="section-tag">Features</span>
-            <h2>
-                Everything You Need <span class="gradient-text">in One Place</span>
-            </h2>
-            <p>
-                Powerful and smart tools to manage your events from start to finish
-            </p>
-        </div>
-        <div class="features-grid">
-            <div class="feature-card reveal">
-                <div class="feature-icon icon-1">
-                    <i class="fas fa-calendar-plus"></i>
-                </div>
-                <h3>Event Creation</h3>
-                <p>
-                    Create professional events easily with full customization for
-                    details, images.
-                </p>
-                <a href="#" class="feature-link" data-feature="event-creation">
-                    Learn More <i class="fas fa-arrow-right"></i>
-                </a>
-            </div>
-            <div class="feature-card reveal">
-                <div class="feature-icon icon-2">
-                    <i class="fas fa-ticket-alt"></i>
-                </div>
-                <h3>Multiple Ticket Types</h3>
-                <p>
-                    Create VIP, regular, or free tickets with different prices and
-                    features for each type
-                </p>
-                <a href="#" class="feature-link" data-feature="ticket-types">
-                    Learn More <i class="fas fa-arrow-right"></i>
-                </a>
-            </div>
-            <div class="feature-card reveal">
-                <div class="feature-icon icon-3"><i class="fas fa-qrcode"></i></div>
-                <h3>Secure QR Code</h3>
-                <p>
-                    Each ticket has a unique encrypted QR Code that prevents fraud and
-                    reuse
-                </p>
-                <a href="#" class="feature-link" data-feature="qr-code">
-                    Learn More <i class="fas fa-arrow-right"></i>
-                </a>
-            </div>
-            <div class="feature-card reveal">
-                <div class="feature-icon icon-4">
-                    <i class="fas fa-credit-card"></i>
-                </div>
-                <h3>Secure Payments</h3>
-                <p>
-                    Stripe integration for secure online payments with support for all
-                    major cards
-                </p>
-                <a href="#" class="feature-link" data-feature="payments">
-                    Learn More <i class="fas fa-arrow-right"></i>
-                </a>
-            </div>
-            <div class="feature-card reveal">
-                <div class="feature-icon icon-5">
-                    <i class="fas fa-chart-line"></i>
-                </div>
-                <h3>Smart Dashboard</h3>
-                <p>
-                    Track sales, statistics, and attendance in real-time with an
-                    easy-to-use interface
-                </p>
-                <a href="#" class="feature-link" data-feature="dashboard">
-                    Learn More <i class="fas fa-arrow-right"></i>
-                </a>
-            </div>
-            <div class="feature-card reveal">
-                <div class="feature-icon icon-6">
-                    <i class="fas fa-envelope-open-text"></i>
-                </div>
-                <h3>Auto Notifications</h3>
-                <p>
-                    Send booking confirmations and reminders to attendees via email
-                    automatically
-                </p>
-                <a href="#" class="feature-link" data-feature="notifications">
-                    Learn More <i class="fas fa-arrow-right"></i>
-                </a>
-            </div>
-        </div>
-    </div>
-</section>
+        .dashboard-header-content {
+            position: relative;
+            z-index: 2;
+        }
 
-<section class="how-it-works section" id="how">
-    <div class="container">
-        <div class="section-header">
-            <span class="section-tag">How It Works</span>
-            <h2>
-                4 Simple Steps to <span class="gradient-text">Event Success</span>
-            </h2>
-            <p>
-                From creation to event day, we're with you every step of the way
-            </p>
-        </div>
-        <div class="steps-container">
-            <div class="step-line"></div>
-            <div class="step reveal">
-                <div class="step-number">1</div>
-                <div class="step-icon"><i class="fas fa-pen-fancy"></i></div>
-                <h3>Create Your Event</h3>
-                <p>
-                    Add details, images, location, and define ticket types and prices
-                </p>
-            </div>
-            <div class="step reveal">
-                <div class="step-number">2</div>
-                <div class="step-icon"><i class="fas fa-share-alt"></i></div>
-                <h3>Share with Audience</h3>
-                <p>Users browse events and book tickets effortlessly</p>
-            </div>
-            <div class="step reveal">
-                <div class="step-number">3</div>
-                <div class="step-icon"><i class="fas fa-money-bill-wave"></i></div>
-                <h3>Receive Payments</h3>
-                <p>Secure payments via Stripe and QR tickets sent automatically</p>
-            </div>
-            <div class="step reveal">
-                <div class="step-number">4</div>
-                <div class="step-icon"><i class="fas fa-check-double"></i></div>
-                <h3>Verify at Entry</h3>
-                <p>Scanner verifies QR Code instantly to validate tickets</p>
-            </div>
-        </div>
-    </div>
-</section>
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 50px;
+        }
 
-<section class="roles section">
-    <div class="container">
-        <div class="section-header">
-            <span class="section-tag">Users</span>
-            <h2>A Platform <span class="gradient-text">for Everyone</span></h2>
-            <p>Four types of users, each with their own special permissions</p>
-        </div>
-        <div class="roles-grid">
-            <div class="role-card reveal">
-                <div class="role-avatar"><i class="fas fa-user-shield"></i></div>
-                <h3>Admin</h3>
-                <p>Complete system management and full control</p>
-                <ul>
-                    <li><i class="fas fa-check"></i> Manage Users</li>
-                    <li><i class="fas fa-check"></i> System Monitoring</li>
-                    <li><i class="fas fa-check"></i> Full Analytics</li>
-                </ul>
-            </div>
-            <div class="role-card reveal">
-                <div class="role-avatar"><i class="fas fa-user-tie"></i></div>
-                <h3>Organizer</h3>
-                <p>Create and manage events and sell tickets</p>
-                <ul>
-                    <li><i class="fas fa-check"></i> Create Events</li>
-                    <li><i class="fas fa-check"></i> Manage Tickets</li>
-                    <li><i class="fas fa-check"></i> Track Sales</li>
-                </ul>
-            </div>
-            <div class="role-card reveal">
-                <div class="role-avatar"><i class="fas fa-user"></i></div>
-                <h3>Attendee</h3>
-                <p>Browse events and book tickets easily</p>
-                <ul>
-                    <li><i class="fas fa-check"></i> Browse Events</li>
-                    <li><i class="fas fa-check"></i> Book Tickets</li>
-                    <li><i class="fas fa-check"></i> My Tickets</li>
-                </ul>
-            </div>
-            <div class="role-card reveal">
-                <div class="role-avatar"><i class="fas fa-qrcode"></i></div>
-                <h3>Scanner</h3>
-                <p>Verify tickets at event entrance</p>
-                <ul>
-                    <li><i class="fas fa-check"></i> Scan QR Code</li>
-                    <li><i class="fas fa-check"></i> Instant Verify</li>
-                    <li><i class="fas fa-check"></i> Update Status</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</section>
+        @@media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
 
-<section class="landing-feedback section enhanced-bg-glow" id="feedback">
-    <div class="container">
-        <div class="section-header">
-            <span class="section-tag-enhanced"><i class="fas fa-comments"></i> Testimonials</span>
-            <h2>What Users <span class="gradient-text">Say About Us</span></h2>
-            <p>Authentic reviews from Attendees, Organizers, and gate Scanners using Eventify Pro.</p>
+        .dashboard-stat-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+        }
+
+        .dashboard-stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--accent);
+        }
+
+        .stat-card-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            background: var(--soft-purple);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .stat-card-details h3 {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text);
+            line-height: 1.2;
+        }
+
+        .stat-card-details p {
+            font-size: 13px;
+            color: var(--text-light);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .dashboard-section-title {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 24px;
+            color: var(--text);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Reusable Grid for dashboard events list */
+        .dash-events-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .dash-event-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .dash-event-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+            box-shadow: var(--shadow-md);
+        }
+
+        .dash-event-img {
+            height: 150px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        .dash-event-fallback {
+            height: 150px;
+            background: var(--gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 40px;
+        }
+
+        .dash-event-body {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            flex-grow: 1;
+        }
+
+        .dash-event-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .dash-event-meta {
+            font-size: 12px;
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+
+        .dash-event-meta span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .dash-event-meta i {
+            color: var(--primary);
+        }
+    </style>
+
+    <div class="container" style="padding-top: 120px; padding-bottom: 60px;">
+        <!-- Welcome banner -->
+        <div class="dashboard-header">
+            <div class="dashboard-header-content">
+                <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; background: rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 50px; display: inline-block; margin-bottom: 16px; letter-spacing: 0.5px;">Attendee Portal</span>
+                <h1 style="font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 800; margin-bottom: 8px;">Welcome Back, @Model.UserFullName 👋</h1>
+                <p style="font-size: 16px; opacity: 0.9;">Manage your upcoming events, check ticket details, and browse new experiences.</p>
+            </div>
         </div>
 
-        @if (Model.ApprovedFeedback.Any())
+        <!-- Stats Grid -->
+        <div class="dashboard-grid">
+            <a asp-controller="Events" asp-action="MyTickets" class="dashboard-stat-card">
+                <div class="stat-card-icon"><i class="far fa-calendar-check"></i></div>
+                <div class="stat-card-details">
+                    <h3>@Model.UpcomingEventsCount</h3>
+                    <p>Upcoming Events</p>
+                </div>
+            </a>
+            
+            <a asp-controller="Events" asp-action="MyTickets" class="dashboard-stat-card">
+                <div class="stat-card-icon"><i class="fas fa-ticket-alt"></i></div>
+                <div class="stat-card-details">
+                    <h3>@Model.MyTicketsCount</h3>
+                    <p>My Tickets</p>
+                </div>
+            </a>
+
+            <div class="dashboard-stat-card">
+                <div class="stat-card-icon"><i class="far fa-bell"></i></div>
+                <div class="stat-card-details">
+                    <h3>@Model.NotificationsCount</h3>
+                    <p>Notifications</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming booked events section -->
+        <div class="dashboard-section-title">
+            <span>My Upcoming Events</span>
+            <a asp-controller="Events" asp-action="MyTickets" class="btn-outline btn-small">View All Tickets <i class="fas fa-arrow-right"></i></a>
+        </div>
+
+        @if (Model.UpcomingBookedEvents != null && Model.UpcomingBookedEvents.Any())
         {
-            <div class="feedback-carousel-enhanced" data-feedback-carousel data-page-size="3">
-                <div class="landing-feedback-grid-enhanced">
-                    @foreach (var feedback in Model.ApprovedFeedback)
-                    {
-                        string displayName = feedback.DisplayName ?? "User";
-                        string initials = displayName.Length > 0 ? displayName.Substring(0, 1).ToUpper() : "U";
-
-                        <article class="landing-feedback-card-enhanced" data-feedback-card>
+            <div class="dash-events-grid">
+                @foreach (var ev in Model.UpcomingBookedEvents)
+                {
+                    <div class="dash-event-card">
+                        @if (!string.IsNullOrEmpty(ev.ImageUrl))
+                        {
+                            <div class="dash-event-img" style="background-image: url('@ev.ImageUrl')"></div>
+                        }
+                        else
+                        {
+                            <div class="dash-event-fallback"><i class="fas fa-calendar-alt"></i></div>
+                        }
+                        
+                        <div class="dash-event-body">
                             <div>
-                                <div class="testimonial-rating">
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                </div>
-                                <p>"@feedback.Message"</p>
-                            </div>
-                            <div class="feedback-author-enhanced">
-                                <div class="feedback-avatar-gradient">
-                                    @initials
-                                </div>
-                                <div class="feedback-author-info">
-                                    <h3>@feedback.DisplayName</h3>
-                                    <span>@feedback.CreatedAt.ToString("MMM dd, yyyy")</span>
+                                <h4 class="dash-event-title">@ev.Title</h4>
+                                <div class="dash-event-meta">
+                                    <span><i class="far fa-calendar-alt"></i> @ev.StartDate.ToString("MMM dd, yyyy @ hh:mm tt")</span>
+                                    <span><i class="fas fa-map-marker-alt"></i> @ev.City</span>
                                 </div>
                             </div>
-                        </article>
-                    }
-                </div>
-
-                <div class="carousel-controls-enhanced">
-                    <button type="button" class="btn-nav-enhanced" data-feedback-prev aria-label="Previous feedback">
-                        <i class="fas fa-arrow-left"></i>
-                    </button>
-                    <div class="carousel-dots" data-feedback-dots>
-                        <!-- Dots will be dynamically generated by Javascript -->
+                            <a asp-controller="Events" asp-action="Details" asp-route-id="@ev.Id" class="btn-primary btn-small btn-full" style="border-radius: 8px; justify-content: center; margin-top: 10px;">
+                                View Event Details
+                            </a>
+                        </div>
                     </div>
-                    <button type="button" class="btn-nav-enhanced" data-feedback-next aria-label="Next feedback">
-                        <i class="fas fa-arrow-right"></i>
-                    </button>
-                </div>
+                }
             </div>
         }
         else
         {
-            <div class="landing-feedback-empty-enhanced">
-                <i class="fas fa-comment-dots"></i>
-                <p>No approved reviews yet. Be the first to share your ticketing experience!</p>
-                <a asp-controller="Home" asp-action="Feedback" class="btn-primary">Write a Review <i class="fas fa-arrow-right"></i></a>
+            <div style="background: var(--white); border: 1px solid var(--border); border-radius: 20px; padding: 40px; text-align: center; box-shadow: var(--shadow-sm); margin-bottom: 50px;">
+                <div style="font-size: 44px; color: var(--text-light); margin-bottom: 16px;"><i class="far fa-calendar-plus"></i></div>
+                <h4 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">No Booked Events</h4>
+                <p style="color: var(--text-light); margin-bottom: 20px;">You don't have any upcoming events booked yet. Discover new experiences today!</p>
+                <a asp-controller="Events" asp-action="Index" class="btn-primary"><i class="fas fa-search"></i> Browse Events</a>
             </div>
         }
-    </div>
-</section>
 
-<section class="cta section">
-    <div class="container">
-        <div class="cta-box">
-            <div class="cta-content">
+        <!-- Quick actions -->
+        <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 20px; color: var(--text);">Explore Platform</h3>
+        <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+            <a asp-controller="Events" asp-action="Index" class="btn-primary" style="padding: 12px 28px; border-radius: 12px;">
+                <i class="fas fa-search"></i> Discover Events
+            </a>
+            <a asp-controller="Categories" asp-action="Index" class="btn-outline" style="padding: 12px 28px; border-radius: 12px;">
+                <i class="fas fa-tags"></i> Browse Categories
+            </a>
+            <a asp-controller="Home" asp-action="HelpCenter" class="btn-ghost" style="padding: 12px 28px; border-radius: 12px; border: 1px solid var(--border);">
+                <i class="far fa-life-ring"></i> Get Support
+            </a>
+        </div>
+    </div>
+}
+else
+{
+    <section class="hero" id="home">
+        <div class="hero-slideshow">
+            <div class="hero-slide active" style="background-image: url('@Url.Content("~/Images/Home/Home1.png")')"></div>
+            <div class="hero-slide" style="background-image: url('@Url.Content("~/Images/Home/Home2.png")')"></div>
+            <div class="hero-slide" style="background-image: url('@Url.Content("~/Images/Home/Home3.png")')"></div>
+        </div>
+        <div class="hero-overlay"></div>
+        <div class="hero-container">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <i class="fas fa-bolt"></i>
+                    <span>#1 Event Management Platform</span>
+                </div>
+                <h1 class="hero-title">
+                    Create <span class="gradient-text">Unforgettable</span> <br />Events
+                    Effortlessly
+                </h1>
+                <p class="hero-description">
+                    The complete platform for creating and managing events, concerts,
+                    conferences, and workshops. Sell tickets online and verify them with
+                    QR Code seamlessly.
+                </p>
+                <div class="hero-buttons">
+                    <a asp-controller="Account" asp-action="Register" class="btn-primary btn-large">
+                        <i class="fas fa-rocket"></i> Start Free Trial
+                    </a>
+                    <a href="#" class="btn-outline btn-large" id="watchDemoBtn">
+                        <i class="fas fa-play-circle"></i> Watch Demo
+                    </a>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <h3 class="counter" data-target="50000">0</h3>
+                        <p>Tickets Sold</p>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <h3 class="counter" data-target="2500">0</h3>
+                        <p>Active Organizers</p>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <h3 class="counter" data-target="850">0</h3>
+                        <p>Successful Events</p>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="hero-card card-main">
+                    <div class="card-image">
+                        <i class="fas fa-music"></i>
+                        <div class="card-tag">VIP</div>
+                    </div>
+                    <div class="card-content">
+                        <h4>Summer Music Festival 2026</h4>
+                        <div class="card-info">
+                            <span><i class="fas fa-calendar"></i> June 15</span>
+                            <span><i class="fas fa-map-marker-alt"></i> Cairo</span>
+                        </div>
+                        <div class="card-footer">
+                            <span class="price">$50</span>
+                            <button class="btn-book">Book Now</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-card card-floating card-1">
+                    <i class="fas fa-qrcode"></i>
+                    <div>
+                        <h5>QR Code</h5>
+                        <p>Secure Ticket</p>
+                    </div>
+                </div>
+                <div class="hero-card card-floating card-2">
+                    <i class="fas fa-check-circle"></i>
+                    <div>
+                        <h5>Payment Done</h5>
+                        <p>Successfully</p>
+                    </div>
+                </div>
+                <div class="hero-card card-floating card-3">
+                    <i class="fas fa-users"></i>
+                    <div>
+                        <h5>+1,250</h5>
+                        <p>Confirmed</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="hero-slideshow-dots">
+            <button class="hero-slideshow-dot active" aria-label="Slide 1"></button>
+            <button class="hero-slideshow-dot" aria-label="Slide 2"></button>
+            <button class="hero-slideshow-dot" aria-label="Slide 3"></button>
+        </div>
+
+    </section>
+
+    <section class="featured-events-section" style="background: linear-gradient(180deg, var(--soft-purple) 0%, rgba(255, 255, 255, 0.9) 100%); padding: 80px 0 60px; border-bottom: 1px solid var(--border);">
+        <div class="container">
+            <div class="section-header" style="text-align: center; max-width: 600px; margin: 0 auto 30px;">
+                <span class="section-tag" style="background: rgba(124, 58, 237, 0.08); color: var(--primary); padding: 6px 14px; border-radius: 30px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block; margin-bottom: 12px;"><i class="fas fa-star"></i> Featured</span>
+                <h2 style="font-size: 30px; font-weight: 800; line-height: 1.3; color: var(--text); margin-bottom: 12px;">Featured <span class="gradient-text">Events</span></h2>
+                <p style="color: var(--text-light); font-size: 14px;">Explore our top upcoming experiences recommended just for you</p>
+            </div>
+
+            @if (Model.FeaturedEvents != null && Model.FeaturedEvents.Any())
+            {
+                <div class="events-grid">
+                    @foreach (var ev in Model.FeaturedEvents)
+                    {
+                        <div class="event-card">
+                            <div class="event-card-image-wrapper">
+                                @if (!string.IsNullOrEmpty(ev.ImageUrl))
+                                {
+                                    <div class="event-card-image" style="background-image: url('@ev.ImageUrl')"></div>
+                                }
+                                else
+                                {
+                                    <div class="event-card-fallback-bg">
+                                        <i class="fas fa-calendar-alt fallback-icon"></i>
+                                    </div>
+                                }
+                                <span class="event-badge">@ev.Status</span>
+                            </div>
+
+                            <div class="event-card-body">
+                                <span class="event-category-label">@ev.CategoryName</span>
+                                <h3 class="event-title" title="@ev.Title">@ev.Title</h3>
+                                
+                                <div class="event-info-list">
+                                    <div class="event-info-item">
+                                        <i class="far fa-calendar-alt"></i>
+                                        <span>@ev.StartDate.ToString("MMM dd, yyyy")</span>
+                                    </div>
+                                    <div class="event-info-item">
+                                        <i class="far fa-clock"></i>
+                                        <span>@ev.StartDate.ToString("hh:mm tt")</span>
+                                    </div>
+                                    <div class="event-info-item">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <span>@ev.City</span>
+                                    </div>
+                                    <div class="event-info-item">
+                                        <i class="far fa-user"></i>
+                                        <span>@ev.OrganizerName</span>
+                                    </div>
+                                </div>
+
+                                <div class="event-card-footer">
+                                    <div class="event-price-box">
+                                        <span class="price-label">Prices Start From</span>
+                                        <span class="event-price">
+                                            @if (ev.MinPrice > 0)
+                                            {
+                                                <span class="price-currency">EGP</span><span class="price-amount">@ev.MinPrice.ToString("N0")</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="price-free">Free Admission</span>
+                                            }
+                                        </span>
+                                    </div>
+                                    <a asp-controller="Events" asp-action="Details" asp-route-id="@ev.Id" class="btn-card-action">
+                                        Book Now <i class="fas fa-arrow-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div style="text-align: center; padding: 40px; background: var(--white); border-radius: 20px; border: 1px solid var(--border); box-shadow: var(--shadow-sm);">
+                    <p style="color: var(--text-light); margin: 0;">No upcoming featured events at the moment. Check back later!</p>
+                </div>
+            }
+
+            <div style="text-align: center; margin-top: 30px;">
+                <a asp-controller="Events" asp-action="Index" class="btn-outline btn-large" style="display: inline-flex; align-items: center; gap: 8px; border-radius: 12px; padding: 12px 28px; text-decoration: none; font-weight: 700;">
+                    Discover All Events <i class="fas fa-search" style="font-size: 12px;"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <style>
+        /* Event Cards Grid & Styling (Unification) */
+        .events-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+            margin-bottom: 30px;
+        }
+
+        .event-card {
+            background: var(--white);
+            border: 1px solid rgba(124, 58, 237, 0.08);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.15), box-shadow 0.4s ease, border-color 0.4s ease;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            position: relative;
+            text-align: left;
+        }
+
+        .event-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 15px 30px rgba(91, 33, 182, 0.1);
+            border-color: rgba(124, 58, 237, 0.2);
+        }
+
+        .event-card-image-wrapper {
+            position: relative;
+            height: 160px;
+            overflow: hidden;
+            background: var(--soft-purple);
+        }
+
+        .event-card-image {
+            height: 100%;
+            width: 100%;
+            background-size: cover;
+            background-position: center;
+            transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .event-card-fallback-bg {
+            height: 100%;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--soft-purple) 0%, rgba(124, 58, 237, 0.1) 100%);
+        }
+
+        .fallback-icon {
+            color: var(--primary);
+            font-size: 45px;
+        }
+
+        .event-card:hover .event-card-image {
+            transform: scale(1.06);
+        }
+
+        .event-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(91, 33, 182, 0.95);
+            backdrop-filter: blur(8px);
+            color: var(--white);
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+            z-index: 2;
+            text-transform: uppercase;
+        }
+
+        .event-card-body {
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .event-category-label {
+            font-size: 10.5px;
+            font-weight: 700;
+            color: var(--primary-light);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            letter-spacing: 0.8px;
+        }
+
+        .event-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 12px;
+            line-height: 1.4;
+            transition: var(--transition);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            height: 50px;
+        }
+
+        .event-card:hover .event-title {
+            color: var(--primary);
+        }
+
+        .event-info-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 16px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: var(--text-light);
+        }
+
+        .event-info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .event-info-item i {
+            color: var(--primary-light);
+            width: 14px;
+            font-size: 13px;
+        }
+
+        .event-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border);
+            padding-top: 16px;
+            margin-top: auto;
+        }
+
+        .event-price-box {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .price-label {
+            font-size: 9.5px;
+            color: var(--text-light);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .event-price {
+            font-size: 13.5px;
+            font-weight: 600;
+            color: var(--text);
+            display: flex;
+            align-items: baseline;
+        }
+
+        .price-currency {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-light);
+            margin-right: 3px;
+        }
+
+        .price-amount {
+            font-size: 17px;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1;
+        }
+
+        .price-free {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--success);
+        }
+
+        .btn-card-action {
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%) !important;
+            color: var(--white) !important;
+            border: none;
+            padding: 9px 18px;
+            border-radius: 50px;
+            font-size: 12.5px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            outline: none;
+            box-shadow: 0 4px 10px rgba(124, 58, 237, 0.12);
+        }
+
+        .btn-card-action:hover {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
+            color: var(--white) !important;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(91, 33, 182, 0.25);
+        }
+
+        .btn-card-action i {
+            font-size: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .btn-card-action:hover i {
+            transform: translateX(3px);
+        }
+
+        /* Explore Categories Section */
+        .explore-categories-section {
+            background: var(--white);
+            padding: 80px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .categories-chips-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 40px;
+        }
+        .home-category-card {
+            background: var(--soft-purple);
+            border: 1px solid rgba(124, 58, 237, 0.08);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            transition: var(--transition);
+            text-decoration: none;
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow-xs);
+        }
+        .home-category-card:hover {
+            transform: translateY(-5px);
+            background: var(--white);
+            border-color: var(--primary-light);
+            box-shadow: 0 10px 20px rgba(124, 58, 237, 0.08);
+        }
+        .home-category-icon-wrapper {
+            width: 56px;
+            height: 56px;
+            background: var(--white);
+            color: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+        }
+        .home-category-card:hover .home-category-icon-wrapper {
+            background: var(--primary);
+            color: var(--white);
+            transform: scale(1.1);
+        }
+        .home-category-title {
+            font-size: 15px;
+            font-weight: 700;
+            margin: 0;
+            color: var(--text);
+        }
+        .home-category-count {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--primary-light);
+            background: rgba(124, 58, 237, 0.08);
+            padding: 4px 10px;
+            border-radius: 30px;
+        }
+    </style>
+
+    <section class="explore-categories-section">
+        <div class="container">
+            <div class="section-header" style="text-align: center; max-width: 600px; margin: 0 auto 30px;">
+                <span class="section-tag" style="background: rgba(124, 58, 237, 0.08); color: var(--primary); padding: 6px 14px; border-radius: 30px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block; margin-bottom: 12px;"><i class="fas fa-tags"></i> Categories</span>
+                <h2 style="font-size: 30px; font-weight: 800; line-height: 1.3; color: var(--text); margin-bottom: 12px;">Explore by <span class="gradient-text">Category</span></h2>
+                <p style="color: var(--text-light); font-size: 14px;">Find and join upcoming events based on your specific interests</p>
+            </div>
+            
+            <div class="categories-chips-grid">
+                @if (Model.Categories != null && Model.Categories.Any())
+                {
+                    @foreach (var category in Model.Categories)
+                    {
+                        string nameLower = category.Name.ToLower();
+                        string iconClass = "fa-folder-open";
+
+                        if (nameLower.Contains("sport") || nameLower.Contains("fit") || nameLower.Contains("run"))
+                            iconClass = "fa-running";
+                        else if (nameLower.Contains("music") || nameLower.Contains("concert") || nameLower.Contains("song"))
+                            iconClass = "fa-music";
+                        else if (nameLower.Contains("tech") || nameLower.Contains("code") || nameLower.Contains("soft"))
+                            iconClass = "fa-laptop-code";
+                        else if (nameLower.Contains("business") || nameLower.Contains("startup") || nameLower.Contains("conf"))
+                            iconClass = "fa-briefcase";
+                        else if (nameLower.Contains("art") || nameLower.Contains("paint") || nameLower.Contains("design"))
+                            iconClass = "fa-palette";
+                        else if (nameLower.Contains("food") || nameLower.Contains("drink") || nameLower.Contains("cook"))
+                            iconClass = "fa-utensils";
+                        else if (nameLower.Contains("education") || nameLower.Contains("learn") || nameLower.Contains("course"))
+                            iconClass = "fa-graduation-cap";
+
+                        <a asp-controller="Categories" asp-action="Details" asp-route-id="@category.Id" class="home-category-card">
+                            <div class="home-category-icon-wrapper">
+                                <i class="fas @iconClass"></i>
+                            </div>
+                            <h3 class="home-category-title">@category.Name</h3>
+                            <span class="home-category-count">@category.EventCount @(category.EventCount == 1 ? "Event" : "Events")</span>
+                        </a>
+                    }
+                }
+            </div>
+
+            <div style="text-align: center; margin-top: 40px;">
+                <a asp-controller="Categories" asp-action="Index" class="btn-outline btn-large" style="display: inline-flex; align-items: center; gap: 8px; border-radius: 12px; padding: 12px 28px; text-decoration: none; font-weight: 700;">
+                    View All Categories <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="features section" id="features">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Features</span>
                 <h2>
-                    Ready to Launch Your
-                    <span class="gradient-text">Next Event?</span>
+                    Everything You Need <span class="gradient-text">in One Place</span>
                 </h2>
                 <p>
-                    Join thousands of successful organizers and create unforgettable
-                    events
+                    Powerful and smart tools to manage your events from start to finish
                 </p>
-                <div class="cta-buttons">
-                    <a asp-controller="Account" asp-action="Register" class="btn-primary btn-large">
-                        <i class="fas fa-rocket"></i> Start Free
+            </div>
+            <div class="features-grid">
+                <div class="feature-card reveal">
+                    <div class="feature-icon icon-1">
+                        <i class="fas fa-calendar-plus"></i>
+                    </div>
+                    <h3>Event Creation</h3>
+                    <p>
+                        Create professional events easily with full customization for
+                        details, images.
+                    </p>
+                    <a href="#" class="feature-link" data-feature="event-creation">
+                        Learn More <i class="fas fa-arrow-right"></i>
                     </a>
-                    <a asp-controller="Home" asp-action="HelpCenter" class="btn-outline btn-large">
-                        <i class="fas fa-phone"></i> Contact Us
+                </div>
+                <div class="feature-card reveal">
+                    <div class="feature-icon icon-2">
+                        <i class="fas fa-ticket-alt"></i>
+                    </div>
+                    <h3>Multiple Ticket Types</h3>
+                    <p>
+                        Create VIP, regular, or free tickets with different prices and
+                        features for each type
+                    </p>
+                    <a href="#" class="feature-link" data-feature="ticket-types">
+                        Learn More <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="feature-icon icon-3"><i class="fas fa-qrcode"></i></div>
+                    <h3>Secure QR Code</h3>
+                    <p>
+                        Each ticket has a unique encrypted QR Code that prevents fraud and
+                        reuse
+                    </p>
+                    <a href="#" class="feature-link" data-feature="qr-code">
+                        Learn More <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="feature-icon icon-4">
+                        <i class="fas fa-credit-card"></i>
+                    </div>
+                    <h3>Secure Payments</h3>
+                    <p>
+                        Paymob integration for secure online payments with support for all
+                        major cards
+                    </p>
+                    <a href="#" class="feature-link" data-feature="payments">
+                        Learn More <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="feature-icon icon-5">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>Smart Dashboard</h3>
+                    <p>
+                        Track sales, statistics, and attendance in real-time with an
+                        easy-to-use interface
+                    </p>
+                    <a href="#" class="feature-link" data-feature="dashboard">
+                        Learn More <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="feature-icon icon-6">
+                        <i class="fas fa-envelope-open-text"></i>
+                    </div>
+                    <h3>Auto Notifications</h3>
+                    <p>
+                        Send booking confirmations and reminders to attendees via email
+                        automatically
+                    </p>
+                    <a href="#" class="feature-link" data-feature="notifications">
+                        Learn More <i class="fas fa-arrow-right"></i>
                     </a>
                 </div>
             </div>
-            <div class="cta-decoration">
-                <i class="fas fa-ticket-alt"></i>
+        </div>
+    </section>
+
+    <section class="how-it-works section" id="how">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">How It Works</span>
+                <h2>
+                    4 Simple Steps to <span class="gradient-text">Event Success</span>
+                </h2>
+                <p>
+                    From creation to event day, we're with you every step of the way
+                </p>
+            </div>
+            <div class="steps-container">
+                <div class="step-line"></div>
+                <div class="step reveal">
+                    <div class="step-number">1</div>
+                    <div class="step-icon"><i class="fas fa-pen-fancy"></i></div>
+                    <h3>Create Your Event</h3>
+                    <p>
+                        Add details, images, location, and define ticket types and prices
+                    </p>
+                </div>
+                <div class="step reveal">
+                    <div class="step-number">2</div>
+                    <div class="step-icon"><i class="fas fa-share-alt"></i></div>
+                    <h3>Share with Audience</h3>
+                    <p>Users browse events and book tickets effortlessly</p>
+                </div>
+                <div class="step reveal">
+                    <div class="step-number">3</div>
+                    <div class="step-icon"><i class="fas fa-money-bill-wave"></i></div>
+                    <h3>Receive Payments</h3>
+                    <p>Secure payments via Paymob and QR tickets sent automatically</p>
+                </div>
+                <div class="step reveal">
+                    <div class="step-number">4</div>
+                    <div class="step-icon"><i class="fas fa-check-double"></i></div>
+                    <h3>Verify at Entry</h3>
+                    <p>Scanner verifies QR Code instantly to validate tickets</p>
+                </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<div class="feature-modal" id="featureModal" aria-hidden="true">
-    <div class="feature-modal-backdrop" data-close-modal></div>
-    <div class="feature-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="featureModalTitle">
-        <button class="feature-modal-close" type="button" aria-label="Close" data-close-modal>
-            <i class="fas fa-times"></i>
-        </button>
-        <div class="feature-modal-icon" id="featureModalIcon">
-            <i class="fas fa-calendar-plus"></i>
+    <section class="roles section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Users</span>
+                <h2>A Platform <span class="gradient-text">for Everyone</span></h2>
+                <p>Four types of users, each with their own special permissions</p>
+            </div>
+            <div class="roles-grid">
+                <div class="role-card reveal">
+                    <div class="role-avatar"><i class="fas fa-user-shield"></i></div>
+                    <h3>Admin</h3>
+                    <p>Complete system management and full control</p>
+                    <ul>
+                        <li><i class="fas fa-check"></i> Manage Users</li>
+                        <li><i class="fas fa-check"></i> System Monitoring</li>
+                        <li><i class="fas fa-check"></i> Full Analytics</li>
+                    </ul>
+                </div>
+                <div class="role-card reveal">
+                    <div class="role-avatar"><i class="fas fa-user-tie"></i></div>
+                    <h3>Organizer</h3>
+                    <p>Create and manage events and sell tickets</p>
+                    <ul>
+                        <li><i class="fas fa-check"></i> Create Events</li>
+                        <li><i class="fas fa-check"></i> Manage Tickets</li>
+                        <li><i class="fas fa-check"></i> Track Sales</li>
+                    </ul>
+                </div>
+                <div class="role-card reveal">
+                    <div class="role-avatar"><i class="fas fa-user"></i></div>
+                    <h3>Attendee</h3>
+                    <p>Browse events and book tickets easily</p>
+                    <ul>
+                        <li><i class="fas fa-check"></i> Browse Events</li>
+                        <li><i class="fas fa-check"></i> Book Tickets</li>
+                        <li><i class="fas fa-check"></i> My Tickets</li>
+                    </ul>
+                </div>
+                <div class="role-card reveal">
+                    <div class="role-avatar"><i class="fas fa-qrcode"></i></div>
+                    <h3>Scanner</h3>
+                    <p>Verify tickets at event entrance</p>
+                    <ul>
+                        <li><i class="fas fa-check"></i> Scan QR Code</li>
+                        <li><i class="fas fa-check"></i> Instant Verify</li>
+                        <li><i class="fas fa-check"></i> Update Status</li>
+                    </ul>
+                </div>
+            </div>
         </div>
-        <span class="section-tag">Feature Details</span>
-        <h3 id="featureModalTitle">Event Creation</h3>
-        <p id="featureModalText"></p>
-        <ul class="feature-modal-list" id="featureModalList"></ul>
-        <a asp-controller="Account" asp-action="Register" class="btn-primary">
-            Try This Feature <i class="fas fa-arrow-right"></i>
-        </a>
-    </div>
-</div>
+    </section>
 
-<div class="demo-modal" id="demoModal" aria-hidden="true">
-    <div class="feature-modal-backdrop" data-close-demo></div>
-    <div class="demo-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="demoModalTitle">
-        <button class="feature-modal-close" type="button" aria-label="Close" data-close-demo>
-            <i class="fas fa-times"></i>
-        </button>
-        <div class="demo-preview">
-            <i class="fas fa-play"></i>
+    <section class="landing-feedback section enhanced-bg-glow" id="feedback">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag-enhanced"><i class="fas fa-comments"></i> Testimonials</span>
+                <h2>What Users <span class="gradient-text">Say About Us</span></h2>
+                <p>Authentic reviews from Attendees, Organizers, and gate Scanners using Eventify Pro.</p>
+            </div>
+
+            @if (Model.ApprovedFeedback.Any())
+            {
+                <div class="feedback-carousel-enhanced" data-feedback-carousel data-page-size="3">
+                    <div class="landing-feedback-grid-enhanced">
+                        @foreach (var feedback in Model.ApprovedFeedback)
+                        {
+                            string displayName = feedback.DisplayName ?? "User";
+                            string initials = displayName.Length > 0 ? displayName.Substring(0, 1).ToUpper() : "U";
+
+                            <article class="landing-feedback-card-enhanced" data-feedback-card>
+                                <div>
+                                    <div class="testimonial-rating">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                    <p>"@feedback.Message"</p>
+                                </div>
+                                <div class="feedback-author-enhanced">
+                                    <div class="feedback-avatar-gradient">
+                                        @initials
+                                    </div>
+                                    <div class="feedback-author-info">
+                                        <h3>@feedback.DisplayName</h3>
+                                        <span>@feedback.CreatedAt.ToString("MMM dd, yyyy")</span>
+                                    </div>
+                                </div>
+                            </article>
+                        }
+                    </div>
+
+                    <div class="carousel-controls-enhanced">
+                        <button type="button" class="btn-nav-enhanced" data-feedback-prev aria-label="Previous feedback">
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                        <div class="carousel-dots" data-feedback-dots>
+                            <!-- Dots will be dynamically generated by Javascript -->
+                        </div>
+                        <button type="button" class="btn-nav-enhanced" data-feedback-next aria-label="Next feedback">
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="landing-feedback-empty-enhanced">
+                    <i class="fas fa-comment-dots"></i>
+                    <p>No approved reviews yet. Be the first to share your ticketing experience!</p>
+                    <a asp-controller="Home" asp-action="Feedback" class="btn-primary">Write a Review <i class="fas fa-arrow-right"></i></a>
+                </div>
+            }
         </div>
-        <span class="section-tag">Platform Demo</span>
-        <h3 id="demoModalTitle">See Eventify Pro in Action</h3>
-        <p>
-            A quick walkthrough of creating an event, selling tickets, sending QR codes,
-            and scanning attendees at the entrance.
-        </p>
-        <div class="demo-steps">
-            <div><i class="fas fa-calendar-plus"></i><span>Create event</span></div>
-            <div><i class="fas fa-ticket-alt"></i><span>Sell tickets</span></div>
-            <div><i class="fas fa-qrcode"></i><span>Scan QR</span></div>
+    </section>
+
+    <section class="cta section">
+        <div class="container">
+            <div class="cta-box">
+                <div class="cta-content">
+                    <h2>
+                        Ready to Launch Your
+                        <span class="gradient-text">Next Event?</span>
+                    </h2>
+                    <p>
+                        Join thousands of successful organizers and create unforgettable
+                        events
+                    </p>
+                    <div class="cta-buttons">
+                        <a asp-controller="Account" asp-action="Register" class="btn-primary btn-large">
+                            <i class="fas fa-rocket"></i> Start Free
+                        </a>
+                        <a asp-controller="Home" asp-action="HelpCenter" class="btn-outline btn-large">
+                            <i class="fas fa-phone"></i> Contact Us
+                        </a>
+                    </div>
+                </div>
+                <div class="cta-decoration">
+                    <i class="fas fa-ticket-alt"></i>
+                </div>
+            </div>
         </div>
-        <a asp-controller="Account" asp-action="Register" class="btn-primary">
-            Start Free Trial <i class="fas fa-arrow-right"></i>
-        </a>
+    </section>
+
+    <div class="feature-modal" id="featureModal" aria-hidden="true">
+        <div class="feature-modal-backdrop" data-close-modal></div>
+        <div class="feature-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="featureModalTitle">
+            <button class="feature-modal-close" type="button" aria-label="Close" data-close-modal>
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="feature-modal-icon" id="featureModalIcon">
+                <i class="fas fa-calendar-plus"></i>
+            </div>
+            <span class="section-tag">Feature Details</span>
+            <h3 id="featureModalTitle">Event Creation</h3>
+            <p id="featureModalText"></p>
+            <ul class="feature-modal-list" id="featureModalList"></ul>
+            <a asp-controller="Account" asp-action="Register" class="btn-primary">
+                Try This Feature <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
     </div>
-</div>
+
+    <div class="demo-modal" id="demoModal" aria-hidden="true">
+        <div class="feature-modal-backdrop" data-close-demo></div>
+        <div class="demo-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="demoModalTitle">
+            <button class="feature-modal-close" type="button" aria-label="Close" data-close-demo>
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="demo-preview">
+                <i class="fas fa-play"></i>
+            </div>
+            <span class="section-tag">Platform Demo</span>
+            <h3 id="demoModalTitle">See Eventify Pro in Action</h3>
+            <p>
+                A quick walkthrough of creating an event, selling tickets, sending QR codes,
+                and scanning attendees at the entrance.
+            </p>
+            <div class="demo-steps">
+                <div><i class="fas fa-calendar-plus"></i><span>Create event</span></div>
+                <div><i class="fas fa-ticket-alt"></i><span>Sell tickets</span></div>
+                <div><i class="fas fa-qrcode"></i><span>Scan QR</span></div>
+            </div>
+            <a asp-controller="Account" asp-action="Register" class="btn-primary">
+                Start Free Trial <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+}
 
 @section Scripts {
     <script>

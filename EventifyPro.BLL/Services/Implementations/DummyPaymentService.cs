@@ -1,5 +1,3 @@
-using MapsterMapper;
-
 namespace EventifyPro.BLL.Services.Implementations;
 
 public class DummyPaymentService : IPaymentService
@@ -17,5 +15,8 @@ public class DummyPaymentService : IPaymentService
         throw new NotImplementedException();
 
     public Task<Result<PaymentResultDto>> HandleCallbackAsync(string transactionId, bool success, CancellationToken cancellationToken = default) => 
+        throw new NotImplementedException();
+
+    public Task<Result<PaymentResultDto>> HandlePaymobCallbackAsync(IDictionary<string, string> callbackData, string hmac, CancellationToken cancellationToken = default) => 
         throw new NotImplementedException();
 }

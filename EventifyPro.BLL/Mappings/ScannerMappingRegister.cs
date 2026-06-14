@@ -1,6 +1,3 @@
-using EventifyPro.BLL.DTOs.Scanner;
-using Mapster;
-
 namespace EventifyPro.BLL.Mappings;
 
 public sealed class ScannerMappingRegister : IRegister

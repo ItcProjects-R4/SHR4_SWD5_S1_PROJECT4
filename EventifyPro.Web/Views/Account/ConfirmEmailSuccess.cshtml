@@ -1,0 +1,42 @@
+@{
+    Layout = "_AuthLayout";
+    ViewData["Title"] = "Email Confirmed - Eventify Pro";
+}
+
+<main class="auth-container">
+    <section class="auth-card" aria-labelledby="confirmSuccessTitle">
+        <div class="auth-card-header" style="text-align: center;">
+            <span class="auth-kicker">Success</span>
+            <h1 id="confirmSuccessTitle" style="font-size: 32px; margin-bottom: 15px;">Email Verified!</h1>
+            <p>Your email address has been verified successfully. You can now access your dashboard, book tickets, and manage events.</p>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 24px; align-items: center; margin-top: 10px;">
+            <div style="width: 80px; height: 80px; border-radius: 50%; background: #d1fae5; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-check" style="color: var(--success); font-size: 38px;"></i>
+            </div>
+            
+            <a asp-controller="Account" asp-action="Login" class="primary-btn" style="width: 100%; text-align: center; display: inline-flex; justify-content: center; align-items: center; min-height: 50px;">
+                Go to Login
+            </a>
+        </div>
+    </section>
+
+    <aside class="auth-illustration" aria-hidden="true">
+        <div class="illustration-content">
+            <div class="floating-icons">
+                <div class="floating-icon icon-1"><i class="fas fa-check"></i></div>
+                <div class="floating-icon icon-2"><i class="fas fa-user-check"></i></div>
+                <div class="floating-icon icon-3"><i class="fas fa-unlock"></i></div>
+                <div class="floating-icon icon-4"><i class="fas fa-thumbs-up"></i></div>
+                <div class="floating-icon icon-5"><i class="fas fa-award"></i></div>
+            </div>
+            <div class="illustration-card">
+                <div class="card-shine"></div>
+                <i class="fas fa-envelope-open main-icon" style="color: var(--primary);"></i>
+                <h2>Welcome aboard!</h2>
+                <p>Your account is now active and fully secured. Log in to get started.</p>
+            </div>
+        </div>
+    </aside>
+</main>

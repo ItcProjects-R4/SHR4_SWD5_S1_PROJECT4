@@ -110,7 +110,7 @@
 
                 <div class="input-with-action">
                     <div class="input-group">
-                        <input asp-for="UserName" id="userName" placeholder=" " autocomplete="username" required />
+                        <input asp-for="UserName" id="userName" placeholder=" " autocomplete="username" required minlength="4" pattern="^[a-zA-Z0-9_]+$" />
                         <label asp-for="UserName">Username</label>
                     </div>
                     <button class="secondary-btn" type="button" id="checkUserNameBtn">
@@ -150,11 +150,16 @@
 
                 <div class="checkbox-group">
                     <label class="custom-checkbox">
-                        <input asp-for="AcceptTerms" required />
+                        <input asp-for="AcceptTerms" id="AcceptTerms" />
                         <span class="checkmark"></span>
                         <span>I agree to the <a asp-controller="Home" asp-action="Terms" target="_blank">Terms & Conditions</a> and <a asp-controller="Home" asp-action="Privacy" target="_blank">Privacy Policy</a></span>
                     </label>
                     <span asp-validation-for="AcceptTerms" class="field-validation"></span>
+                </div>
+                
+                <div id="termsWarning" class="terms-warning-alert">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>You must agree to the Terms & Conditions and Privacy Policy to create an account.</span>
                 </div>
             </section>
 
@@ -320,8 +325,19 @@
                 const userName = userNameInput.value.trim();
                 userNameAvailable = false;
 
-                if (!userName || !userNameInput.checkValidity()) {
-                    userNameInput.reportValidity();
+                if (!userName) {
+                    setStatus("Username is required.", "error");
+                    return;
+                }
+
+                if (userName.length < 4) {
+                    setStatus("Username must be at least 4 characters long.", "error");
+                    return;
+                }
+
+                const usernameRegex = /^[a-zA-Z0-9_]+$/;
+                if (!usernameRegex.test(userName)) {
+                    setStatus("Username can contain letters, numbers, and underscores only.", "error");
                     return;
                 }
 
@@ -365,16 +381,61 @@
             });
             confirmInput.addEventListener("input", validateConfirmPassword);
 
-            form.addEventListener("submit", (e) => {
-                const isPasswordValid = validatePassword();
-                const isConfirmValid = validateConfirmPassword();
+            const acceptTermsCheckbox = document.getElementById("AcceptTerms");
+            const termsWarning = document.getElementById("termsWarning");
 
-                if (!isPasswordValid || !isConfirmValid) {
-                    e.preventDefault();
-                    showStep(3);
+        // 1. تأكيد إخفاء العناصر فوراً عند بداية التشغيل
+        if (termsWarning) termsWarning.style.display = "none";
+
+        if (acceptTermsCheckbox) {
+            acceptTermsCheckbox.addEventListener("change", () => {
+                if (acceptTermsCheckbox.checked) {
+                    if (termsWarning) termsWarning.style.display = "none";
+                    const checkboxGroup = acceptTermsCheckbox.closest(".checkbox-group");
+                    if (checkboxGroup) {
+                        checkboxGroup.classList.remove("has-error");
+                        checkboxGroup.style.animation = "none";
+                    }
                 }
             });
+        }
 
+        // تعديل حدث الـ Submit ليعمل كـ interceptor قوي
+        form.addEventListener("submit", (e) => {
+            const isPasswordValid = validatePassword();
+            const isConfirmValid = validateConfirmPassword();
+            let hasErrors = false;
+
+            // فحص حاسم للشروط قبل تمرير الفورم
+            if (acceptTermsCheckbox && !acceptTermsCheckbox.checked) {
+                hasErrors = true;
+
+                // إظهار الـ alert المخصص بـ flex
+                if (termsWarning) {
+                    termsWarning.style.display = "flex";
+                    termsWarning.style.animation = "none";
+                    termsWarning.offsetHeight; /* فرض إعادة بناء الـ Reflow */
+                    termsWarning.style.animation = null;
+                }
+
+                const checkboxGroup = acceptTermsCheckbox.closest(".checkbox-group");
+                if (checkboxGroup) {
+                    checkboxGroup.classList.add("has-error");
+
+                    // عمل ريستارت حقيقي للأنيميشن المكتوب في الـ CSS
+                    checkboxGroup.style.animation = "none";
+                    checkboxGroup.offsetHeight; /* تفعيل الـ Reflow للحركة */
+                    checkboxGroup.style.animation = "shakeTerms 0.4s ease-in-out forwards";
+                }
+            }
+
+            // منع الإرسال لو الباسورد خطأ أو الشروط لم يتم الموافقة عليها
+            if (!isPasswordValid || !isConfirmValid || hasErrors) {
+                e.preventDefault();
+                e.stopPropagation(); // منع الـ Plugins التانية من إيقاف الكود
+                showStep(3); // تثبيت المستخدم في خطوة رقم 4 (index 3)
+            }
+        });
             showStep(0);
         });
     </script>

@@ -19,15 +19,24 @@ public class AuthService : IAuthService
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly IOutboxService _outboxService;
+    private readonly IEmailService _emailService;
+    private readonly IConfiguration _configuration;
 
     public AuthService(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
-        RoleManager<IdentityRole> roleManager)
+        RoleManager<IdentityRole> roleManager,
+        IOutboxService outboxService,
+        IEmailService emailService,
+        IConfiguration configuration)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _roleManager = roleManager;
+        _outboxService = outboxService;
+        _emailService = emailService;
+        _configuration = configuration;
     }
 
     public async Task<Result> RegisterPublicUserAsync(RegisterDto dto)
@@ -68,6 +77,20 @@ public class AuthService : IAuthService
             return Result.Failure(ErrorMessages.User.RoleAssignmentFailed);
         }
 
+        // Generate email confirmation token
+        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        var encodedToken = System.Net.WebUtility.UrlEncode(token);
+        var baseUrl = _configuration["BaseUrl"] ?? "https://localhost:7198";
+        var verificationLink = $"{baseUrl}/Account/ConfirmEmail?userId={user.Id}&token={encodedToken}";
+
+        // Enqueue verification email to outbox
+        await _outboxService.EnqueueAsync("Email.Verification", new OutboxService.VerificationPayload
+        {
+            RecipientEmail = user.Email,
+            RecipientName = user.FullName,
+            VerificationLink = verificationLink
+        });
+
         return Result.Success();
     }
 
@@ -89,6 +112,27 @@ public class AuthService : IAuthService
         if (signInResult.IsLockedOut)
             return Result.Failure("Account is locked. Please try again later.");
 
+        if (signInResult.IsNotAllowed)
+        {
+            if (!await _userManager.IsEmailConfirmedAsync(user))
+            {
+                // Resend email confirmation
+                var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                var encodedToken = System.Net.WebUtility.UrlEncode(token);
+                var baseUrl = _configuration["BaseUrl"] ?? "https://localhost:7198";
+                var verificationLink = $"{baseUrl}/Account/ConfirmEmail?userId={user.Id}&token={encodedToken}";
+
+                await _outboxService.EnqueueAsync("Email.Verification", new OutboxService.VerificationPayload
+                {
+                    RecipientEmail = user.Email!,
+                    RecipientName = user.FullName,
+                    VerificationLink = verificationLink
+                });
+
+                return Result.Failure("Your email is not verified. A new verification link has been sent to your email.");
+            }
+        }
+
         return signInResult.Succeeded
             ? Result.Success()
             : Result.Failure(ErrorMessages.User.InvalidCredentials);
@@ -98,6 +142,23 @@ public class AuthService : IAuthService
     {
         await _signInManager.SignOutAsync();
         return Result.Success();
+    }
+
+    public async Task<Result<string>> GetUserPrimaryRoleByEmailAsync(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return Result<string>.Failure("Email address is required.");
+
+        var user = await _userManager.FindByEmailAsync(email.Trim());
+        if (user is null)
+            return Result<string>.Failure(ErrorMessages.User.NotFound);
+
+        var roles = await _userManager.GetRolesAsync(user);
+        var role = LoginRoles.FirstOrDefault(r => roles.Contains(r));
+
+        return string.IsNullOrWhiteSpace(role)
+            ? Result<string>.Failure(ErrorMessages.User.RoleNotFound)
+            : Result<string>.Success(role);
     }
 
     public async Task<Result> CreateScannerForOrganizerAsync(CreateScannerDto dto, string organizerId)
@@ -113,9 +174,11 @@ public class AuthService : IAuthService
         if (existingUser is not null)
             return Result.Failure(ErrorMessages.User.AlreadyExists);
 
+        var scannerUserName = await GenerateUniqueUserNameAsync(dto.Email);
+
         var scanner = new ApplicationUser
         {
-            UserName = dto.Email.Trim(),
+            UserName = scannerUserName,
             Email = dto.Email.Trim(),
             FullName = dto.FullName.Trim(),
             ScannerCreatedByOrganizerId = organizerId,
@@ -133,6 +196,13 @@ public class AuthService : IAuthService
             await _userManager.DeleteAsync(scanner);
             return Result.Failure(ErrorMessages.User.RoleAssignmentFailed);
         }
+
+        // Send scanner credentials email
+        await _emailService.SendScannerCredentialsEmailAsync(
+            dto.Email,
+            dto.FullName,
+            dto.Password,
+            organizer.FullName);
 
         return Result.Success();
     }
@@ -153,6 +223,118 @@ public class AuthService : IAuthService
         return await _userManager.FindByEmailAsync(email.Trim()) is null;
     }
 
+    public async Task<Result> ConfirmEmailAsync(string userId, string token)
+    {
+        if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(token))
+            return Result.Failure("User ID and confirmation token are required.");
+
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user is null)
+            return Result.Failure(ErrorMessages.User.NotFound);
+
+        var result = await _userManager.ConfirmEmailAsync(user, token);
+        if (!result.Succeeded)
+            return Result.Failure(ToErrorMessage(result));
+
+        await _outboxService.EnqueueAsync(
+            "Email.Welcome",
+            new OutboxService.WelcomePayload
+            {
+                RecipientEmail = user.Email!,
+                RecipientName = user.FullName
+            },
+            DateTime.UtcNow.AddSeconds(10));
+
+        return Result.Success();
+    }
+
+    public async Task<Result> ForgotPasswordAsync(string email, string baseUrl)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return Result.Failure("Email address is required.");
+
+        var user = await _userManager.FindByEmailAsync(email.Trim());
+        if (user is null)
+        {
+            // Security best practice: do not reveal that the user does not exist
+            return Result.Success();
+        }
+
+        // Generate password reset token
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var encodedToken = System.Net.WebUtility.UrlEncode(token);
+        var resetLink = $"{baseUrl}/Account/ResetPassword?email={System.Net.WebUtility.UrlEncode(user.Email!)}&token={encodedToken}";
+
+        // Enqueue password reset email to outbox
+        await _outboxService.EnqueueAsync("Email.PasswordReset", new OutboxService.PasswordResetPayload
+        {
+            RecipientEmail = user.Email!,
+            RecipientName = user.FullName,
+            ResetLink = resetLink
+        });
+
+        return Result.Success();
+    }
+
+    public async Task<Result> ResetPasswordAsync(ResetPasswordDto dto)
+    {
+        if (dto is null)
+            return Result.Failure("Invalid request.");
+
+        var user = await _userManager.FindByEmailAsync(dto.Email.Trim());
+        if (user is null)
+        {
+            // Security best practice: do not reveal user existence
+            return Result.Failure(ErrorMessages.User.NotFound);
+        }
+
+        var result = await _userManager.ResetPasswordAsync(user, dto.Token, dto.NewPassword);
+        if (!result.Succeeded)
+            return Result.Failure(ToErrorMessage(result));
+
+        // Enqueue security notification email to outbox
+        await _outboxService.EnqueueAsync("Email.SecurityNotification", new OutboxService.SecurityNotificationPayload
+        {
+            RecipientEmail = user.Email!,
+            RecipientName = user.FullName,
+            SecurityAction = "Password Reset",
+            Details = $"Your password was successfully reset on {DateTime.UtcNow:dd MMM yyyy, hh:mm tt} UTC."
+        });
+
+        return Result.Success();
+    }
+
+    public async Task<Result> ResendVerificationEmailAsync(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return Result.Failure("Email address is required.");
+
+        var user = await _userManager.FindByEmailAsync(email.Trim());
+        if (user is null)
+        {
+            return Result.Success();
+        }
+
+        if (user.EmailConfirmed)
+        {
+            return Result.Failure("Email is already confirmed.");
+        }
+
+        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        var encodedToken = System.Net.WebUtility.UrlEncode(token);
+        var baseUrl = _configuration["BaseUrl"] ?? "https://localhost:7198";
+        var verificationLink = $"{baseUrl}/Account/ConfirmEmail?userId={user.Id}&token={encodedToken}";
+
+        await _outboxService.EnqueueAsync("Email.Verification", new OutboxService.VerificationPayload
+        {
+            RecipientEmail = user.Email!,
+            RecipientName = user.FullName,
+            VerificationLink = verificationLink
+        });
+
+        return Result.Success();
+    }
+
     private static string NormalizeRole(string? role)
     {
         if (string.IsNullOrWhiteSpace(role)) return string.Empty;
@@ -160,6 +342,28 @@ public class AuthService : IAuthService
         return LoginRoles.FirstOrDefault(
                    r => string.Equals(r, role.Trim(), StringComparison.OrdinalIgnoreCase))
                ?? string.Empty;
+    }
+
+    private async Task<string> GenerateUniqueUserNameAsync(string email)
+    {
+        var localPart = email.Trim().Split('@')[0];
+        var sanitized = new string(localPart
+            .Select(c => char.IsLetterOrDigit(c) || c == '_' ? c : '_')
+            .ToArray())
+            .Trim('_');
+
+        if (string.IsNullOrWhiteSpace(sanitized))
+            sanitized = "scanner";
+
+        var candidate = sanitized;
+        var suffix = 1;
+
+        while (await _userManager.FindByNameAsync(candidate) is not null)
+        {
+            candidate = $"{sanitized}_{suffix++}";
+        }
+
+        return candidate;
     }
 
     private static string ToErrorMessage(IdentityResult result) =>

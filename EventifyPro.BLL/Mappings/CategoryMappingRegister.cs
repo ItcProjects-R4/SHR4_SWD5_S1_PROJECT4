@@ -1,6 +1,3 @@
-using EventifyPro.BLL.DTOs.Category;
-using Mapster;
-
 namespace EventifyPro.BLL.Mappings;
 
 #pragma warning disable CS8603 // Mapster Ignore expressions can target nullable members safely.
@@ -9,7 +6,8 @@ public sealed class CategoryMappingRegister : IRegister
 {
     public void Register(TypeAdapterConfig config)
     {
-        config.NewConfig<Category, CategoryDto>();
+        config.NewConfig<Category, CategoryDto>()
+            .Map(dest => dest.EventCount, src => src.Events.Count(e => e.Status == EventStatus.Published && !e.IsDeleted));
 
         config.NewConfig<CategoryCreateDto, Category>()
             .Ignore(dest => dest.Id)

@@ -1,5 +1,3 @@
-﻿using Eventify.Domain.Enums;
-
 namespace Eventify.Domain.Entities;
 
 /// <summary>
@@ -8,7 +6,7 @@ namespace Eventify.Domain.Entities;
 /// </summary>
 /// <remarks>
 /// Events are the core entity of the EventifyPro system. They transition through various states
-/// from Draft to Published, and eventually Completed or Cancelled. Events support capacity limits,
+/// from PendingReview to Published or Rejected, and eventually Completed or Cancelled. Events support capacity limits,
 /// multiple ticket types, and comprehensive tracking of bookings and attendance.
 /// </remarks>
 public class Event
@@ -30,16 +28,22 @@ public class Event
     /// <summary>
     /// Gets or sets the current status of the event.
     /// </summary>
-    /// <value>The event status (Draft, Published, Cancelled, or Completed).</value>
-    public EventStatus Status { get; set; } = EventStatus.Draft;
+    /// <value>The event status (Draft, PendingReview, Published, Rejected, Cancelled, or Completed).</value>
+    public EventStatus Status { get; set; } = EventStatus.PendingReview;
+
+    public string? ReviewNotes { get; set; }
+    public string? ReviewedByAdminId { get; set; }
+    public DateTime? ReviewedAt { get; set; }
 
     /// <summary>
     /// Gets or sets the maximum capacity of attendees for the event.
     /// </summary>
     /// <value>The maximum number of attendees, or null for unlimited capacity.</value>
     public int? MaxCapacity { get; set; }
+    public int? MaxTicketsPerUser { get; set; }
 
     public bool IsDeleted { get; set; } = false;
+    public bool IsFeatured { get; set; } = false;
 
     /// <summary>
     /// Gets or sets the user ID of the event organizer (foreign key).
@@ -58,6 +62,7 @@ public class Event
 
     // Navigation
     public ApplicationUser Organizer { get; set; } = null!;
+    public ApplicationUser? ReviewedByAdmin { get; set; }
     public Category Category { get; set; } = null!;
     public ICollection<TicketType> TicketTypes { get; set; } = [];
     public ICollection<Booking> Bookings { get; set; } = [];

@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
-
-namespace Eventify.Domain.Entities;
+﻿namespace Eventify.Domain.Entities;
 
 /// <summary>
 /// Represents an application user extending ASP.NET Core Identity.

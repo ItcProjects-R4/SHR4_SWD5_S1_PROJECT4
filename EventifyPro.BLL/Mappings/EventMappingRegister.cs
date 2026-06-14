@@ -1,7 +1,3 @@
-using Eventify.Domain.Enums;
-using EventifyPro.BLL.DTOs.Event;
-using Mapster;
-
 using DomainEvent = Eventify.Domain.Entities.Event;
 
 namespace EventifyPro.BLL.Mappings;
@@ -42,7 +38,7 @@ public sealed class EventMappingRegister : IRegister
             .Ignore(dest => dest.ScanLogs)
             .Ignore(dest => dest.ActualEventScanLogs)
             .Ignore(dest => dest.WaitingListEntries)
-            .Map(dest => dest.Status, _ => EventStatus.Draft)
+            .Map(dest => dest.Status, _ => EventStatus.PendingReview)
             .Map(dest => dest.CreatedAt, _ => DateTime.UtcNow);
 
         config.NewConfig<EventUpdateDto, DomainEvent>()

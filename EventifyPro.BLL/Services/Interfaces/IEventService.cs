@@ -5,6 +5,9 @@ public interface IEventService
     Task<Result<EventDetailDto>> CreateAsync(EventCreateDto dto, string organizerId, CancellationToken cancellationToken = default);
     Task<Result<EventDetailDto>> UpdateAsync(int id, EventUpdateDto dto, string organizerId, CancellationToken cancellationToken = default);
     Task<Result> PublishAsync(int id, string organizerId, CancellationToken cancellationToken = default);
+    Task<Result> ApproveAsync(int id, string adminId, CancellationToken cancellationToken = default);
+    Task<Result> RejectAsync(int id, string adminId, string reason, CancellationToken cancellationToken = default);
+    Task<Result<IReadOnlyList<EventSummaryDto>>> GetPendingReviewAsync(CancellationToken cancellationToken = default);
     Task<Result> CancelAsync(int id, string organizerId, string reason, CancellationToken cancellationToken = default);
     Task<Result<EventDetailDto>> GetDetailAsync(int id, CancellationToken cancellationToken = default);
     Task<PagedResult<EventSummaryDto>> SearchAsync(EventFilterDto filter, CancellationToken cancellationToken = default);

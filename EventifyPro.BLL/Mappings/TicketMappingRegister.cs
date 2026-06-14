@@ -1,6 +1,3 @@
-using EventifyPro.BLL.DTOs.Ticket;
-using Mapster;
-
 namespace EventifyPro.BLL.Mappings;
 
 public sealed class TicketMappingRegister : IRegister

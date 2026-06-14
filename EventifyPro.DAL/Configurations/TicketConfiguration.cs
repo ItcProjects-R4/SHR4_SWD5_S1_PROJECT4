@@ -40,6 +40,8 @@ public class TicketConfiguration : IEntityTypeConfiguration<Ticket>
             .IsRequired()
             .HasDefaultValueSql("GETUTCDATE()");
 
+        builder.HasQueryFilter(t => !t.Event.IsDeleted);
+
         // Relationships
         builder.HasOne(t => t.Event)
             .WithMany(e => e.Tickets)

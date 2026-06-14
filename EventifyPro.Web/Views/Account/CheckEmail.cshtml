@@ -1,4 +1,4 @@
-﻿@model string
+@model string
 @{
     Layout = "_AuthLayout";
     ViewData["Title"] = "Check Your Email - Eventify Pro";
@@ -7,9 +7,18 @@
 <main class="auth-container">
     <section class="auth-card" aria-labelledby="checkEmailTitle">
         <div class="auth-card-header">
-            <span class="auth-kicker">Almost there!</span>
-            <h1 id="checkEmailTitle">Check your inbox</h1>
-            <p>We've sent a password reset link to <strong style="color: var(--primary);">@Model</strong>. Please check your email.</p>
+            @if (ViewBag.ActionType == "Register")
+            {
+                <span class="auth-kicker">Welcome!</span>
+                <h1 id="checkEmailTitle">Verify your email</h1>
+                <p>We've sent a verification link to <strong style="color: var(--primary);">@Model</strong>. Please check your email to verify your account.</p>
+            }
+            else
+            {
+                <span class="auth-kicker">Almost there!</span>
+                <h1 id="checkEmailTitle">Check your inbox</h1>
+                <p>We've sent a password reset link to <strong style="color: var(--primary);">@Model</strong>. Please check your email.</p>
+            }
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 20px; align-items: center; margin-top: 20px;">
@@ -27,13 +36,26 @@
                     You can request a new link in <strong id="timer" style="color: var(--primary); font-size: 16px;">02:00</strong>
                 </p>
 
-                <form asp-controller="Account" asp-action="ForgotPassword" method="post" id="resend-form" style="display: none;">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="Email" value="@Model" />
-                    <button type="submit" class="link-btn" style="background: none; border: none; cursor: pointer; font-size: 15px;">
-                        <i class="fas fa-sync-alt" style="margin-right: 5px;"></i> Resend Reset Link
-                    </button>
-                </form>
+                @if (ViewBag.ActionType == "Register")
+                {
+                    <form asp-controller="Account" asp-action="ResendVerificationEmail" method="post" id="resend-form" style="display: none;">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="Email" value="@Model" />
+                        <button type="submit" class="link-btn" style="background: none; border: none; cursor: pointer; font-size: 15px;">
+                            <i class="fas fa-sync-alt" style="margin-right: 5px;"></i> Resend Verification Link
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <form asp-controller="Account" asp-action="ForgotPassword" method="post" id="resend-form" style="display: none;">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="Email" value="@Model" />
+                        <button type="submit" class="link-btn" style="background: none; border: none; cursor: pointer; font-size: 15px;">
+                            <i class="fas fa-sync-alt" style="margin-right: 5px;"></i> Resend Reset Link
+                        </button>
+                    </form>
+                }
             </div>
 
             <a asp-controller="Account" asp-action="Login" class="link-btn" style="margin-top: 10px;">
@@ -53,9 +75,18 @@
             </div>
             <div class="illustration-card">
                 <div class="card-shine"></div>
-                <i class="fas fa-envelope-open-text main-icon"></i>
-                <h2>Email Sent!</h2>
-                <p>Check your inbox or spam folder for the secure reset link.</p>
+                @if (ViewBag.ActionType == "Register")
+                {
+                    <i class="fas fa-envelope-open main-icon" style="color: var(--primary);"></i>
+                    <h2>Verify Email!</h2>
+                    <p>Check your inbox or spam folder for the activation link.</p>
+                }
+                else
+                {
+                    <i class="fas fa-envelope-open-text main-icon"></i>
+                    <h2>Email Sent!</h2>
+                    <p>Check your inbox or spam folder for the secure reset link.</p>
+                }
             </div>
         </div>
     </aside>
@@ -65,7 +96,7 @@
     <script>
         document.addEventListener("DOMContentLoaded", function () {
            
-            let timeLeft = 20;
+            let timeLeft = 120;
             const timerElement = document.getElementById("timer");
             const timerText = document.getElementById("timer-text");
             const resendForm = document.getElementById("resend-form");

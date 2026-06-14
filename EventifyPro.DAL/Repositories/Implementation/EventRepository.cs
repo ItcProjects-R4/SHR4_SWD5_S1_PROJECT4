@@ -1,6 +1,3 @@
-using Eventify.DAL.Extensions;
-using Eventify.Shared.Wrappers;
-
 namespace EventifyPro.DAL.Repositories;
 
 public class EventRepository : GenericRepository<Event>, IEventRepository
@@ -29,6 +26,7 @@ public class EventRepository : GenericRepository<Event>, IEventRepository
         DateTime? to,
         int pageNumber,
         int pageSize,
+        bool? isFeatured = null,
         CancellationToken cancellationToken = default)
     {
         // Build base query — Global QueryFilter (!IsDeleted) applies automatically
@@ -52,20 +50,34 @@ public class EventRepository : GenericRepository<Event>, IEventRepository
         if (to.HasValue)
             query = query.Where(e => e.StartDate <= to.Value);
 
+        if (isFeatured.HasValue)
+            query = query.Where(e => e.IsFeatured == isFeatured.Value);
+
         // Apply ordering BEFORE pagination (important!)
         query = query.OrderBy(e => e.StartDate);
 
         // Apply includes AFTER ordering but in the same query
         query = query
-     .AsNoTracking()
-     .AsSplitQuery()
-     .Include(e => e.Category)
-     .Include(e => e.Organizer)
-     .Include(e => e.TicketTypes);
+                    .AsNoTracking()
+                    .AsSplitQuery()
+                    .Include(e => e.Category)
+                    .Include(e => e.Organizer)
+                    .Include(e => e.TicketTypes);
 
         // Use QueryableExtensions for clean pagination
         return await query.ToPagedResultAsync(pageNumber, pageSize, cancellationToken);
     }
+
+    public async Task<IReadOnlyList<Event>> GetPendingReviewAsync(CancellationToken cancellationToken = default)
+        => await _dbSet
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Where(e => e.Status == EventStatus.PendingReview)
+            .Include(e => e.Category)
+            .Include(e => e.Organizer)
+            .Include(e => e.TicketTypes)
+            .OrderBy(e => e.CreatedAt)
+            .ToListAsync(cancellationToken);
 
     public async Task<IReadOnlyList<Event>> GetByOrganizerIdAsync(string organizerId, CancellationToken cancellationToken = default)
         => await _dbSet

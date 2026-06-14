@@ -1,6 +1,3 @@
-using System.Linq.Expressions;
-using Eventify.Shared.Wrappers;
-
 namespace EventifyPro.DAL.Repositories.Interfaces;
 
 /// <summary>

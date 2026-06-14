@@ -50,6 +50,8 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.Property(p => p.UpdatedAt)
             .IsRequired(false);
 
+        builder.HasQueryFilter(p => !p.Booking.Event.IsDeleted);
+
         // Foreign Key and Relationships
         builder.HasOne(p => p.Booking)
             .WithOne(b => b.Payment)

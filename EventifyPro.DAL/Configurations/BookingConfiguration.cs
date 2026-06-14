@@ -18,17 +18,26 @@ public class BookingConfiguration : IEntityTypeConfiguration<Booking>
             .HasColumnType("decimal(10,2)")
             .HasDefaultValueSql("0.00");
 
+        builder.Property(b => b.ServiceFee)
+            .IsRequired()
+            .HasColumnType("decimal(10,2)")
+            .HasDefaultValueSql("0.00");
+
         builder.ToTable(t =>
         {
             t.HasCheckConstraint(
                 "CK_Bookings_TotalAmount",
                 "TotalAmount >= 0");
+            t.HasCheckConstraint(
+                "CK_Bookings_ServiceFee",
+                "ServiceFee >= 0");
         });
 
         builder.Property(b => b.Status)
             .IsRequired()
             .HasConversion<byte>()
-            .HasDefaultValueSql("0");
+            .HasDefaultValue(BookingStatus.Pending)
+            .HasSentinel((BookingStatus)255);
 
         builder.Property(b => b.BookingReference)
             .IsRequired()
@@ -43,6 +52,8 @@ public class BookingConfiguration : IEntityTypeConfiguration<Booking>
 
         builder.Property(b => b.UpdatedAt)
             .HasDefaultValue(null);
+
+        builder.HasQueryFilter(b => !b.Event.IsDeleted);
 
         builder.HasOne(b => b.User)
             .WithMany(u => u.Bookings)
