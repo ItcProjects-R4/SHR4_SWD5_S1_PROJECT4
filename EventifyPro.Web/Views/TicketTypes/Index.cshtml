@@ -1,0 +1,221 @@
+@model IEnumerable<EventifyPro.Web.ViewModels.TicketType.TicketTypeViewModel>
+@{
+    Layout = "_OrganizerLayout";
+    ViewData["Title"] = "Manage Tickets";
+    ViewData["HeaderTitle"] = $"Tickets for: {ViewBag.EventTitle}";
+    ViewData["HeaderSubtitle"] = "Create and manage different ticket tiers (e.g., VIP, Regular, Early Bird).";
+    
+    int eventId = ViewBag.EventId;
+}
+
+@section Styles {
+    <style>
+        .table-card {
+            background: white;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            margin-top: 24px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .data-table th {
+            background: var(--bg);
+            padding: 16px 24px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid var(--border);
+        }
+        .data-table td {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14.5px;
+            color: var(--text);
+            vertical-align: middle;
+        }
+        .data-table tbody tr:hover {
+            background: var(--soft-purple);
+        }
+
+        .action-btn {
+            width: 34px;
+            height: 34px;
+            border: none;
+            background: var(--soft-purple);
+            color: var(--primary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-right: 4px;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+        .action-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+        }
+        .action-btn.delete {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+        .action-btn.delete:hover {
+            background: var(--error);
+            color: white;
+        }
+
+        .ticket-name {
+            font-weight: 700;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .badge-active {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .badge-inactive {
+            background: rgba(107, 114, 128, 0.1);
+            color: var(--text-light);
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+}
+
+<div class="header-actions">
+    <a href="/Events/OrganizerIndex" class="btn-secondary" style="display: inline-flex; align-items: center; gap: 8px;">
+        <i class="fas fa-arrow-left"></i> Back to Events
+    </a>
+    <a href="/TicketTypes/Create?eventId=@eventId" class="btn-primary">
+        <i class="fas fa-plus"></i> Create Ticket Type
+    </a>
+</div>
+
+<div class="table-card">
+    @if (Model != null && Model.Any())
+    {
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Ticket Name</th>
+                    <th>Price</th>
+                    <th>Capacity</th>
+                    <th>Sold</th>
+                    <th>Sale Dates</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var ticket in Model)
+                {
+                    <tr>
+                        <td>
+                            <div class="ticket-name">
+                                <i class="fas fa-ticket-alt" style="color: var(--primary);"></i>
+                                @ticket.Name
+                            </div>
+                            @if (!string.IsNullOrEmpty(ticket.Description))
+                            {
+                                <div style="font-size: 12px; color: var(--text-light); margin-top: 4px; margin-left: 24px;">
+                                    @ticket.Description
+                                </div>
+                            }
+                        </td>
+                        <td>
+                            @if (ticket.Price == 0)
+                            {
+                                <span style="color: var(--success); font-weight: 700;">Free</span>
+                            }
+                            else
+                            {
+                                <span style="font-weight: 600;">@ticket.Price.ToString("0.00") EGP</span>
+                            }
+                        </td>
+                        <td>
+                            @ticket.TotalQuantity
+                        </td>
+                        <td>
+                            <span style="font-weight: 600;">@ticket.SoldQuantity</span>
+                        </td>
+                        <td style="font-size: 13px; color: var(--text-light);">
+                            @if (ticket.SaleStartDate.HasValue || ticket.SaleEndDate.HasValue)
+                            {
+                                <div><i class="far fa-calendar-alt" style="margin-right: 4px;"></i>Start: @(ticket.SaleStartDate?.ToEgyptTime().ToString("yyyy-MM-dd HH:mm") ?? "Immediate")</div>
+                                <div style="margin-top: 2px;"><i class="far fa-calendar-times" style="margin-right: 4px;"></i>End: @(ticket.SaleEndDate?.ToEgyptTime().ToString("yyyy-MM-dd HH:mm") ?? "Event End")</div>
+                            }
+                            else
+                            {
+                                <span style="font-style: italic;">No limits</span>
+                            }
+                        </td>
+                        <td>
+                            @if (ticket.IsAvailable)
+                            {
+                                <span class="badge-active">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge-inactive">Inactive</span>
+                            }
+                        </td>
+                        <td style="text-align: right;">
+                            <a href="/TicketTypes/Edit/@ticket.Id" class="action-btn" title="Edit Ticket Type">
+                                <i class="fas fa-pen"></i>
+                            </a>
+                            <form action="/TicketTypes/Delete" method="post" style="display: inline-block;" onsubmit="return confirm('Are you sure you want to delete this ticket type?');">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@ticket.Id" />
+                                <input type="hidden" name="eventId" value="@eventId" />
+                                <button type="submit" class="action-btn delete" title="Delete Ticket Type">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div style="text-align: center; padding: 60px 20px;">
+            <div style="width: 80px; height: 80px; background: var(--soft-purple); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: var(--primary); font-size: 32px;">
+                <i class="fas fa-ticket-alt"></i>
+            </div>
+            <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 8px;">No tickets configured</h3>
+            <p style="color: var(--text-light); margin-bottom: 24px; max-width: 400px; margin-left: auto; margin-right: auto;">
+                You haven't added any ticket types for this event yet. You need at least one ticket type for attendees to book.
+            </p>
+            <a href="/TicketTypes/Create?eventId=@eventId" class="btn-primary">
+                <i class="fas fa-plus"></i> Create Ticket Type
+            </a>
+        </div>
+    }
+</div>

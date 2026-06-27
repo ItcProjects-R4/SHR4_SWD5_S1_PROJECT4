@@ -22,6 +22,8 @@ public class TicketViewModel
 
     public string EventTitle { get; set; } = string.Empty;
     public DateTime EventDate { get; set; }
+    public DateTime EventEndDate { get; set; }
+    public string BookingStatus { get; set; } = string.Empty;
 
     public DateTime CreatedAt { get; set; }
 }

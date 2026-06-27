@@ -1,4 +1,4 @@
-﻿namespace Eventify.Domain.Entities;
+namespace Eventify.Domain.Entities;
 
 /// <summary>
 /// Represents a user review for an attended event.
@@ -9,7 +9,7 @@
 /// Reviews can be hidden by moderators for content policy violations. Multiple reviews per user-event
 /// combination are prevented through unique constraints at the database level.
 /// </remarks>
-public class Review
+public class Review : AuditableEntity
 {
     /// <summary>
     /// Gets or sets the unique identifier for the review.
@@ -43,10 +43,17 @@ public class Review
     /// <value><c>true</c> if hidden by moderators; otherwise, <c>false</c>.</value>
     public bool IsHidden { get; set; } = false;
 
-    public DateTime CreatedAt { get; set; }
-    public DateTime? UpdatedAt { get; set; }
+    public string? HiddenById { get; set; }
+    public string? HiddenReason { get; set; }
+
+    // Organizer reply and reporting fields
+    public string? OrganizerReply { get; set; }
+    public DateTime? RepliedAt { get; set; }
+    public bool IsFlagged { get; set; } = false;
+    public string? FlaggedReason { get; set; }
 
     // Navigation
     public ApplicationUser User { get; set; } = null!;
     public Event Event { get; set; } = null!;
+    public ApplicationUser? HiddenBy { get; set; }
 }

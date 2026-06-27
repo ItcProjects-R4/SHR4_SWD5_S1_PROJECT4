@@ -1,0 +1,110 @@
+@model EventifyPro.Web.ViewModels.Review.ReviewCreateViewModel
+@{
+    ViewData["Title"] = "Write Review";
+}
+
+<div class="bg-animation">
+    <div class="bg-blob blob-1"></div>
+    <div class="bg-blob blob-2"></div>
+    <div class="bg-blob blob-3"></div>
+</div>
+
+<div class="page-header">
+    <div class="container">
+        <h1>Write a <span class="gradient-text">Review</span></h1>
+        <p>Share your experience and help others find the best events.</p>
+    </div>
+</div>
+
+<div class="container" style="padding-top: 40px; padding-bottom: 80px;">
+    <div class="checkout-card" style="max-width: 600px; margin: 0 auto; padding: 35px;">
+        <h3><i class="fas fa-edit"></i> Share Your Feedback</h3>
+
+        <form asp-controller="Review" asp-action="Create" method="post" style="margin-top: 24px;">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="EventId" />
+            <input type="hidden" asp-for="Rating" id="ratingValue" value="5" />
+
+            <div asp-validation-summary="ModelOnly" style="color: var(--error); background: rgba(239,68,68,0.05); border: 1px solid var(--error); border-radius: 8px; padding: 12px; margin-bottom: 20px; font-size: 14px; font-weight: 600;"></div>
+
+            <!-- Star Rating Input -->
+            <div style="margin-bottom: 30px; text-align: center;">
+                <label style="display: block; font-weight: 700; margin-bottom: 12px; color: var(--text-light); text-transform: uppercase; font-size: 13px;">Your Rating</label>
+                <div class="stars" style="font-size: 36px; display: inline-flex; gap: 8px; cursor: pointer;">
+                    <i class="fas fa-star star-btn" data-value="1" onclick="setRating(1)"></i>
+                    <i class="fas fa-star star-btn" data-value="2" onclick="setRating(2)"></i>
+                    <i class="fas fa-star star-btn" data-value="3" onclick="setRating(3)"></i>
+                    <i class="fas fa-star star-btn" data-value="4" onclick="setRating(4)"></i>
+                    <i class="fas fa-star star-btn" data-value="5" onclick="setRating(5)"></i>
+                </div>
+                <div id="ratingText" style="font-weight: 700; color: var(--primary); margin-top: 8px; font-size: 15px;">Excellent!</div>
+            </div>
+
+            <!-- Comment Input -->
+            <div class="input-group" style="margin-bottom: 24px;">
+                <textarea asp-for="Comment" placeholder="Describe your experience (optional)..." style="min-height: 150px; border-radius: 16px;"></textarea>
+                <label asp-for="Comment">Your Review</label>
+                <span asp-validation-for="Comment" style="color: var(--error); font-size: 12px; margin-top: 4px; display: block;"></span>
+            </div>
+
+            <!-- Actions -->
+            <div style="display: flex; gap: 16px;">
+                <a href="/Ticket/MyTickets" class="btn-outline btn-full" style="justify-content: center;">Cancel</a>
+                <button type="submit" class="btn-primary btn-full">Submit Review</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function setRating(rating) {
+            document.getElementById('ratingValue').value = rating;
+            const stars = document.querySelectorAll('.star-btn');
+            
+            // Loop through stars and paint them
+            stars.forEach(star => {
+                const val = parseInt(star.getAttribute('data-value'));
+                if (val <= rating) {
+                    star.className = 'fas fa-star star-btn';
+                } else {
+                    star.className = 'far fa-star star-btn';
+                }
+            });
+
+            // Update rating text
+            const labels = {
+                1: 'Poor',
+                2: 'Fair',
+                3: 'Good',
+                4: 'Very Good',
+                5: 'Excellent!'
+            };
+            document.getElementById('ratingText').innerText = labels[rating] || '';
+        }
+
+        // Initialize hover effects for stars
+        document.addEventListener('DOMContentLoaded', () => {
+            const stars = document.querySelectorAll('.star-btn');
+            stars.forEach(star => {
+                star.addEventListener('mouseover', function() {
+                    const hoverVal = parseInt(this.getAttribute('data-value'));
+                    stars.forEach(s => {
+                        const val = parseInt(s.getAttribute('data-value'));
+                        if (val <= hoverVal) {
+                            s.style.color = '#fbbf24'; // temporary gold
+                        } else {
+                            s.style.color = 'var(--light-purple)';
+                        }
+                    });
+                });
+
+                star.addEventListener('mouseout', function() {
+                    stars.forEach(s => {
+                        s.style.color = ''; // reset to stylesheet
+                    });
+                });
+            });
+        });
+    </script>
+}

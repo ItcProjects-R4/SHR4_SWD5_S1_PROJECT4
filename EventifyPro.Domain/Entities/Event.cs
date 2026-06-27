@@ -1,3 +1,5 @@
+using Eventify.Domain.Interfaces;
+
 namespace Eventify.Domain.Entities;
 
 /// <summary>
@@ -9,7 +11,7 @@ namespace Eventify.Domain.Entities;
 /// from PendingReview to Published or Rejected, and eventually Completed or Cancelled. Events support capacity limits,
 /// multiple ticket types, and comprehensive tracking of bookings and attendance.
 /// </remarks>
-public class Event
+public class Event : AuditableEntity, ISoftDelete
 {
     /// <summary>
     /// Gets or sets the unique identifier for the event.
@@ -44,6 +46,7 @@ public class Event
 
     public bool IsDeleted { get; set; } = false;
     public bool IsFeatured { get; set; } = false;
+    public int ViewCount { get; set; } = 0;
 
     /// <summary>
     /// Gets or sets the user ID of the event organizer (foreign key).
@@ -57,9 +60,6 @@ public class Event
     /// <value>The category identifier.</value>
     public int CategoryId { get; set; }
 
-    public DateTime CreatedAt { get; set; }
-    public DateTime? UpdatedAt { get; set; }
-
     // Navigation
     public ApplicationUser Organizer { get; set; } = null!;
     public ApplicationUser? ReviewedByAdmin { get; set; }
@@ -71,4 +71,6 @@ public class Event
     public ICollection<ScanLog> ScanLogs { get; set; } = [];
     public ICollection<ScanLog> ActualEventScanLogs { get; set; } = [];
     public ICollection<WaitingList> WaitingListEntries { get; set; } = [];
+    public ICollection<SavedEvent> SavedEvents { get; set; } = [];
+    public ICollection<EventScanner> AssignedScanners { get; set; } = [];
 }

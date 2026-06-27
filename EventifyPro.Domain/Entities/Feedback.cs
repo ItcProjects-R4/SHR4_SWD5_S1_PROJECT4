@@ -18,4 +18,7 @@ public class Feedback
     public DateTime CreatedAt { get; set; }
 
     public DateTime? ApprovedAt { get; set; }
+
+    public string? ApprovedById { get; set; }
+    public ApplicationUser? ApprovedBy { get; set; }
 }

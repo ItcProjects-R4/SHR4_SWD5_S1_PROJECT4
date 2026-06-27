@@ -19,4 +19,16 @@ public interface IPaymentService
     /// Handles the Paymob webhook/callback with HMAC signature verification.
     /// </summary>
     Task<Result<PaymentResultDto>> HandlePaymobCallbackAsync(IDictionary<string, string> callbackData, string hmac, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Handles the Paymob GET redirect callback using the payment ID from the URL path.
+    /// This is the preferred method — no Paymob API call needed.
+    /// </summary>
+    Task<Result<PaymentResultDto>> HandleRedirectCallbackAsync(int paymentId, string transactionId, string hmac, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Handles the Paymob GET redirect callback by looking up the payment from redirect query data.
+    /// Fallback method when payment ID is not in the URL path.
+    /// </summary>
+    Task<Result<PaymentResultDto>> HandleRedirectCallbackAsync(string transactionId, IDictionary<string, string> redirectData, string hmac, CancellationToken cancellationToken = default);
 }

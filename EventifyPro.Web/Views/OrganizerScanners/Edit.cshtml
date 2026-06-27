@@ -1,0 +1,136 @@
+@model EventifyPro.Web.ViewModels.OrganizerScanners.EditScannerViewModel
+@{
+    Layout = "_OrganizerLayout";
+    ViewData["Title"] = "Edit Scanner Account";
+    ViewData["HeaderTitle"] = "Edit Scanner Account 📱";
+    ViewData["HeaderSubtitle"] = "Update scanner name or reset credentials.";
+}
+
+@section Styles {
+    <style>
+        .form-card {
+            background: white;
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 14.5px;
+            color: var(--text);
+            background: var(--bg);
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+            background: white;
+        }
+
+        .form-control[readonly] {
+            background: var(--bg);
+            color: var(--text-light);
+            cursor: not-allowed;
+            border-color: transparent;
+        }
+
+        .text-danger {
+            color: var(--error);
+            font-size: 12.5px;
+            margin-top: 6px;
+            display: block;
+        }
+
+        label .text-danger {
+            display: inline;
+            margin-top: 0;
+        }
+
+        .info-text {
+            background: rgba(124, 58, 237, 0.1);
+            color: var(--primary);
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 13.5px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-top: 24px;
+            line-height: 1.5;
+        }
+
+        .form-actions {
+            margin-top: 32px;
+            display: flex;
+            gap: 16px;
+            justify-content: flex-end;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+}
+
+<div class="form-card">
+    <form asp-controller="OrganizerScanners" asp-action="Edit" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <div asp-validation-summary="ModelOnly" class="text-danger" style="margin-bottom: 20px;"></div>
+
+        <div class="form-group">
+            <label asp-for="Email" class="form-label">Scanner Email (Cannot be changed)</label>
+            <input asp-for="Email" class="form-control" readonly />
+        </div>
+
+        <div class="form-group">
+            <label asp-for="FullName" class="form-label">Scanner Full Name <span class="text-danger">*</span></label>
+            <input asp-for="FullName" class="form-control" required />
+            <span asp-validation-for="FullName" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="NewPassword" class="form-label">Reset Password</label>
+            <input asp-for="NewPassword" type="password" class="form-control" placeholder="Leave blank to keep current password" />
+            <span asp-validation-for="NewPassword" class="text-danger"></span>
+        </div>
+
+        <div class="info-text">
+            <i class="fas fa-info-circle" style="font-size: 20px; margin-top: 2px;"></i>
+            <div>
+                <strong>Credentials Update:</strong> If you input a new password, the scanner user will be logged out and must use the new password to log back in on the Scanner App.
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <a asp-controller="OrganizerScanners" asp-action="Index" class="btn-secondary">Cancel</a>
+            <button type="submit" class="btn-primary">
+                <i class="fas fa-save"></i> Save Changes
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

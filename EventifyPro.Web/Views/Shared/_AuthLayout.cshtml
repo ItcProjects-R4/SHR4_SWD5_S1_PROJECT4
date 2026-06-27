@@ -4,17 +4,23 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"]</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="~/favicon.png?v=2" />
+    <link rel="icon" type="image/png" sizes="192x192" href="~/favicon.png?v=2" />
     <link rel="stylesheet" href="@Url.Content("~/css/auth.css")" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/ux-improvements.css" asp-append-version="true" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
           rel="stylesheet" />
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
+    <a href="#main-content" class="skip-link" style="position: absolute; top: -100px; left: 20px; background: var(--primary); color: white; padding: 10px 20px; z-index: 100000; transition: top 0.2s ease-in-out; font-weight: 700; border-radius: 0 0 10px 10px; text-decoration: none; box-shadow: var(--shadow-md);" onfocus="this.style.top='0'" onblur="this.style.top='-100px'">Skip to main content</a>
+
     <div class="auth-page">
         <header class="auth-header">
             <a asp-controller="Home" asp-action="Index" class="logo" aria-label="Eventify Pro home">
-                <div class="logo-icon"><i class="fas fa-ticket-alt"></i></div>
+                <div class="logo-icon">
+                    <img src="/Images/Logo.png" alt="Logo" class="logo-img" />
+                </div>
                 <span>Eventify <b>Pro</b></span>
             </a>
             <a asp-controller="Home" asp-action="Index" class="back-link">
@@ -22,14 +28,12 @@
             </a>
         </header>
 
-        @RenderBody()
+        <main id="main-content">
+            @RenderBody()
+        </main>
 
         <footer class="auth-footer">
-            <select aria-label="Language">
-                <option>English (United States)</option>
-                <option>Arabic</option>
-                <option>French</option>
-            </select>
+            <span style="font-size: 13px; color: var(--text-light); font-weight: 500;">English (United States)</span>
             <ul>
                 <li><a asp-controller="Home" asp-action="HelpCenter">Help</a></li>
                 <li><a asp-controller="Home" asp-action="Privacy">Privacy</a></li>
@@ -38,6 +42,7 @@
         </footer>
     </div>
 
+    <script src="~/js/ux-improvements.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

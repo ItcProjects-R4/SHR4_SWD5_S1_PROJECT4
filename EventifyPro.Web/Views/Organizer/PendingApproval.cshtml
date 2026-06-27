@@ -1,0 +1,190 @@
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Account Pending Approval - Eventify Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Poppins", sans-serif;
+            background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .container {
+            background: #ffffff;
+            padding: 60px 40px;
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(91, 33, 182, 0.1);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            border: 1px solid rgba(138, 43, 226, 0.08);
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @@keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .icon-wrapper {
+            width: 100px;
+            height: 100px;
+            background: rgba(124, 58, 237, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            color: #7c3aed;
+            font-size: 44px;
+            animation: pulse 2s infinite;
+        }
+
+        @@keyframes pulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.4);
+            }
+            70% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 20px rgba(124, 58, 237, 0);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(124, 58, 237, 0);
+            }
+        }
+
+        h1 {
+            color: #4c1d95;
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+
+        p {
+            color: #6b7280;
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(245, 158, 11, 0.1);
+            color: #d97706;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 24px;
+        }
+
+        .btn-logout {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+            color: #ffffff;
+            text-decoration: none;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-weight: 600;
+            box-shadow: 0 10px 20px rgba(124, 58, 237, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-logout:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(124, 58, 237, 0.3);
+            background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%);
+        }
+
+        .support-info {
+            margin-top: 40px;
+            border-top: 1px solid #f3f4f6;
+            padding-top: 24px;
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        .support-info a {
+            color: #7c3aed;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .support-info a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon-wrapper">
+            <i class="fas fa-clock-rotate-left"></i>
+        </div>
+        <div class="status-badge">
+            <i class="fas fa-spinner fa-spin"></i> Pending Admin Approval
+        </div>
+        <h1>Account Pending Verification</h1>
+        <p>
+            Your Organizer profile has been successfully submitted and is currently pending verification by our administration team. 
+            Once approved, you will receive a confirmation email and will be able to access your full organizer dashboard, create events, and manage tickets.
+        </p>
+        
+        <form action="/Account/Logout" method="post" style="display: inline;">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn-logout">
+                <i class="fas fa-right-from-bracket"></i> Sign Out
+            </button>
+        </form>
+
+        <div class="support-info">
+            Need help? Contact our support team at <a href="mailto:eventifypro.eg@gmail.com">eventifypro.eg@gmail.com</a>
+        </div>
+    </div>
+
+    <script>
+        // Check verification status every 10 seconds
+        setInterval(function() {
+            fetch('/Organizer/PendingApprovalStatus')
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.isVerified) {
+                        window.location.href = '/Dashboard/Organizer';
+                    }
+                })
+                .catch(err => console.error("Error checking verification status:", err));
+        }, 10000);
+    </script>
+</body>
+</html>

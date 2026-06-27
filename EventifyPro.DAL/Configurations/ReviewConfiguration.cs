@@ -39,6 +39,19 @@ public class ReviewConfiguration : IEntityTypeConfiguration<Review>
         builder.Property(r => r.UpdatedAt)
             .HasDefaultValue(null);
 
+        builder.Property(r => r.HiddenById)
+            .HasMaxLength(450)
+            .HasDefaultValue(null);
+
+        builder.Property(r => r.HiddenReason)
+            .HasMaxLength(500)
+            .HasDefaultValue(null);
+
+        builder.HasOne(r => r.HiddenBy)
+            .WithMany()
+            .HasForeignKey(r => r.HiddenById)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasOne(r => r.User)
             .WithMany(u => u.Reviews)
             .HasForeignKey(r => r.UserId)

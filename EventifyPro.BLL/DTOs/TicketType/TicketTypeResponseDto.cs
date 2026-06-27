@@ -66,7 +66,7 @@ public record TicketTypeResponseDto
     public DateTime? UpdatedAt { get; init; }
 
     /// <summary>
-    /// Gets a value indicating whether the ticket type is available for purchase.
-    /// </summary>
-    public bool IsAvailable => AvailableQuantity > 0;
+    public bool IsAvailable => AvailableQuantity > 0 
+        && (!SaleStartDate.HasValue || DateTime.UtcNow >= SaleStartDate.Value)
+        && (!SaleEndDate.HasValue || DateTime.UtcNow <= SaleEndDate.Value);
 }

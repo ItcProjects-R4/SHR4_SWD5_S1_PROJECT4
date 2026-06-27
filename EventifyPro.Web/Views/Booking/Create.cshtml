@@ -1,0 +1,27 @@
+@model EventifyPro.Web.ViewModels.Booking.BookingCreateViewModel
+@{
+    ViewData["Title"] = "Creating Booking...";
+    var bookUrl = $"/Events/Book?id={Model.EventId}" + (Model.WaitingListId.HasValue ? $"&waitingListId={Model.WaitingListId.Value}" : "");
+}
+
+<div class="bg-animation">
+    <div class="bg-blob blob-1"></div>
+    <div class="bg-blob blob-2"></div>
+    <div class="bg-blob blob-3"></div>
+</div>
+
+<div class="container" style="padding-top: 100px; padding-bottom: 100px; text-align: center;">
+    <div class="checkout-card" style="max-width: 500px; margin: 0 auto; padding: 40px;">
+        <i class="fas fa-spinner fa-spin" style="font-size: 48px; color: var(--primary); margin-bottom: 24px;"></i>
+        <h2 style="font-weight: 700; margin-bottom: 12px;">Redirecting to Booking Wizard</h2>
+        <p style="color: var(--text-light); margin-bottom: 24px;">We are opening the ticket selection window for your event. Please wait...</p>
+        
+        <a href="@bookUrl" class="btn-primary btn-full">
+            Click here if not redirected <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+</div>
+
+<script>
+    window.location.href = "@Html.Raw(bookUrl)";
+</script>

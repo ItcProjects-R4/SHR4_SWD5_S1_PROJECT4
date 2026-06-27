@@ -1,0 +1,536 @@
+@using Eventify.Domain.Enums
+@model IEnumerable<EventifyPro.BLL.DTOs.Notification.NotificationDto>
+
+@functions {
+    string GetRelativeTime(DateTime createdAt)
+    {
+        var timeSpan = DateTime.UtcNow - createdAt;
+        if (timeSpan.TotalMinutes < 1) return "Just now";
+        if (timeSpan.TotalMinutes < 60) return $"{(int)timeSpan.TotalMinutes}m ago";
+        if (timeSpan.TotalHours < 24) return $"{(int)timeSpan.TotalHours}h ago";
+        if (timeSpan.TotalDays < 7) return $"{(int)timeSpan.TotalDays}d ago";
+        return createdAt.ToString("MMM dd");
+    }
+}
+
+<div class="notification-menu">
+    <div id="notification-antiforgery-container" style="display: none;">
+        @Html.AntiForgeryToken()
+    </div>
+    <button type="button" class="notification-btn" aria-label="Notifications" id="notificationBellBtn">
+        <i class="fa-solid fa-bell"></i>
+        @if (ViewBag.UnreadCount > 0)
+        {
+            <span class="notification-badge">@ViewBag.UnreadCount</span>
+        }
+    </button>
+    <div class="notification-dropdown">
+        <div class="notification-dropdown-header">
+            <div>
+                <strong>Notifications</strong>
+                <span>Latest updates</span>
+            </div>
+            @if (ViewBag.UnreadCount > 0)
+            {
+                <form action="/Notifications/MarkAllAsRead" method="post" style="margin: 0;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="mark-all-read-btn">Mark all as read</button>
+                </form>
+            }
+        </div>
+        
+        <div class="notification-items-list">
+            @if (!Model.Any())
+            {
+                <div class="no-notifications">
+                    <i class="fa-regular fa-bell-slash"></i>
+                    <p>No notifications yet</p>
+                </div>
+            }
+            else
+            {
+                @foreach (var notification in Model)
+                {
+                    string iconClass = "fa-solid fa-bell";
+                    string typeClass = "notif-default";
+                    
+                    switch (notification.Type)
+                    {
+                        case NotificationType.BookingConfirmed:
+                            iconClass = "fa-solid fa-circle-check";
+                            typeClass = "notif-success";
+                            break;
+                        case NotificationType.PaymentFailed:
+                            iconClass = "fa-solid fa-circle-xmark";
+                            typeClass = "notif-danger";
+                            break;
+                        case NotificationType.EventTomorrow:
+                            iconClass = "fa-solid fa-calendar-day";
+                            typeClass = "notif-warning";
+                            break;
+                        case NotificationType.TicketScanned:
+                            iconClass = "fa-solid fa-qrcode";
+                            typeClass = "notif-info";
+                            break;
+                        case NotificationType.ReviewReminder:
+                            iconClass = "fa-solid fa-star";
+                            typeClass = "notif-amber";
+                            break;
+                        case NotificationType.RefundStatus:
+                            iconClass = "fa-solid fa-arrow-rotate-left";
+                            typeClass = "notif-purple";
+                            break;
+                        case NotificationType.Maintenance:
+                            iconClass = "fa-solid fa-screwdriver-wrench";
+                            typeClass = "notif-danger";
+                            break;
+                        case NotificationType.SystemUpdate:
+                            iconClass = "fa-solid fa-circle-up";
+                            typeClass = "notif-success";
+                            break;
+                        case NotificationType.CustomAlert:
+                            iconClass = "fa-solid fa-triangle-exclamation";
+                            typeClass = "notif-warning";
+                            break;
+                    }
+
+                    <a href="javascript:void(0);" data-notification-id="@notification.Id" class="notification-item @(notification.IsRead ? "" : "unread") @typeClass">
+                        <div class="notif-icon-wrapper">
+                            <i class="@iconClass"></i>
+                        </div>
+                        <div class="notif-content">
+                            <div class="notif-title-row">
+                                <span class="notif-title">@notification.Title</span>
+                                <span class="notif-time">@GetRelativeTime(notification.CreatedAt)</span>
+                            </div>
+                            <p class="notif-msg">@notification.Message</p>
+                        </div>
+                        @if (!notification.IsRead)
+                        {
+                            <span class="unread-dot"></span>
+                        }
+                    </a>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Dropdown wrapper positioning */
+    .notification-menu {
+        position: relative;
+        display: inline-block;
+    }
+
+    /* Bell Button */
+    .notification-btn {
+        background: var(--soft-purple, #f5f3ff);
+        border: 1px solid var(--border, #e5e7eb);
+        color: var(--primary, #5b21b6);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        transition: var(--transition, all 0.4s cubic-bezier(0.4, 0, 0.2, 1));
+        position: relative;
+        outline: none;
+    }
+
+    .notification-btn:hover {
+        background: var(--primary, #5b21b6);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
+    }
+
+    /* Notification Badge */
+    .notification-badge {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        background-color: var(--error, #ef4444);
+        color: white;
+        border-radius: 50%;
+        padding: 2px 6px;
+        font-size: 10px;
+        font-weight: 700;
+        border: 2px solid white;
+        line-height: 1;
+        box-shadow: 0 2px 5px rgba(239, 68, 68, 0.3);
+    }
+
+    /* Dropdown Container */
+    .notification-dropdown {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 12px);
+        width: 360px !important;
+        background: white;
+        border-radius: 16px;
+        border: 1px solid var(--border, #e5e7eb) !important;
+        box-shadow: 0 10px 30px rgba(91, 33, 182, 0.12) !important;
+        z-index: 1000;
+        display: none;
+        transform-origin: top right;
+        animation: scaleUp 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+        padding: 0 !important;
+        pointer-events: none;
+    }
+
+    .notification-dropdown.active {
+        display: block;
+        pointer-events: auto;
+    }
+
+    @@keyframes scaleUp {
+        from { transform: scale(0.95); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+
+    /* Mobile responsive dropdown */
+    @@media (max-width: 480px) {
+        .notification-dropdown {
+            position: fixed;
+            right: 12px;
+            left: 12px;
+            top: 75px;
+            bottom: auto;
+            width: auto !important;
+            max-width: calc(100vw - 24px);
+            max-height: 70vh;
+            border-radius: 16px;
+        }
+    }
+
+    /* Header styling */
+    .notification-dropdown-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px !important;
+        border-bottom: 1px solid var(--border, #e5e7eb);
+        background: white;
+    }
+
+    .notification-dropdown-header div {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .notification-dropdown-header strong {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text, #1f1b2e);
+    }
+
+    .notification-dropdown-header span {
+        font-size: 11px;
+        color: var(--text-light, #6b7280);
+    }
+
+    .mark-all-read-btn {
+        background: none;
+        border: none;
+        color: var(--primary, #5b21b6);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 0;
+        transition: var(--transition, all 0.3s cubic-bezier(0.4, 0, 0.2, 1));
+        text-decoration: none;
+        font-family: inherit;
+        outline: none;
+    }
+
+    .mark-all-read-btn:hover {
+        color: var(--primary-dark, #4c1d95);
+        text-decoration: underline;
+    }
+
+    /* Items List */
+    .notification-items-list {
+        max-height: 380px;
+        overflow-y: auto;
+    }
+
+    .notification-items-list::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .notification-items-list::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .notification-items-list::-webkit-scrollbar-thumb {
+        background: var(--light-purple, #ede9fe);
+        border-radius: 10px;
+    }
+
+    /* Notification Item */
+    .notification-item {
+        display: flex !important;
+        gap: 12px !important;
+        padding: 14px 20px !important;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+        position: relative;
+        text-decoration: none !important;
+        color: inherit !important;
+        transition: background-color 0.2s ease;
+        background-color: white;
+    }
+
+    .notification-item:last-child {
+        border-bottom: none;
+    }
+
+    .notification-item.unread {
+        background-color: rgba(124, 58, 237, 0.04) !important;
+    }
+
+    .notification-item:hover {
+        background-color: var(--soft-purple, #f5f3ff) !important;
+    }
+
+    /* Icon Styling */
+    .notif-icon-wrapper {
+        flex-shrink: 0;
+    }
+
+    .notif-icon-wrapper i {
+        width: 36px !important;
+        height: 36px !important;
+        font-size: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+    }
+
+    .notif-default .notif-icon-wrapper i {
+        background: rgba(91, 33, 182, 0.1) !important;
+        color: var(--primary, #5b21b6) !important;
+    }
+
+    .notif-success .notif-icon-wrapper i {
+        background: rgba(34, 197, 94, 0.1) !important;
+        color: #22c55e !important;
+    }
+    
+    .notif-danger .notif-icon-wrapper i {
+        background: rgba(239, 68, 68, 0.1) !important;
+        color: #ef4444 !important;
+    }
+
+    .notif-warning .notif-icon-wrapper i {
+        background: rgba(249, 115, 22, 0.1) !important;
+        color: #f97316 !important;
+    }
+
+    .notif-info .notif-icon-wrapper i {
+        background: rgba(59, 130, 246, 0.1) !important;
+        color: #3b82f6 !important;
+    }
+
+    .notif-amber .notif-icon-wrapper i {
+        background: rgba(234, 179, 8, 0.1) !important;
+        color: #eab308 !important;
+    }
+
+    .notif-purple .notif-icon-wrapper i {
+        background: rgba(168, 85, 247, 0.1) !important;
+        color: #a855f7 !important;
+    }
+
+    /* Content styling */
+    .notif-content {
+        flex-grow: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .notif-title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 8px;
+    }
+
+    .notif-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text, #1f1b2e);
+    }
+
+    .notif-time {
+        font-size: 11px;
+        color: var(--text-light, #6b7280);
+        font-weight: 500;
+        flex-shrink: 0;
+    }
+
+    .notif-msg {
+        font-size: 12px;
+        color: var(--text-light, #6b7280);
+        margin: 0;
+        line-height: 1.4;
+        font-weight: 400;
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    /* Unread indicator dot */
+    .unread-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: var(--primary, #5b21b6);
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        flex-shrink: 0;
+    }
+
+    /* Empty state */
+    .no-notifications {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+        color: var(--text-light, #6b7280);
+        text-align: center;
+    }
+
+    .no-notifications i {
+        font-size: 32px;
+        margin-bottom: 12px;
+        opacity: 0.5;
+        color: var(--primary, #5b21b6);
+    }
+
+    .no-notifications p {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 500;
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const bellBtn = document.getElementById("notificationBellBtn");
+        const dropdown = document.querySelector(".notification-dropdown");
+
+        if (bellBtn && dropdown) {
+            // Handle bell button click
+            bellBtn.addEventListener("click", function (e) {
+                e.stopPropagation();
+                e.preventDefault();
+                dropdown.classList.toggle("active");
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener("click", function (e) {
+                // Check if click is outside the notification menu
+                const notificationMenu = bellBtn.closest(".notification-menu");
+                if (notificationMenu && !notificationMenu.contains(e.target)) {
+                    dropdown.classList.remove("active");
+                }
+            }, true);
+
+            // Handle touch events for mobile devices
+            document.addEventListener("touchstart", function (e) {
+                const notificationMenu = bellBtn.closest(".notification-menu");
+                if (notificationMenu && !notificationMenu.contains(e.target)) {
+                    dropdown.classList.remove("active");
+                }
+            }, true);
+
+            // Close dropdown on escape key
+            document.addEventListener("keydown", function (e) {
+                if (e.key === "Escape" && dropdown.classList.contains("active")) {
+                    dropdown.classList.remove("active");
+                    bellBtn.focus();
+                }
+            });
+
+            // Handle notification item clicks
+            const notificationItems = dropdown.querySelectorAll(".notification-item");
+            notificationItems.forEach(item => {
+                item.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    
+                    const notifId = item.dataset.notificationId;
+                    const isUnread = item.classList.contains("unread");
+                    
+                    if (isUnread && notifId) {
+                        // Mark as read in the UI immediately
+                        item.classList.remove("unread");
+                        const unreadDot = item.querySelector(".unread-dot");
+                        if (unreadDot) {
+                            unreadDot.remove();
+                        }
+                        
+                        // Decrement badge count
+                        const badge = document.querySelector(".notification-badge");
+                        if (badge) {
+                            let count = parseInt(badge.innerText) || 0;
+                            if (count > 1) {
+                                badge.innerText = count - 1;
+                            } else {
+                                badge.remove(); // Remove badge entirely if count reaches 0
+                            }
+                        }
+
+                        // Send AJAX request to the backend
+                        const tokenContainer = document.getElementById("notification-antiforgery-container");
+                        const tokenInput = tokenContainer ? tokenContainer.querySelector('input[name="__RequestVerificationToken"]') : null;
+                        const verificationToken = tokenInput ? tokenInput.value : '';
+
+                        fetch(`/Notifications/MarkAsRead/${notifId}`, {
+                            method: "POST",
+                            headers: {
+                                "RequestVerificationToken": verificationToken,
+                                "Content-Type": "application/json"
+                            }
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                console.error("Failed to mark notification as read");
+                            }
+                        })
+                        .catch(err => console.error("Error marking notification as read:", err));
+                    }
+
+                    // Close dropdown after clicking on a notification
+                    setTimeout(() => {
+                        dropdown.classList.remove("active");
+                    }, 100);
+                });
+            });
+
+            // Prevent dropdown from closing when clicking inside it
+            dropdown.addEventListener("click", function (e) {
+                e.stopPropagation();
+            });
+
+            // Handle touch/tap on dropdown items
+            dropdown.addEventListener("touchend", function (e) {
+                if (e.target.closest(".notification-item")) {
+                    setTimeout(() => {
+                        dropdown.classList.remove("active");
+                    }, 100);
+                }
+            });
+        }
+    });
+</script>

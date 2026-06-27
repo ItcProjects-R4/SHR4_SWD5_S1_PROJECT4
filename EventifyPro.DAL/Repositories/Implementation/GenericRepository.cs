@@ -17,8 +17,18 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
     public async Task<T?> GetByIdAsync(object id, CancellationToken cancellationToken = default)
         => await _dbSet.FindAsync([id], cancellationToken);
 
-    public async Task<IReadOnlyList<T>> GetAllAsync(CancellationToken cancellationToken = default)
-        => await _dbSet.AsNoTracking().ToListAsync(cancellationToken);
+    public void SoftDelete(T entity)
+    {
+        if (entity is ISoftDelete softDeleteEntity)
+        {
+            softDeleteEntity.IsDeleted = true;
+            _context.Entry(entity).State = EntityState.Modified;
+        }
+        else
+        {
+            throw new InvalidOperationException($"Entity of type {typeof(T).Name} does not implement ISoftDelete.");
+        }
+    }
 
     public async Task<IReadOnlyList<T>> FindAsync(
         Expression<Func<T, bool>> predicate,

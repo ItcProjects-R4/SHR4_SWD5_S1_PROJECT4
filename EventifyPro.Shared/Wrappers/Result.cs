@@ -2,9 +2,9 @@ namespace Eventify.Shared.Wrappers;
 
 public class Result<T>
 {
-    public bool IsSuccess { get; private set; }
-    public T? Data { get; private set; }
-    public string? Error { get; private set; }
+    public bool IsSuccess { get; init; }
+    public T? Data { get; init; }
+    public string? Error { get; init; }
     public bool IsFailure => !IsSuccess;
 
     private Result(bool isSuccess, T? data, string? error)
@@ -34,8 +34,8 @@ public class Result<T>
 
 public class Result
 {
-    public bool IsSuccess { get; private set; }
-    public string? Error { get; private set; }
+    public bool IsSuccess { get; init; }
+    public string? Error { get; init; }
     public bool IsFailure => !IsSuccess;
 
     private Result(bool isSuccess, string? error)

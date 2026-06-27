@@ -73,6 +73,7 @@ public static class ErrorMessages
         public const string DuplicateTicketType = "Duplicate ticket types are not allowed in the same booking. Increase the quantity instead.";
         public const string QuantityMustBePositive = "Ticket quantity for each type must be greater than zero.";
         public const string ConcurrencyRetryExceeded = "Booking confirmation failed due to high traffic. Please try again.";
+        public const string DuplicateBooking = "You already have a confirmed booking for this event.";
     }
 
     public static class Payment

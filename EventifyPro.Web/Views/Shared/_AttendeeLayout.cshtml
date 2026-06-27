@@ -1,0 +1,394 @@
+@inject Microsoft.AspNetCore.Identity.UserManager<Eventify.Domain.Entities.ApplicationUser> UserManager
+@{
+    var user = await UserManager.GetUserAsync(User);
+    var fullName = user?.FullName ?? User.Identity?.Name ?? "Attendee";
+    var profileImg = user?.ProfileImageUrl;
+    var currentController = ViewContext.RouteData.Values["Controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["Action"]?.ToString();
+}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Eventify Pro</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="~/favicon.png?v=2" />
+    <link rel="icon" type="image/png" sizes="192x192" href="~/favicon.png?v=2" />
+
+    <link rel="stylesheet" href="~/css/style.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/attendee.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/ux-improvements.css" asp-append-version="true" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <style>
+        /* Toast Notifications */
+        #toast-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 999999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 420px;
+            width: calc(100% - 48px);
+        }
+        .toast-notification {
+            background: var(--white);
+            color: var(--text);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            transform: translateX(120%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+            opacity: 0;
+        }
+        .toast-notification.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        .toast-icon-wrapper {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        .toast-icon-wrapper.update {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+        .toast-icon-wrapper.cancel {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+        .toast-content {
+            flex-grow: 1;
+        }
+        .toast-title {
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--primary-dark);
+            margin-bottom: 4px;
+        }
+        .toast-message {
+            font-size: 13px;
+            color: var(--text-light);
+            line-height: 1.4;
+        }
+        .toast-close {
+            background: transparent;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 14px;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        .toast-close:hover {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link" style="position: absolute; top: -100px; left: 20px; background: var(--primary); color: white; padding: 10px 20px; z-index: 100000; transition: top 0.2s ease-in-out; font-weight: 700; border-radius: 0 0 10px 10px; text-decoration: none; box-shadow: var(--shadow-md);" onfocus="this.style.top='0'" onblur="this.style.top='-100px'">Skip to main content</a>
+
+    <div class="attendee-layout-wrapper">
+        <!-- Top Navigation Bar -->
+        <header class="attendee-top-bar">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <button class="mobile-toggle" id="sidebarToggle" aria-label="Toggle Navigation" style="background: none; border: none; color: var(--primary); font-size: 20px; cursor: pointer; padding: 8px; border-radius: 8px; transition: var(--transition); display: none; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <a href="/" class="attendee-logo-link">
+                    <span class="attendee-logo-text">Eventify<span>Pro</span></span>
+                </a>
+            </div>
+            
+            <div class="attendee-top-user">
+                @await Component.InvokeAsync("NotificationCenter")
+                <div class="top-user-info">
+                    <span class="top-user-name">@fullName</span>
+                    <span class="top-user-role">Attendee Portal</span>
+                </div>
+                @if (!string.IsNullOrEmpty(profileImg))
+                {
+                    <img src="@profileImg" alt="Profile" class="top-user-avatar" />
+                }
+                else
+                {
+                    <img src="https://api.dicebear.com/7.x/initials/svg?seed=@Uri.EscapeDataString(fullName)" alt="Profile" class="top-user-avatar" />
+                }
+            </div>
+        </header>
+
+        <!-- Main Body Area -->
+        <div class="attendee-main-container">
+            <!-- Sidebar -->
+            <aside class="attendee-sidebar">
+                <div class="sidebar-header-toggle" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px;">
+                    <span style="font-weight: 800; font-size: 14px; color: var(--primary-dark); text-transform: uppercase; letter-spacing: 0.5px;" class="menu-label">Menu</span>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="sidebarCollapse" aria-label="Collapse Sidebar" style="background: none; border: none; color: var(--text-light); cursor: pointer; font-size: 14px; padding: 4px; display: flex; align-items: center; justify-content: center; transition: var(--transition);">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <button class="mobile-toggle" id="sidebarClose" aria-label="Close Sidebar" style="display: none; background: none; border: none; color: var(--text-light); cursor: pointer; font-size: 16px; padding: 4px;">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+                <ul class="sidebar-menu-list">
+                    <li class="sidebar-menu-item">
+                        <a href="/Attendee/Index" class="sidebar-nav-link @(currentController == "Attendee" && currentAction == "Index" ? "active" : "")">
+                            <i class="fa-solid fa-chart-line"></i> <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="/Attendee/Profile" class="sidebar-nav-link @(currentController == "Attendee" && currentAction == "Profile" ? "active" : "")">
+                            <i class="fa-solid fa-user-pen"></i> <span>My Profile</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="/Ticket/MyTickets" class="sidebar-nav-link @(currentController == "Ticket" && currentAction == "MyTickets" ? "active" : "")">
+                            <i class="fa-solid fa-ticket"></i> <span>My Tickets</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="/Attendee/MyEvents" class="sidebar-nav-link @(currentController == "Attendee" && currentAction == "MyEvents" ? "active" : "")">
+                            <i class="fa-solid fa-calendar-check"></i> <span>My Events</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="/Booking" class="sidebar-nav-link @(currentController == "Booking" ? "active" : "")">
+                            <i class="fa-solid fa-calendar-days"></i> <span>My Bookings</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="/Attendee/SavedEvents" class="sidebar-nav-link @(currentController == "Attendee" && currentAction == "SavedEvents" ? "active" : "")">
+                            <i class="fa-solid fa-bookmark"></i> <span>Saved Events</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="/Events" class="sidebar-nav-link">
+                            <i class="fa-solid fa-magnifying-glass"></i> <span>Explore Events</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item" style="margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px;">
+                        <form id="logout-form" asp-controller="Account" asp-action="Logout" method="post" style="display: block; width: 100%; margin: 0;">
+                            @Html.AntiForgeryToken()
+                            <button type="button" class="sidebar-nav-link logout-btn-sidebar" onclick="openLogoutModal(event)" style="width: 100%; border: none; background: transparent; cursor: pointer; color: var(--error); text-align: left; justify-content: flex-start; gap: 12px; padding: 14px 18px; border-radius: 50px; font-weight: 600; font-family: inherit; transition: var(--transition);">
+                                <i class="fa-solid fa-right-from-bracket" style="color: var(--error);"></i> <span>Sign Out</span>
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </aside>
+
+            <!-- Workspace -->
+            <main class="attendee-workspace" id="main-content">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebarOverlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 999; opacity: 0; transition: opacity 0.3s ease;"></div>
+
+    <partial name="_Footer" />
+
+    <script src="~/js/ux-improvements.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+
+    <!-- Beautiful Logout Modal -->
+    <div id="logoutModal" class="logout-modal" style="display: none; position: fixed; z-index: 99999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(15, 23, 42, 0.45); backdrop-filter: blur(4px); align-items: center; justify-content: center; opacity: 0; transition: opacity 0.25s ease;">
+        <div class="logout-modal-content" style="background-color: var(--white); border-radius: 20px; padding: 30px; border: 1px solid var(--border); width: 90%; max-width: 400px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); transform: scale(0.9); transition: transform 0.25s ease; text-align: center;">
+            <div style="width: 56px; height: 56px; background-color: rgba(239, 68, 68, 0.1); color: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 18px auto; font-size: 24px;">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </div>
+            <h3 style="font-size: 18px; font-weight: 800; color: var(--primary-dark); margin: 0 0 8px 0;">Sign Out</h3>
+            <p style="font-size: 14px; color: var(--text-light); margin: 0 0 24px 0; line-height: 1.5;">Are you sure you want to log out of your Eventify Pro account?</p>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button type="button" class="btn-outline" onclick="closeLogoutModal()" style="flex: 1; justify-content: center; border-radius: 10px; font-weight: 600; font-size: 13.5px; height: 42px; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--text);">Cancel</button>
+                <button type="button" class="btn-primary" onclick="submitLogoutForm()" style="flex: 1; justify-content: center; border-radius: 10px; font-weight: 600; font-size: 13.5px; height: 42px; background: #ef4444; border-color: #ef4444; color: white; cursor: pointer; border: none;">Yes, Log out</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openLogoutModal(event) {
+            event.preventDefault();
+            const modal = document.getElementById('logoutModal');
+            const content = modal.querySelector('.logout-modal-content');
+            modal.style.display = 'flex';
+            // Force reflow
+            modal.offsetHeight;
+            modal.style.opacity = '1';
+            content.style.transform = 'scale(1)';
+        }
+
+        function closeLogoutModal() {
+            const modal = document.getElementById('logoutModal');
+            const content = modal.querySelector('.logout-modal-content');
+            modal.style.opacity = '0';
+            content.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 250);
+        }
+
+        function submitLogoutForm() {
+            document.getElementById('logout-form').submit();
+        }
+        
+        // Close modal when clicking outside of the content
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('logoutModal');
+            if (event.target === modal) {
+                closeLogoutModal();
+            }
+        });
+
+        // Attendee Sidebar collapsing and toggle logic
+        document.addEventListener("DOMContentLoaded", () => {
+            // Check for collapsed state in localStorage on page load
+            if (localStorage.getItem('attendee-sidebar-collapsed') === 'true') {
+                document.querySelector('.attendee-main-container')?.classList.add('collapsed');
+                document.querySelector('.attendee-sidebar')?.classList.add('collapsed');
+                
+                const icon = document.getElementById('sidebarCollapse')?.querySelector('i');
+                if (icon) {
+                    icon.className = 'fa-solid fa-chevron-right';
+                }
+            }
+
+            // Mobile toggle
+            document.getElementById('sidebarToggle')?.addEventListener('click', function() {
+                document.querySelector('.attendee-sidebar')?.classList.add('active');
+                const overlay = document.getElementById('sidebarOverlay');
+                if (overlay) {
+                    overlay.style.display = 'block';
+                    // Force reflow
+                    overlay.offsetHeight;
+                    overlay.style.opacity = '1';
+                }
+            });
+
+            const closeSidebar = function() {
+                document.querySelector('.attendee-sidebar')?.classList.remove('active');
+                const overlay = document.getElementById('sidebarOverlay');
+                if (overlay) {
+                    overlay.style.opacity = '0';
+                    setTimeout(() => {
+                        overlay.style.display = 'none';
+                    }, 300);
+                }
+            };
+
+            document.getElementById('sidebarClose')?.addEventListener('click', closeSidebar);
+            document.getElementById('sidebarOverlay')?.addEventListener('click', closeSidebar);
+
+            // Desktop collapse toggle
+            document.getElementById('sidebarCollapse')?.addEventListener('click', function() {
+                const container = document.querySelector('.attendee-main-container');
+                const sidebar = document.querySelector('.attendee-sidebar');
+                if (container && sidebar) {
+                    const isCollapsed = container.classList.toggle('collapsed');
+                    sidebar.classList.toggle('collapsed');
+                    localStorage.setItem('attendee-sidebar-collapsed', isCollapsed);
+                    
+                    // Toggle chevron icon
+                    const icon = this.querySelector('i');
+                    if (icon) {
+                        if (isCollapsed) {
+                            icon.className = 'fa-solid fa-chevron-right';
+                        } else {
+                            icon.className = 'fa-solid fa-chevron-left';
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+
+    <div id="toast-container"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+    <script>
+        // SIGNALR LIVE NOTIFICATIONS
+        (function () {
+            const userId = '@(user?.Id ?? "")';
+            if (!userId) return;
+
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("/hubs/notification")
+                .configureLogging(signalR.LogLevel.Warning)
+                .withAutomaticReconnect()
+                .build();
+
+            connection.start()
+                .then(() => {
+                    console.log("[SignalR Hub] Attendee connected successfully!");
+                    connection.invoke("JoinAttendeeGroup", userId)
+                        .then(() => console.log("[SignalR Hub] Joined attendee group: attendee_" + userId.toLowerCase()))
+                        .catch(err => console.error("[SignalR Hub] Error joining attendee group: ", err));
+                })
+                .catch(err => console.error("[SignalR Hub] Connection failed: ", err.toString()));
+
+            connection.on("ReceiveEventUpdated", function (data) {
+                console.log("ReceiveEventUpdated:", data);
+                showToast('update', 'Event Updated 📅', data.message);
+            });
+
+            connection.on("ReceiveEventCancelled", function (data) {
+                console.log("ReceiveEventCancelled:", data);
+                showToast('cancel', 'Event Cancelled ⚠️', data.message);
+            });
+        })();
+
+        function showToast(type, title, message) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = `toast-notification ${type}`;
+
+            const icon = type === 'update' ? 'fa-calendar-alt' : 'fa-triangle-exclamation';
+            const iconClass = type === 'update' ? 'update' : 'cancel';
+
+            toast.innerHTML = `
+                <div class="toast-icon-wrapper ${iconClass}">
+                    <i class="fas ${icon}"></i>
+                </div>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+
+            container.appendChild(toast);
+
+            // Trigger reflow
+            toast.offsetHeight;
+            toast.classList.add('show');
+
+            // Auto remove after 6 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    toast.remove();
+                }, 400);
+            }, 6000);
+        }
+    </script>
+</body>
+</html>

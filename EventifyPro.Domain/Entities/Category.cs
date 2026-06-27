@@ -1,4 +1,4 @@
-﻿namespace Eventify.Domain.Entities;
+namespace Eventify.Domain.Entities;
 
 /// <summary>
 /// Represents a category for organizing events (e.g., Sports, Music, Technology).
@@ -9,7 +9,7 @@
 /// events by type. Each event is associated with one category, and categories can be managed
 /// by administrators.
 /// </remarks>
-public class Category
+public class Category : AuditableEntity
 {
     /// <summary>
     /// Gets or sets the unique identifier for the category.
@@ -24,9 +24,6 @@ public class Category
     public string Name { get; set; } = string.Empty;
 
     public string? Description { get; set; }
-
-    public DateTime CreatedAt { get; set; }
-    public DateTime? UpdatedAt { get; set; }
 
     // Navigation
     public ICollection<Event> Events { get; set; } = [];

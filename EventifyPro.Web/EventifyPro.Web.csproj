@@ -13,16 +13,22 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="ClosedXML" Version="0.105.0" />
+		<PackageReference Include="Hangfire.AspNetCore" Version="1.8.23" />
+		<PackageReference Include="Hangfire.SqlServer" Version="1.8.23" />
+		<PackageReference Include="LigerShark.WebOptimizer.Core" Version="3.0.477" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="8.*" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.*">
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
+		<PackageReference Include="Microsoft.AspNetCore.OutputCaching.StackExchangeRedis" Version="8.*" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="wwwroot\Images\Attendee\" />
-	  <Folder Include="wwwroot\Images\Event\" />
-	  <Folder Include="wwwroot\Images\Organizer\" />
+		<None Update="libwkhtmltox.dll">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
 	</ItemGroup>
 
 </Project>

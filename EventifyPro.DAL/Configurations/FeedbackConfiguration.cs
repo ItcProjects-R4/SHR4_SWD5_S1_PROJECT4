@@ -30,6 +30,15 @@ public class FeedbackConfiguration : IEntityTypeConfiguration<Feedback>
         builder.Property(f => f.ApprovedAt)
             .HasDefaultValue(null);
 
+        builder.Property(f => f.ApprovedById)
+            .HasMaxLength(450)
+            .HasDefaultValue(null);
+
+        builder.HasOne(f => f.ApprovedBy)
+            .WithMany()
+            .HasForeignKey(f => f.ApprovedById)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasIndex(f => f.IsApproved)
             .HasDatabaseName("IX_Feedback_IsApproved");
 

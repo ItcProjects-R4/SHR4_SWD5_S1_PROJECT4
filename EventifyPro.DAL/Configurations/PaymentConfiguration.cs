@@ -43,6 +43,11 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .HasMaxLength(300)
             .HasColumnType("nvarchar(300)");
 
+        builder.Property(p => p.Currency)
+            .IsRequired()
+            .HasMaxLength(10)
+            .HasDefaultValue("EGP");
+
         builder.Property(p => p.PaymentDate)
             .IsRequired()
             .HasDefaultValueSql("GETUTCDATE()");

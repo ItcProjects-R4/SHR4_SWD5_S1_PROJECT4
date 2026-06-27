@@ -23,7 +23,10 @@ public class UnitOfWork : IUnitOfWork, IDisposable
     private IWaitingListRepository? _waitingListRepository;
     private IScanLogRepository? _scanLogRepository;
     private IOutboxMessageRepository? _outboxMessageRepository;
+    private ISavedEventRepository? _savedEventRepository;
+    private INotificationRepository? _notificationRepository;
     private IGenericRepository<ApplicationUser>? _userRepository;
+    private IGenericRepository<OrganizerProfile>? _organizerProfileRepository;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="UnitOfWork"/> class.
@@ -179,6 +182,30 @@ public class UnitOfWork : IUnitOfWork, IDisposable
     }
 
     /// <summary>
+    /// Gets the repository for SavedEvent entities.
+    /// </summary>
+    public ISavedEventRepository SavedEvents
+    {
+        get
+        {
+            _savedEventRepository ??= new SavedEventRepository(_dbContext);
+            return _savedEventRepository;
+        }
+    }
+
+    /// <summary>
+    /// Gets the repository for Notification entities.
+    /// </summary>
+    public INotificationRepository Notifications
+    {
+        get
+        {
+            _notificationRepository ??= new NotificationRepository(_dbContext);
+            return _notificationRepository;
+        }
+    }
+
+    /// <summary>
     /// Gets the repository for ApplicationUser entities.
     /// </summary>
     public IGenericRepository<ApplicationUser> Users
@@ -187,6 +214,15 @@ public class UnitOfWork : IUnitOfWork, IDisposable
         {
             _userRepository ??= new GenericRepository<ApplicationUser>(_dbContext);
             return _userRepository;
+        }
+    }
+
+    public IGenericRepository<OrganizerProfile> OrganizerProfiles
+    {
+        get
+        {
+            _organizerProfileRepository ??= new GenericRepository<OrganizerProfile>(_dbContext);
+            return _organizerProfileRepository;
         }
     }
 
@@ -216,21 +252,27 @@ public class UnitOfWork : IUnitOfWork, IDisposable
     /// </summary>
     public async Task RollbackAsync(CancellationToken cancellationToken = default)
     {
-        foreach (var entry in _dbContext.ChangeTracker.Entries())
+        var currentTransaction = _dbContext.Database.CurrentTransaction;
+        if (currentTransaction != null)
         {
-            switch (entry.State)
+            await currentTransaction.RollbackAsync(cancellationToken);
+        }
+        else
+        {
+            foreach (var entry in _dbContext.ChangeTracker.Entries())
             {
-                case EntityState.Modified:
-                case EntityState.Deleted:
-                    entry.Reload();
-                    break;
-                case EntityState.Added:
-                    entry.State = EntityState.Detached;
-                    break;
+                switch (entry.State)
+                {
+                    case EntityState.Modified:
+                    case EntityState.Deleted:
+                        entry.Reload();
+                        break;
+                    case EntityState.Added:
+                        entry.State = EntityState.Detached;
+                        break;
+                }
             }
         }
-
-        await Task.CompletedTask;
     }
 
     /// <summary>

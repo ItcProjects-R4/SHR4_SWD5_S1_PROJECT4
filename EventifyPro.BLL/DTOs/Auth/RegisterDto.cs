@@ -43,4 +43,12 @@ public class RegisterDto
     /// </summary>
     [Required]
     public string Role { get; set; } = string.Empty;
+
+    // Organization details (optional, only for Organizer role)
+    public string? OrganizationName { get; set; }
+    public string? BusinessPhone { get; set; }
+    public string? WebsiteUrl { get; set; }
+    public string? CommercialRegister { get; set; }
+    public string? TaxNumber { get; set; }
+    public string? LogoUrl { get; set; }
 }

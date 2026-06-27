@@ -19,4 +19,10 @@ public class DummyPaymentService : IPaymentService
 
     public Task<Result<PaymentResultDto>> HandlePaymobCallbackAsync(IDictionary<string, string> callbackData, string hmac, CancellationToken cancellationToken = default) => 
         throw new NotImplementedException();
+
+    public Task<Result<PaymentResultDto>> HandleRedirectCallbackAsync(int paymentId, string transactionId, string hmac, CancellationToken cancellationToken = default) =>
+        throw new NotImplementedException();
+
+    public Task<Result<PaymentResultDto>> HandleRedirectCallbackAsync(string transactionId, IDictionary<string, string> redirectData, string hmac, CancellationToken cancellationToken = default) => 
+        throw new NotImplementedException();
 }

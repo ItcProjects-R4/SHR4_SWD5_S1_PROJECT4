@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace EventifyPro.Web.ViewModels.Event;
 
 public class EventSearchViewModel

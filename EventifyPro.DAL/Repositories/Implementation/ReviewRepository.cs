@@ -96,6 +96,7 @@ public class ReviewRepository : GenericRepository<Review>, IReviewRepository
         }
 
         return await _dbSet
+            .AsNoTracking()
             .Where(r => r.UserId == userId && r.EventId == eventId)
             .Include(r => r.User)
             .Include(r => r.Event)

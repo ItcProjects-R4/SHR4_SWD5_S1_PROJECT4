@@ -54,4 +54,9 @@ public record TicketResponseDto
     /// Gets or sets the date and time when the ticket was created.
     /// </summary>
     public DateTime CreatedAt { get; init; }
+
+    public string EventTitle { get; init; } = string.Empty;
+    public DateTime EventStartDate { get; init; }
+    public DateTime EventEndDate { get; init; }
+    public string BookingStatus { get; init; } = string.Empty;
 }

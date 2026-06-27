@@ -128,4 +128,13 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.querySelector('form').addEventListener('submit', function (e) {
+            if ($(this).valid()) {
+                var btn = this.querySelector('.btn-submit-enhanced');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting Review...';
+            }
+        });
+    </script>
 }

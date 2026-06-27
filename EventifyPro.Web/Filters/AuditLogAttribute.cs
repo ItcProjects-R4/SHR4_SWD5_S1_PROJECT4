@@ -1,18 +1,10 @@
-using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using System;
-using System.IO;
-using System.Security.Claims;
-using System.Text.Json;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
-
 namespace EventifyPro.Web.Filters
 {
     [AttributeUsage(AttributeTargets.Method)]
     public class AuditLogAttribute : ActionFilterAttribute
     {
+        private static readonly SemaphoreSlim _fileLock = new(1, 1);
+
         public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
             var user = context.HttpContext.User;
@@ -23,43 +15,89 @@ namespace EventifyPro.Web.Filters
             var method = context.HttpContext.Request.Method;
 
             var logger = context.HttpContext.RequestServices.GetService<ILogger<AuditLogAttribute>>();
-            logger?.LogInformation("AUDIT START: User {Username} ({UserId}) is executing action {ActionName} via {Method} at {RequestPath}",
-                username, userId, actionName, method, requestPath);
+            logger?.LogInformation("AUDIT: User {Username} executing {ActionName}", username, actionName);
 
             var executedContext = await next();
 
             var status = executedContext.Exception == null ? "Success" : "Failed";
-            logger?.LogInformation("AUDIT END: Action {ActionName} completed with status: {Status}", actionName, status);
 
+            // 1. Log to Database
+            var dbContext = context.HttpContext.RequestServices.GetService<EventifyDbContext>();
+            if (dbContext != null)
+            {
+                try
+                {
+                    string actionParams = string.Empty;
+                    try
+                    {
+                        actionParams = JsonSerializer.Serialize(context.ActionArguments);
+                    }
+                    catch (Exception)
+                    {
+                        actionParams = "Could not serialize parameters.";
+                    }
+
+                    var dbAuditLog = new AuditLog
+                    {
+                        TableName = context.Controller.GetType().Name,
+                        Action = context.ActionDescriptor.RouteValues["action"] ?? "Unknown",
+                        EntityId = string.Empty,
+                        OldValues = actionParams,
+                        NewValues = executedContext.Exception != null ? $"Error: {executedContext.Exception.Message}" : "Success",
+                        UserId = userId != "Anonymous" ? userId : null,
+                        IpAddress = context.HttpContext.Connection.RemoteIpAddress?.ToString(),
+                        UserAgent = context.HttpContext.Request.Headers["User-Agent"].ToString(),
+                        ChangedAt = DateTime.UtcNow
+                    };
+
+                    if (context.ActionArguments.TryGetValue("userId", out var targetId) && targetId != null)
+                    {
+                        dbAuditLog.EntityId = targetId.ToString() ?? string.Empty;
+                    }
+                    else if (context.ActionArguments.TryGetValue("id", out var idVal) && idVal != null)
+                    {
+                        dbAuditLog.EntityId = idVal.ToString() ?? string.Empty;
+                    }
+
+                    await dbContext.AuditLogs.AddAsync(dbAuditLog);
+                    await dbContext.SaveChangesAsync();
+                }
+                catch (Exception ex)
+                {
+                    logger?.LogError(ex, "Failed to write audit log to database.");
+                }
+            }
+
+            // 2. Log to Flat File
+            var auditEntry = new
+            {
+                Timestamp = DateTime.UtcNow,
+                UserId = userId,
+                Username = username,
+                Action = actionName,
+                Path = requestPath.ToString(),
+                Method = method,
+                Status = status,
+                Exception = executedContext.Exception?.Message
+            };
+
+            var json = JsonSerializer.Serialize(auditEntry) + Environment.NewLine;
+
+            await _fileLock.WaitAsync();
             try
             {
-                var webHostEnvironment = context.HttpContext.RequestServices.GetService<IWebHostEnvironment>();
-                var webRootPath = webHostEnvironment?.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-                var logsDir = Path.Combine(webRootPath, "uploads", "logs");
-                if (!Directory.Exists(logsDir))
-                {
-                    Directory.CreateDirectory(logsDir);
-                }
-
-                var logFilePath = Path.Combine(logsDir, "audit_log.json");
-                var auditEntry = new
-                {
-                    Timestamp = DateTime.UtcNow,
-                    UserId = userId,
-                    Username = username,
-                    Action = actionName,
-                    Path = requestPath.ToString(),
-                    Method = method,
-                    Status = status,
-                    Exception = executedContext.Exception?.Message
-                };
-
-                var json = JsonSerializer.Serialize(auditEntry) + Environment.NewLine;
+                var logsDir = Path.Combine(Directory.GetCurrentDirectory(), "App_Data", "logs");
+                Directory.CreateDirectory(logsDir);
+                var logFilePath = Path.Combine(logsDir, $"audit_{DateTime.UtcNow:yyyyMMdd}.log");
                 await File.AppendAllTextAsync(logFilePath, json);
             }
             catch (Exception ex)
             {
                 logger?.LogError(ex, "Failed to write audit log to file.");
+            }
+            finally
+            {
+                _fileLock.Release();
             }
         }
     }

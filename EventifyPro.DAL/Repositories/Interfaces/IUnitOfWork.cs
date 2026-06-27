@@ -80,9 +80,20 @@ public interface IUnitOfWork : IAsyncDisposable, IDisposable
     IOutboxMessageRepository OutboxMessages { get; }
 
     /// <summary>
+    /// Gets the repository for SavedEvent entities.
+    /// </summary>
+    ISavedEventRepository SavedEvents { get; }
+
+    /// <summary>
+    /// Gets the repository for Notification entities.
+    /// </summary>
+    INotificationRepository Notifications { get; }
+
+    /// <summary>
     /// Gets the repository for ApplicationUser entities.
     /// </summary>
     IGenericRepository<ApplicationUser> Users { get; }
+    IGenericRepository<OrganizerProfile> OrganizerProfiles { get; }
 
     /// <summary>
     /// Saves all changes made in all repositories to the database in a single transaction.

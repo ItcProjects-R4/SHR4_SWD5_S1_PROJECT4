@@ -22,4 +22,22 @@ public record PaymentInitDto
     /// </summary>
     [Required, StringLength(50)]
     public string Method { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the payment currency (e.g., EGP, USD).
+    /// </summary>
+    [Required, StringLength(10)]
+    public string Currency { get; init; } = "EGP";
+
+    /// <summary>
+    /// Optional success redirect URL passed to Paymob so the user is redirected here after payment.
+    /// If not set, Paymob uses the dashboard-configured success URL.
+    /// </summary>
+    public string? SuccessUrl { get; init; }
+
+    /// <summary>
+    /// Optional failure redirect URL passed to Paymob so the user is redirected here on payment failure.
+    /// If not set, Paymob uses the dashboard-configured failure URL.
+    /// </summary>
+    public string? FailureUrl { get; init; }
 }

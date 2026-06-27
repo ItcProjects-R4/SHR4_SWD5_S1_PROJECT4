@@ -5,183 +5,11 @@
     ViewData["Title"] = "Eventify Pro - Smart Event Management Platform";
 }
 
+<link rel="stylesheet" href="~/css/home-landing-custom.css" asp-append-version="true" />
+
 @if (Model.IsAuthenticated)
 {
     <!-- Dynamic Attendee Dashboard -->
-    <style>
-        /* Dashboard Premium Styles */
-        .dashboard-header {
-            background: var(--gradient);
-            border-radius: 30px;
-            padding: 50px;
-            color: var(--white);
-            margin-top: 30px;
-            margin-bottom: 40px;
-            position: relative;
-            overflow: hidden;
-            box-shadow: var(--shadow-lg);
-        }
-
-        .dashboard-header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
-            z-index: 1;
-        }
-
-        .dashboard-header-content {
-            position: relative;
-            z-index: 2;
-        }
-
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
-            margin-bottom: 50px;
-        }
-
-        @@media (max-width: 768px) {
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .dashboard-stat-card {
-            background: var(--white);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 24px;
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            box-shadow: var(--shadow-sm);
-            transition: var(--transition);
-        }
-
-        .dashboard-stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-md);
-            border-color: var(--accent);
-        }
-
-        .stat-card-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 16px;
-            background: var(--soft-purple);
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-        }
-
-        .stat-card-details h3 {
-            font-size: 28px;
-            font-weight: 800;
-            color: var(--text);
-            line-height: 1.2;
-        }
-
-        .stat-card-details p {
-            font-size: 13px;
-            color: var(--text-light);
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .dashboard-section-title {
-            font-size: 24px;
-            font-weight: 800;
-            margin-bottom: 24px;
-            color: var(--text);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        /* Reusable Grid for dashboard events list */
-        .dash-events-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 24px;
-            margin-bottom: 40px;
-        }
-
-        .dash-event-card {
-            background: var(--white);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: var(--shadow-sm);
-            transition: var(--transition);
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-
-        .dash-event-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--accent);
-            box-shadow: var(--shadow-md);
-        }
-
-        .dash-event-img {
-            height: 150px;
-            background-size: cover;
-            background-position: center;
-            position: relative;
-        }
-
-        .dash-event-fallback {
-            height: 150px;
-            background: var(--gradient);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 40px;
-        }
-
-        .dash-event-body {
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            flex-grow: 1;
-        }
-
-        .dash-event-title {
-            font-size: 16px;
-            font-weight: 700;
-            margin-bottom: 10px;
-            line-height: 1.4;
-        }
-
-        .dash-event-meta {
-            font-size: 12px;
-            color: var(--text-light);
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            margin-bottom: 16px;
-        }
-
-        .dash-event-meta span {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .dash-event-meta i {
-            color: var(--primary);
-        }
-    </style>
 
     <div class="container" style="padding-top: 120px; padding-bottom: 60px;">
         <!-- Welcome banner -->
@@ -245,7 +73,7 @@
                             <div>
                                 <h4 class="dash-event-title">@ev.Title</h4>
                                 <div class="dash-event-meta">
-                                    <span><i class="far fa-calendar-alt"></i> @ev.StartDate.ToString("MMM dd, yyyy @ hh:mm tt")</span>
+                                    <span><i class="far fa-calendar-alt"></i> @ev.StartDate.ToEgyptTime().ToString("MMM dd, yyyy @ hh:mm tt")</span>
                                     <span><i class="fas fa-map-marker-alt"></i> @ev.City</span>
                                 </div>
                             </div>
@@ -316,39 +144,74 @@ else
                 </div>
                 <div class="hero-stats">
                     <div class="stat-item">
-                        <h3 class="counter" data-target="50000">0</h3>
+                        <h3 class="counter" data-target="@Model.TotalTicketsSold">0</h3>
                         <p>Tickets Sold</p>
                     </div>
                     <div class="stat-divider"></div>
                     <div class="stat-item">
-                        <h3 class="counter" data-target="2500">0</h3>
+                        <h3 class="counter" data-target="@Model.TotalActiveOrganizers">0</h3>
                         <p>Active Organizers</p>
                     </div>
                     <div class="stat-divider"></div>
                     <div class="stat-item">
-                        <h3 class="counter" data-target="850">0</h3>
+                        <h3 class="counter" data-target="@Model.TotalSuccessfulEvents">0</h3>
                         <p>Successful Events</p>
                     </div>
                 </div>
             </div>
             <div class="hero-visual">
-                <div class="hero-card card-main">
-                    <div class="card-image">
-                        <i class="fas fa-music"></i>
-                        <div class="card-tag">VIP</div>
-                    </div>
-                    <div class="card-content">
-                        <h4>Summer Music Festival 2026</h4>
-                        <div class="card-info">
-                            <span><i class="fas fa-calendar"></i> June 15</span>
-                            <span><i class="fas fa-map-marker-alt"></i> Cairo</span>
+                @if (Model.HeroEvent != null)
+                {
+                    <div class="hero-card card-main">
+                        <div class="card-image" style="background-image: url('@(string.IsNullOrEmpty(Model.HeroEvent.ImageUrl) ? "" : Model.HeroEvent.ImageUrl)'); background-size: cover; background-position: center; display: flex; align-items: flex-end;">
+                            @if (string.IsNullOrEmpty(Model.HeroEvent.ImageUrl))
+                            {
+                                <i class="fas fa-calendar-alt fallback-icon" style="color: var(--white); font-size: 3rem; margin: auto;"></i>
+                            }
+                            <div class="card-tag">@(string.IsNullOrEmpty(Model.HeroEvent.CategoryName) ? "Featured" : Model.HeroEvent.CategoryName)</div>
                         </div>
-                        <div class="card-footer">
-                            <span class="price">$50</span>
-                            <button class="btn-book">Book Now</button>
+                        <div class="card-content">
+                            <h4 title="@Model.HeroEvent.Title">@Model.HeroEvent.Title</h4>
+                            <div class="card-info">
+                                <span><i class="fas fa-calendar"></i> @Model.HeroEvent.StartDate.ToEgyptTime().ToString("MMM dd")</span>
+                                <span><i class="fas fa-map-marker-alt"></i> @Model.HeroEvent.City</span>
+                            </div>
+                            <div class="card-footer">
+                                <span class="price">
+                                    @if (Model.HeroEvent.MinPrice > 0)
+                                    {
+                                        @($"EGP {Model.HeroEvent.MinPrice:N0}")
+                                    }
+                                    else
+                                    {
+                                        @("Free")
+                                    }
+                                </span>
+                                <a asp-controller="Events" asp-action="Details" asp-route-id="@Model.HeroEvent.Id" class="btn-book" style="text-decoration: none; text-align: center; display: inline-flex; align-items: center; justify-content: center;">Book Now</a>
+                            </div>
                         </div>
                     </div>
-                </div>
+                }
+                else
+                {
+                    <div class="hero-card card-main">
+                        <div class="card-image">
+                            <i class="fas fa-music"></i>
+                            <div class="card-tag">VIP</div>
+                        </div>
+                        <div class="card-content">
+                            <h4>Summer Music Festival 2026</h4>
+                            <div class="card-info">
+                                <span><i class="fas fa-calendar"></i> June 15</span>
+                                <span><i class="fas fa-map-marker-alt"></i> Cairo</span>
+                            </div>
+                            <div class="card-footer">
+                                <span class="price">$50</span>
+                                <button class="btn-book">Book Now</button>
+                            </div>
+                        </div>
+                    </div>
+                }
                 <div class="hero-card card-floating card-1">
                     <i class="fas fa-qrcode"></i>
                     <div>
@@ -415,11 +278,11 @@ else
                                 <div class="event-info-list">
                                     <div class="event-info-item">
                                         <i class="far fa-calendar-alt"></i>
-                                        <span>@ev.StartDate.ToString("MMM dd, yyyy")</span>
+                                        <span>@ev.StartDate.ToEgyptTime().ToString("MMM dd, yyyy")</span>
                                     </div>
                                     <div class="event-info-item">
                                         <i class="far fa-clock"></i>
-                                        <span>@ev.StartDate.ToString("hh:mm tt")</span>
+                                        <span>@ev.StartDate.ToEgyptTime().ToString("hh:mm tt")</span>
                                     </div>
                                     <div class="event-info-item">
                                         <i class="fas fa-map-marker-alt"></i>
@@ -469,292 +332,7 @@ else
         </div>
     </section>
 
-    <style>
-        /* Event Cards Grid & Styling (Unification) */
-        .events-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 30px;
-            margin-top: 40px;
-            margin-bottom: 30px;
-        }
 
-        .event-card {
-            background: var(--white);
-            border: 1px solid rgba(124, 58, 237, 0.08);
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: var(--shadow-sm);
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.15), box-shadow 0.4s ease, border-color 0.4s ease;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            position: relative;
-            text-align: left;
-        }
-
-        .event-card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 15px 30px rgba(91, 33, 182, 0.1);
-            border-color: rgba(124, 58, 237, 0.2);
-        }
-
-        .event-card-image-wrapper {
-            position: relative;
-            height: 160px;
-            overflow: hidden;
-            background: var(--soft-purple);
-        }
-
-        .event-card-image {
-            height: 100%;
-            width: 100%;
-            background-size: cover;
-            background-position: center;
-            transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
-        }
-
-        .event-card-fallback-bg {
-            height: 100%;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, var(--soft-purple) 0%, rgba(124, 58, 237, 0.1) 100%);
-        }
-
-        .fallback-icon {
-            color: var(--primary);
-            font-size: 45px;
-        }
-
-        .event-card:hover .event-card-image {
-            transform: scale(1.06);
-        }
-
-        .event-badge {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            background: rgba(91, 33, 182, 0.95);
-            backdrop-filter: blur(8px);
-            color: var(--white);
-            padding: 4px 10px;
-            border-radius: 30px;
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
-            z-index: 2;
-            text-transform: uppercase;
-        }
-
-        .event-card-body {
-            padding: 20px 24px;
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-        }
-
-        .event-category-label {
-            font-size: 10.5px;
-            font-weight: 700;
-            color: var(--primary-light);
-            text-transform: uppercase;
-            margin-bottom: 6px;
-            letter-spacing: 0.8px;
-        }
-
-        .event-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--text);
-            margin-bottom: 12px;
-            line-height: 1.4;
-            transition: var(--transition);
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            height: 50px;
-        }
-
-        .event-card:hover .event-title {
-            color: var(--primary);
-        }
-
-        .event-info-list {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px 16px;
-            margin-bottom: 20px;
-            font-size: 13px;
-            color: var(--text-light);
-        }
-
-        .event-info-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .event-info-item i {
-            color: var(--primary-light);
-            width: 14px;
-            font-size: 13px;
-        }
-
-        .event-card-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-top: 1px solid var(--border);
-            padding-top: 16px;
-            margin-top: auto;
-        }
-
-        .event-price-box {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .price-label {
-            font-size: 9.5px;
-            color: var(--text-light);
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 2px;
-        }
-
-        .event-price {
-            font-size: 13.5px;
-            font-weight: 600;
-            color: var(--text);
-            display: flex;
-            align-items: baseline;
-        }
-
-        .price-currency {
-            font-size: 10px;
-            font-weight: 700;
-            color: var(--text-light);
-            margin-right: 3px;
-        }
-
-        .price-amount {
-            font-size: 17px;
-            font-weight: 800;
-            color: var(--primary);
-            line-height: 1;
-        }
-
-        .price-free {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--success);
-        }
-
-        .btn-card-action {
-            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%) !important;
-            color: var(--white) !important;
-            border: none;
-            padding: 9px 18px;
-            border-radius: 50px;
-            font-size: 12.5px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: var(--transition);
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            text-decoration: none;
-            outline: none;
-            box-shadow: 0 4px 10px rgba(124, 58, 237, 0.12);
-        }
-
-        .btn-card-action:hover {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
-            color: var(--white) !important;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 18px rgba(91, 33, 182, 0.25);
-        }
-
-        .btn-card-action i {
-            font-size: 10px;
-            transition: transform 0.3s ease;
-        }
-
-        .btn-card-action:hover i {
-            transform: translateX(3px);
-        }
-
-        /* Explore Categories Section */
-        .explore-categories-section {
-            background: var(--white);
-            padding: 80px 0;
-            border-bottom: 1px solid var(--border);
-        }
-        .categories-chips-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 20px;
-            margin-top: 40px;
-        }
-        .home-category-card {
-            background: var(--soft-purple);
-            border: 1px solid rgba(124, 58, 237, 0.08);
-            border-radius: 16px;
-            padding: 24px;
-            text-align: center;
-            transition: var(--transition);
-            text-decoration: none;
-            color: var(--text);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 12px;
-            box-shadow: var(--shadow-xs);
-        }
-        .home-category-card:hover {
-            transform: translateY(-5px);
-            background: var(--white);
-            border-color: var(--primary-light);
-            box-shadow: 0 10px 20px rgba(124, 58, 237, 0.08);
-        }
-        .home-category-icon-wrapper {
-            width: 56px;
-            height: 56px;
-            background: var(--white);
-            color: var(--primary);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            box-shadow: var(--shadow-sm);
-            transition: var(--transition);
-        }
-        .home-category-card:hover .home-category-icon-wrapper {
-            background: var(--primary);
-            color: var(--white);
-            transform: scale(1.1);
-        }
-        .home-category-title {
-            font-size: 15px;
-            font-weight: 700;
-            margin: 0;
-            color: var(--text);
-        }
-        .home-category-count {
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--primary-light);
-            background: rgba(124, 58, 237, 0.08);
-            padding: 4px 10px;
-            border-radius: 30px;
-        }
-    </style>
 
     <section class="explore-categories-section">
         <div class="container">
@@ -1027,7 +605,7 @@ else
                                     </div>
                                     <div class="feedback-author-info">
                                         <h3>@feedback.DisplayName</h3>
-                                        <span>@feedback.CreatedAt.ToString("MMM dd, yyyy")</span>
+                                        <span>@feedback.CreatedAt.ToEgyptTime().ToString("MMM dd, yyyy")</span>
                                     </div>
                                 </div>
                             </article>
@@ -1133,386 +711,5 @@ else
 }
 
 @section Scripts {
-    <script>
-        const watchDemoBtn = document.getElementById("watchDemoBtn");
-        const demoModal = document.getElementById("demoModal");
-
-        const openDemoModal = () => {
-          if (!demoModal) return;
-
-          demoModal.classList.add("active");
-          demoModal.setAttribute("aria-hidden", "false");
-          document.body.classList.add("modal-open");
-        };
-
-        const closeDemoModal = () => {
-          if (!demoModal) return;
-
-          demoModal.classList.remove("active");
-          demoModal.setAttribute("aria-hidden", "true");
-          document.body.classList.remove("modal-open");
-        };
-
-        if (watchDemoBtn) {
-          watchDemoBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            openDemoModal();
-          });
-        }
-
-        document.querySelectorAll("[data-close-demo]").forEach((element) => {
-          element.addEventListener("click", closeDemoModal);
-        });
-
-        const featureDetails = {
-          "event-creation": {
-            icon: "fas fa-calendar-plus",
-            title: "Event Creation",
-            text: "Build a complete event page with title, description, images, date, location, capacity, and ticket settings from one clear form.",
-            points: ["Add full event details", "Upload event images", "Set location and capacity"],
-          },
-          "ticket-types": {
-            icon: "fas fa-ticket-alt",
-            title: "Multiple Ticket Types",
-            text: "Offer different ticket levels so attendees can choose the right experience, from free entry to VIP access.",
-            points: ["Create VIP and regular tickets", "Control prices and quantities", "Support free ticket options"],
-          },
-          "qr-code": {
-            icon: "fas fa-qrcode",
-            title: "Secure QR Code",
-            text: "Every confirmed booking receives a unique QR code that can be checked at the entrance to reduce fraud and duplicate use.",
-            points: ["Unique code per ticket", "Fast entrance validation", "Prevents repeated scans"],
-          },
-          payments: {
-            icon: "fas fa-credit-card",
-            title: "Secure Payments",
-            text: "Let attendees pay online through a smooth checkout flow with card support and automatic booking confirmation.",
-            points: ["Online card payments", "Automatic confirmations", "Clear order summary"],
-          },
-          dashboard: {
-            icon: "fas fa-chart-line",
-            title: "Smart Dashboard",
-            text: "Give organizers a focused dashboard to track ticket sales, revenue, attendance, and event performance in real time.",
-            points: ["Track sales live", "Monitor attendance", "View event analytics"],
-          },
-          notifications: {
-            icon: "fas fa-envelope-open-text",
-            title: "Auto Notifications",
-            text: "Send booking confirmations, reminders, and important updates automatically so attendees stay informed.",
-            points: ["Email confirmations", "Event reminders", "Important update messages"],
-          },
-        };
-
-        const featureModal = document.getElementById("featureModal");
-        const featureModalIcon = document.getElementById("featureModalIcon");
-        const featureModalTitle = document.getElementById("featureModalTitle");
-        const featureModalText = document.getElementById("featureModalText");
-        const featureModalList = document.getElementById("featureModalList");
-
-        const openFeatureModal = (featureKey) => {
-          const feature = featureDetails[featureKey];
-          if (!feature || !featureModal) return;
-
-          featureModalIcon.innerHTML = `<i class="${feature.icon}"></i>`;
-          featureModalTitle.textContent = feature.title;
-          featureModalText.textContent = feature.text;
-          featureModalList.innerHTML = feature.points
-            .map((point) => `<li><i class="fas fa-check"></i>${point}</li>`)
-            .join("");
-
-          featureModal.classList.add("active");
-          featureModal.setAttribute("aria-hidden", "false");
-          document.body.classList.add("modal-open");
-        };
-
-        const closeFeatureModal = () => {
-          if (!featureModal) return;
-
-          featureModal.classList.remove("active");
-          featureModal.setAttribute("aria-hidden", "true");
-          document.body.classList.remove("modal-open");
-        };
-
-        document.querySelectorAll(".feature-link[data-feature]").forEach((link) => {
-          link.addEventListener("click", function (e) {
-            e.preventDefault();
-            openFeatureModal(this.dataset.feature);
-          });
-        });
-
-        document.querySelectorAll("[data-close-modal]").forEach((element) => {
-          element.addEventListener("click", closeFeatureModal);
-        });
-
-        document.addEventListener("keydown", (e) => {
-          if (e.key === "Escape") {
-            closeFeatureModal();
-            closeDemoModal();
-          }
-        });
-
-        const counters = document.querySelectorAll(".counter");
-        const animateCounter = (counter) => {
-          const target = +counter.getAttribute("data-target");
-          const speed = 200;
-          const update = () => {
-            const count = +counter.innerText.replace(/,/g, "").replace("+", "");
-            const inc = target / speed;
-            if (count < target) {
-              counter.innerText = Math.ceil(count + inc).toLocaleString();
-              setTimeout(update, 15);
-            } else {
-              counter.innerText = target.toLocaleString() + "+";
-            }
-          };
-          update();
-        };
-
-        if (counters.length > 0) {
-          const observer = new IntersectionObserver((entries) => {
-            entries.forEach((entry) => {
-              if (entry.isIntersecting) {
-                animateCounter(entry.target);
-                observer.unobserve(entry.target);
-              }
-            });
-          });
-          counters.forEach((c) => observer.observe(c));
-        }
-
-        const navbar = document.querySelector(".navbar");
-        if (navbar && !navbar.classList.contains("scrolled")) {
-          window.addEventListener("scroll", () => {
-            navbar.classList.toggle("scrolled", window.scrollY > 50);
-          });
-        }
-
-        const menuToggle = document.getElementById("menuToggle");
-        if (menuToggle) {
-          menuToggle.addEventListener("click", function () {
-            this.classList.toggle("active");
-            document.querySelector(".nav-links").classList.toggle("active");
-            document.querySelector(".nav-buttons").classList.toggle("active");
-            document.body.classList.toggle("mobile-menu-open");
-          });
-        }
-
-        const filterBtns = document.querySelectorAll(".filter-btn");
-        filterBtns.forEach((btn) => {
-          btn.addEventListener("click", function () {
-            filterBtns.forEach((b) => b.classList.remove("active"));
-            this.classList.add("active");
-          });
-        });
-
-        const revealElements = document.querySelectorAll(
-          ".reveal, .feature-card, .step, .role-card, .event-card-large",
-        );
-        if (revealElements.length > 0) {
-          const revealObserver = new IntersectionObserver(
-            (entries) => {
-              entries.forEach((e) => {
-                if (e.isIntersecting) {
-                  e.target.classList.add("revealed");
-                  e.target.style.opacity = "1";
-                  e.target.style.transform = "translateY(0)";
-                }
-              });
-            },
-            { threshold: 0.1 },
-          );
-
-          revealElements.forEach((el, i) => {
-            if (!el.classList.contains("revealed")) {
-              el.style.opacity = "0";
-              el.style.transform = "translateY(40px)";
-              el.style.transition = `opacity 0.6s ease ${i * 0.05}s, transform 0.6s ease ${i * 0.05}s`;
-            }
-            revealObserver.observe(el);
-          });
-        }
-
-        document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
-          anchor.addEventListener("click", function (e) {
-            const href = this.getAttribute("href");
-            if (href === "#" || href.length <= 1) return;
-            const target = document.querySelector(href);
-            if (target) {
-              e.preventDefault();
-              target.scrollIntoView({ behavior: "smooth", block: "start" });
-            }
-          });
-        });
-
-        document.querySelectorAll(".btn-fav").forEach((btn) => {
-          btn.addEventListener("click", function (e) {
-            e.preventDefault();
-            const icon = this.querySelector("i");
-            if (icon.classList.contains("far")) {
-              icon.classList.remove("far");
-              icon.classList.add("fas");
-              this.style.color = "#EF4444";
-              this.style.background = "#FEE2E2";
-            } else {
-              icon.classList.remove("fas");
-              icon.classList.add("far");
-              this.style.color = "";
-              this.style.background = "";
-            }
-          });
-        });
-
-        document.querySelectorAll("form").forEach((form) => {
-          form.addEventListener("submit", function (e) {
-            const requiredInputs = this.querySelectorAll("[required]");
-            let valid = true;
-            requiredInputs.forEach((input) => {
-              if (!input.value.trim()) {
-                input.style.borderColor = "#EF4444";
-                valid = false;
-              } else {
-                input.style.borderColor = "";
-              }
-            });
-            if (!valid) {
-              e.preventDefault();
-            }
-          });
-        });
-
-        document.querySelectorAll(".newsletter").forEach((form) => {
-          form.addEventListener("submit", function (e) {
-            e.preventDefault();
-            const input = this.querySelector("input");
-            if (input.value.trim()) {
-              const btn = this.querySelector("button");
-              const original = btn.innerHTML;
-              btn.innerHTML = '<i class="fas fa-check"></i>';
-              input.value = "";
-              setTimeout(() => {
-                btn.innerHTML = original;
-              }, 2000);
-            }
-          });
-        });
-
-        document.querySelectorAll("[data-feedback-carousel]").forEach((carousel) => {
-          const cards = Array.from(carousel.querySelectorAll("[data-feedback-card]"));
-          const pageSize = Number(carousel.dataset.pageSize || 5);
-          const dotsContainer = carousel.querySelector("[data-feedback-dots]");
-          const prevBtn = carousel.querySelector("[data-feedback-prev]");
-          const nextBtn = carousel.querySelector("[data-feedback-next]");
-          let page = 0;
-          const totalPages = Math.max(1, Math.ceil(cards.length / pageSize));
-
-          // Generate dynamic pagination dots
-          if (dotsContainer) {
-            dotsContainer.innerHTML = "";
-            for (let i = 0; i < totalPages; i++) {
-              const dot = document.createElement("button");
-              dot.type = "button";
-              dot.className = "carousel-dot" + (i === 0 ? " active" : "");
-              dot.setAttribute("aria-label", `Go to slide ${i + 1}`);
-              dot.addEventListener("click", () => {
-                page = i;
-                renderFeedbackPage();
-              });
-              dotsContainer.appendChild(dot);
-            }
-          }
-
-          const renderFeedbackPage = () => {
-            const grid = carousel.querySelector(".landing-feedback-grid-enhanced");
-            if (grid) {
-              grid.style.opacity = "0";
-              grid.style.transition = "opacity 0.2s ease";
-            }
-
-            setTimeout(() => {
-              cards.forEach((card, index) => {
-                const visible = index >= page * pageSize && index < (page + 1) * pageSize;
-                card.style.display = visible ? "flex" : "none";
-              });
-
-              // Update active dot indicators
-              if (dotsContainer) {
-                const dots = dotsContainer.querySelectorAll(".carousel-dot");
-                dots.forEach((dot, index) => {
-                  dot.classList.toggle("active", index === page);
-                });
-              }
-
-              if (prevBtn) {
-                prevBtn.disabled = page === 0;
-              }
-
-              if (nextBtn) {
-                nextBtn.disabled = page >= totalPages - 1;
-              }
-
-              if (grid) {
-                grid.style.opacity = "1";
-              }
-            }, 180);
-          };
-
-          if (prevBtn) {
-            prevBtn.addEventListener("click", () => {
-              page = Math.max(0, page - 1);
-              renderFeedbackPage();
-            });
-          }
-
-          if (nextBtn) {
-            nextBtn.addEventListener("click", () => {
-              page = Math.min(totalPages - 1, page + 1);
-              renderFeedbackPage();
-            });
-          }
-
-          renderFeedbackPage();
-        });
-
-        // ===== Hero Background Slideshow =====
-        (() => {
-            const slides = document.querySelectorAll('.hero-slide');
-            const dots = document.querySelectorAll('.hero-slideshow-dot');
-            if (slides.length < 2) return;
-
-            let currentSlide = 0;
-            const INTERVAL = 5000; // 5 seconds
-
-            const goToSlide = (index) => {
-                slides[currentSlide].classList.remove('active');
-                dots[currentSlide].classList.remove('active');
-                currentSlide = index;
-                slides[currentSlide].classList.add('active');
-                dots[currentSlide].classList.add('active');
-            };
-
-            // Auto-cycle
-            let timer = setInterval(() => {
-                goToSlide((currentSlide + 1) % slides.length);
-            }, INTERVAL);
-
-            // Dot click handlers
-            dots.forEach((dot, i) => {
-                dot.addEventListener('click', () => {
-                    clearInterval(timer);
-                    goToSlide(i);
-                    timer = setInterval(() => {
-                        goToSlide((currentSlide + 1) % slides.length);
-                    }, INTERVAL);
-                });
-            });
-        })();
-
-        window.addEventListener("load", () => {
-          document.body.style.opacity = "0";
-          document.body.style.transition = "opacity 0.4s ease";
-          setTimeout(() => {
-            document.body.style.opacity = "1";
-          }, 50);
-        });
-    </script>
+    <script src="~/js/home-landing-custom.js" asp-append-version="true"></script>
 }

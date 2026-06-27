@@ -1,0 +1,281 @@
+@model IEnumerable<Eventify.Domain.Entities.Category>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Manage Categories";
+    ViewData["HeaderTitle"] = "Manage Categories 🛡️";
+    ViewData["HeaderSubtitle"] = "Create, update, or delete event categories.";
+}
+
+@section Styles {
+    <style>
+        .action-btn {
+            width: 34px;
+            height: 34px;
+            border: none;
+            background: var(--soft-purple);
+            color: var(--primary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-right: 4px;
+            font-size: 13px;
+        }
+        .action-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+        }
+        .action-btn.delete {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+        .action-btn.delete:hover {
+            background: var(--error);
+            color: white;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 28px;
+            border-radius: 50px;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+            background: var(--gradient);
+            color: var(--white);
+            box-shadow: 0 8px 25px rgba(124, 58, 237, 0.35);
+            text-decoration: none;
+        }
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(124, 58, 237, 0.5);
+        }
+        .btn-small {
+            padding: 8px 18px;
+            font-size: 13px;
+        }
+
+        /* Form Inputs */
+        .filter-input {
+            width: 100%;
+            padding: 10px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            transition: var(--transition);
+        }
+        .filter-input:focus {
+            border-color: var(--primary);
+        }
+
+        /* Modal styling */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-card {
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 440px;
+            padding: 28px;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+        }
+        .table-card {
+            background: white;
+            padding: 28px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            overflow-x: auto;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+        .data-table th {
+            padding: 14px 18px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .data-table td {
+            padding: 16px 18px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+        .data-table tbody tr {
+            transition: var(--transition);
+        }
+        .data-table tbody tr:hover {
+            background: var(--soft-purple);
+        }
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+    </style>
+}
+
+<!-- Create Button Bar -->
+<div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+    <button type="button" class="btn-primary btn-small" onclick="openCreateModal()">
+        <i class="fas fa-plus"></i> Create Category
+    </button>
+</div>
+
+<!-- Categories Table -->
+<div class="table-card">
+    @if (Model.Any())
+    {
+        <table class="data-table">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--border); background: var(--soft-purple);">
+                    <th>Category Name</th>
+                    <th>Description</th>
+                    <th style="text-align: right; width: 140px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var cat in Model)
+                {
+                    <tr>
+                        <td style="font-weight: 700; color: var(--text);">@cat.Name</td>
+                        <td style="color: var(--text-light); max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@(cat.Description ?? "No description available.")</td>
+                        <td style="text-align: right;">
+                            <button type="button" class="action-btn" onclick="openEditModal('@cat.Id', '@cat.Name.Replace("'", "\\'")', '@(cat.Description?.Replace("'", "\\'") ?? "")')" title="Edit Category">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            
+                            <form asp-controller="AdminCategories" asp-action="DeleteCategory" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete category \'@cat.Name.Replace("'", "\\'")\'? All events associated with it may be affected.');">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="categoryId" value="@cat.Id" />
+                                <button type="submit" class="action-btn delete" title="Delete Category">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div style="text-align: center; padding: 48px; color: var(--text-light);">
+            <i class="fas fa-folder-open" style="font-size: 44px; color: var(--accent); margin-bottom: 16px;"></i>
+            <h3 style="font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 4px;">No Categories Found</h3>
+            <p style="font-size: 14px;">Create an event category to get started.</p>
+        </div>
+    }
+</div>
+
+<!-- Create Category Modal -->
+<div id="createCategoryModal" class="modal-overlay" onclick="handleOverlayClick(event, 'createCategoryModal')">
+    <div class="modal-card">
+        <button onclick="closeCreateModal()" style="position: absolute; top: 16px; right: 16px; border: none; background: transparent; font-size: 20px; cursor: pointer; color: var(--text-light);">&times;</button>
+        <h3 style="font-size: 18px; font-weight: 800; color: var(--primary); margin-bottom: 24px;">Create New Category</h3>
+
+        <form asp-controller="AdminCategories" asp-action="CreateCategory" method="post" style="display: flex; flex-direction: column; gap: 16px;">
+            @Html.AntiForgeryToken()
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label style="font-size: 12px; font-weight: 700; color: var(--text-light); text-transform: uppercase;">Category Name</label>
+                <input type="text" name="name" required class="filter-input" placeholder="e.g. Technology, Music..." />
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label style="font-size: 12px; font-weight: 700; color: var(--text-light); text-transform: uppercase;">Description</label>
+                <textarea name="description" class="filter-input" style="min-height: 80px; resize: vertical;" placeholder="Short description of the category..."></textarea>
+            </div>
+
+            <button type="submit" class="btn-primary" style="margin-top: 16px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <i class="fas fa-plus"></i> Create Category
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Category Modal -->
+<div id="editCategoryModal" class="modal-overlay" onclick="handleOverlayClick(event, 'editCategoryModal')">
+    <div class="modal-card">
+        <button onclick="closeEditModal()" style="position: absolute; top: 16px; right: 16px; border: none; background: transparent; font-size: 20px; cursor: pointer; color: var(--text-light);">&times;</button>
+        <h3 style="font-size: 18px; font-weight: 800; color: var(--primary); margin-bottom: 24px;">Edit Category Details</h3>
+
+        <form asp-controller="AdminCategories" asp-action="UpdateCategory" method="post" style="display: flex; flex-direction: column; gap: 16px;">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="editCategoryId" name="categoryId" />
+            
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label style="font-size: 12px; font-weight: 700; color: var(--text-light); text-transform: uppercase;">Category Name</label>
+                <input type="text" id="editCategoryName" name="name" required class="filter-input" />
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label style="font-size: 12px; font-weight: 700; color: var(--text-light); text-transform: uppercase;">Description</label>
+                <textarea id="editCategoryDesc" name="description" class="filter-input" style="min-height: 80px; resize: vertical;"></textarea>
+            </div>
+
+            <button type="submit" class="btn-primary" style="margin-top: 16px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <i class="fas fa-save"></i> Save Changes
+            </button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openCreateModal() {
+            document.getElementById('createCategoryModal').classList.add('active');
+        }
+
+        function closeCreateModal() {
+            document.getElementById('createCategoryModal').classList.remove('active');
+        }
+
+        function openEditModal(catId, name, description) {
+            document.getElementById('editCategoryId').value = catId;
+            document.getElementById('editCategoryName').value = name;
+            document.getElementById('editCategoryDesc').value = description;
+            document.getElementById('editCategoryModal').classList.add('active');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editCategoryModal').classList.remove('active');
+        }
+
+        function handleOverlayClick(event, modalId) {
+            if (event.target === document.getElementById(modalId)) {
+                if (modalId === 'createCategoryModal') closeCreateModal();
+                else if (modalId === 'editCategoryModal') closeEditModal();
+            }
+        }
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeCreateModal();
+                closeEditModal();
+            }
+        });
+    </script>
+}

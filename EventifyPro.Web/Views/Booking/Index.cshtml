@@ -1,0 +1,134 @@
+@model IEnumerable<EventifyPro.Web.ViewModels.Booking.BookingSummaryViewModel>
+@{
+    var isAttendee = User.IsInRole(Eventify.Domain.Constants.RoleNames.Attendee);
+    Layout = isAttendee ? "_AttendeeLayout" : "_Layout";
+    ViewData["Title"] = "My Bookings";
+    var totalPages = ViewBag.TotalPages as int? ?? 1;
+    var pageNumber = ViewBag.PageNumber as int? ?? 1;
+}
+
+@if (!isAttendee)
+{
+    <div class="bg-animation">
+        <div class="bg-blob blob-1"></div>
+        <div class="bg-blob blob-2"></div>
+        <div class="bg-blob blob-3"></div>
+    </div>
+
+    <div class="page-header">
+        <div class="container">
+            <h1>My <span class="gradient-text">Bookings</span></h1>
+            <p>Manage your tickets, check reservation statuses, and download receipts.</p>
+        </div>
+    </div>
+}
+else
+{
+    <div class="workspace-header">
+        <h1 class="workspace-title">My Bookings</h1>
+        <p class="workspace-subtitle">Manage your tickets, check reservation statuses, and download receipts.</p>
+    </div>
+}
+
+<div class="@(isAttendee ? "" : "container")" style="padding-bottom: 80px;">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success); color: var(--success); padding: 16px 20px; border-radius: 12px; margin-bottom: 30px; font-weight: 600;">
+            <i class="fas fa-check-circle" style="margin-right: 8px;"></i> @TempData["SuccessMessage"]
+        </div>
+    }
+    @if (TempData["BookingError"] != null)
+    {
+        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--error); color: var(--error); padding: 16px 20px; border-radius: 12px; margin-bottom: 30px; font-weight: 600;">
+            <i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i> @TempData["BookingError"]
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="empty-state">
+            <i class="fas fa-calendar-times" style="font-size: 80px; color: var(--light-purple); margin-bottom: 20px; display: block;"></i>
+            <h3>No Bookings Found</h3>
+            <p style="color: var(--text-light); margin-bottom: 24px;">You haven't made any bookings yet. Explore events and book your first tickets!</p>
+            <a href="/Events" class="btn-primary">
+                <i class="fas fa-search"></i> Explore Events
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="events-grid-large" style="margin-bottom: 40px;">
+            @foreach (var booking in Model)
+            {
+                <div class="event-card-large" style="display: flex; flex-direction: column; justify-content: space-between;">
+                    <div class="event-body">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                            <span class="event-category" style="position: static; margin-bottom: 0;">
+                                @booking.BookingReference
+                            </span>
+                            @{
+                                var statusClass = booking.Status.ToLower() switch
+                                {
+                                    "confirmed" => "background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid var(--success);",
+                                    "pending" => "background: rgba(245, 158, 11, 0.1); color: var(--warning); border: 1px solid var(--warning);",
+                                    _ => "background: rgba(239, 68, 68, 0.1); color: var(--error); border: 1px solid var(--error);"
+                                };
+                            }
+                            <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 4px 12px; border-radius: 50px; @statusClass">
+                                @booking.Status
+                            </span>
+                        </div>
+
+                        <h3 style="margin-bottom: 12px;">@booking.EventTitle</h3>
+
+                        <div class="event-meta">
+                            <span><i class="fas fa-calendar-alt"></i> @booking.BookingDate.ToEgyptTime().ToString("MMMM dd, yyyy")</span>
+                            <span><i class="fas fa-clock"></i> @booking.BookingDate.ToEgyptTime().ToString("hh:mm tt")</span>
+                        </div>
+
+                        <div style="margin-top: 20px; padding-top: 16px; border-top: 1px dashed var(--border); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <span style="font-size: 11px; color: var(--text-light); text-transform: uppercase; font-weight: 600;">Total Amount</span>
+                                <div style="font-size: 20px; font-weight: 800; color: var(--primary);">@booking.TotalAmount.ToString("C")</div>
+                            </div>
+                            <a href="/Booking/Details/@booking.Id" class="btn-outline btn-small">
+                                Details <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        @if (totalPages > 1)
+        {
+            <div class="pagination">
+                @if (pageNumber > 1)
+                {
+                    <a href="/Booking?pageNumber=@(pageNumber - 1)" class="page-btn" style="display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                }
+
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    if (i == pageNumber)
+                    {
+                        <button class="page-btn active">@i</button>
+                    }
+                    else
+                    {
+                        <a href="/Booking?pageNumber=@i" class="page-btn" style="display: flex; align-items: center; justify-content: center;">@i</a>
+                    }
+                }
+
+                @if (pageNumber < totalPages)
+                {
+                    <a href="/Booking?pageNumber=@(pageNumber + 1)" class="page-btn" style="display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                }
+            </div>
+        }
+    }
+</div>

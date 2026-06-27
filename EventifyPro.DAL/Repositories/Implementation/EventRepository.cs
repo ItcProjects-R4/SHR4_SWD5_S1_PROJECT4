@@ -6,6 +6,7 @@ public class EventRepository : GenericRepository<Event>, IEventRepository
 
     public async Task<Event?> GetByIdWithDetailsAsync(int id, CancellationToken cancellationToken = default)
         => await _dbSet
+            .AsSplitQuery()
             .Include(e => e.Category)
             .Include(e => e.Organizer)
             .Include(e => e.TicketTypes)
@@ -68,20 +69,24 @@ public class EventRepository : GenericRepository<Event>, IEventRepository
         return await query.ToPagedResultAsync(pageNumber, pageSize, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<Event>> GetPendingReviewAsync(CancellationToken cancellationToken = default)
-        => await _dbSet
+    public async Task<PagedResult<Event>> GetPendingReviewAsync(int pageNumber = 1, int pageSize = 10, CancellationToken cancellationToken = default)
+    {
+        var query = _dbSet
             .AsNoTracking()
             .AsSplitQuery()
             .Where(e => e.Status == EventStatus.PendingReview)
             .Include(e => e.Category)
             .Include(e => e.Organizer)
             .Include(e => e.TicketTypes)
-            .OrderBy(e => e.CreatedAt)
-            .ToListAsync(cancellationToken);
+            .OrderBy(e => e.CreatedAt);
+
+        return await query.ToPagedResultAsync(pageNumber, pageSize, cancellationToken);
+    }
 
     public async Task<IReadOnlyList<Event>> GetByOrganizerIdAsync(string organizerId, CancellationToken cancellationToken = default)
         => await _dbSet
             .AsNoTracking()
+            .AsSplitQuery()
             .Where(e => e.OrganizerId == organizerId)
             .Include(e => e.TicketTypes)
             .Include(e => e.Category)

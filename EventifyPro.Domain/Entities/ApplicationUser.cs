@@ -1,4 +1,4 @@
-﻿namespace Eventify.Domain.Entities;
+namespace Eventify.Domain.Entities;
 
 /// <summary>
 /// Represents an application user extending ASP.NET Core Identity.
@@ -31,11 +31,14 @@ public class ApplicationUser : IdentityUser
     public DateTime CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
+    public DateTime? LastLoginAt { get; set; }
 
     public string? ScannerCreatedByOrganizerId { get; set; }
 
     // Navigation
+    public OrganizerProfile? OrganizerProfile { get; set; }
     public ApplicationUser? ScannerCreatedByOrganizer { get; set; }
+
     public ICollection<ApplicationUser> CreatedScannerAccounts { get; set; } = [];
     public ICollection<Event> OrganizedEvents { get; set; } = [];
     public ICollection<Booking> Bookings { get; set; } = [];
@@ -44,4 +47,7 @@ public class ApplicationUser : IdentityUser
     public ICollection<WaitingList> WaitingListItems { get; set; } = [];
     public ICollection<ScanLog> ScanLogs { get; set; } = [];
     public ICollection<Ticket> ScannedTickets { get; set; } = [];
+    public ICollection<SavedEvent> SavedEvents { get; set; } = [];
+    public ICollection<Notification> Notifications { get; set; } = [];
+    public ICollection<EventScanner> AssignedScannerEvents { get; set; } = [];
 }

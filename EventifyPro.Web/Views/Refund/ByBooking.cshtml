@@ -1,0 +1,235 @@
+@model IEnumerable<EventifyPro.BLL.DTOs.Refund.RefundResponseDto>
+@{
+    ViewData["Title"] = "Refund History";
+    Layout = "~/Views/Shared/_AttendeeLayout.cshtml";
+    
+    // Attempt to get bookingId from route or model
+    int bookingId = Model.FirstOrDefault()?.BookingId ?? 0;
+    if (bookingId == 0 && Context.Request.Query.ContainsKey("bookingId"))
+    {
+        int.TryParse(Context.Request.Query["bookingId"], out bookingId);
+    }
+}
+
+<style>
+    .refund-history-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .history-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(91, 33, 182, 0.08);
+        border: 1px solid #e5e7eb;
+        padding: 30px;
+    }
+
+    .history-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        border-bottom: 1px solid #ede9fe;
+        padding-bottom: 16px;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .history-header h2 {
+        font-size: 24px;
+        font-weight: 800;
+        color: #5b21b6;
+    }
+
+    .refund-item {
+        background: #fafaff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 16px;
+        transition: all 0.3s ease;
+    }
+
+    .refund-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(91, 33, 182, 0.05);
+        border-color: #a78bfa;
+    }
+
+    .refund-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .refund-amount {
+        font-size: 18px;
+        font-weight: 800;
+        color: #10b981;
+    }
+
+    .refund-status {
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .status-pending {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+    }
+
+    .status-completed {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+    }
+
+    .status-failed {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+
+    .refund-reason {
+        font-size: 14px;
+        color: #6b7280;
+        background: white;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        margin-top: 10px;
+    }
+
+    .btn-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 14px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary-gradient {
+        background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(124, 58, 237, 0.25);
+    }
+
+    .btn-primary-gradient:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(124, 58, 237, 0.4);
+    }
+</style>
+
+<div class="refund-history-container">
+    <div class="history-card">
+        <div class="history-header">
+            <div>
+                <h2>Refund History</h2>
+                @if (bookingId > 0)
+                {
+                    <p style="color: #6b7280; font-size: 14px; margin-top: 4px;">Refund requests for Booking #@bookingId</p>
+                }
+            </div>
+            @if (bookingId > 0)
+            {
+                <a href="/Refund/Initiate?bookingId=@bookingId" class="btn-action btn-primary-gradient">
+                    <i class="fas fa-plus"></i> Request New Refund
+                </a>
+            }
+        </div>
+
+        @if (TempData["RefundSuccess"] is string successMsg)
+        {
+            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; color: #10b981; padding: 14px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; font-weight: 600;">
+                <i class="fas fa-check-circle" style="margin-right: 8px;"></i> @successMsg
+            </div>
+        }
+        @if (TempData["RefundError"] is string errorMsg)
+        {
+            <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #ef4444; padding: 14px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; font-weight: 600;">
+                <i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i> @errorMsg
+            </div>
+        }
+
+        @if (Model != null && Model.Any())
+        {
+            @foreach (var refund in Model)
+            {
+                var statusClass = refund.Status.ToLower() switch
+                {
+                    "completed" or "approved" => "status-completed",
+                    "failed" or "rejected" => "status-failed",
+                    _ => "status-pending"
+                };
+
+                <div class="refund-item">
+                    <div class="refund-meta">
+                        <div>
+                            <span style="font-size: 13px; color: #6b7280;">Request ID: #@refund.Id</span>
+                            <div style="font-size: 12px; color: #9ca3af; margin-top: 2px;">
+                                Created: @refund.CreatedAt.ToEgyptTime().ToString("MMM dd, yyyy - hh:mm tt")
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="refund-amount">$@refund.Amount.ToString("F2")</div>
+                            <span class="refund-status @statusClass" style="margin-top: 6px;">
+                                <i class="fas fa-circle" style="font-size: 6px;"></i> @refund.Status
+                            </span>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(refund.Reason))
+                    {
+                        <div class="refund-reason">
+                            <strong style="display: block; font-size: 12px; color: #1f1b2e; margin-bottom: 4px; text-transform: uppercase;">Reason:</strong>
+                            @refund.Reason
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(refund.TransactionId))
+                    {
+                        <div style="font-size: 12px; color: #6b7280; margin-top: 10px; display: flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-receipt"></i> <strong>Transaction ID:</strong> <code>@refund.TransactionId</code>
+                        </div>
+                    }
+                </div>
+            }
+        }
+        else
+        {
+            <div style="text-align: center; padding: 48px; color: #6b7280;">
+                <i class="fas fa-receipt" style="font-size: 44px; color: #ede9fe; margin-bottom: 16px;"></i>
+                <h3 style="font-size: 18px; font-weight: 700; color: #1f1b2e; margin-bottom: 4px;">No Refunds Found</h3>
+                <p style="font-size: 14px;">No refund requests have been initiated for this booking.</p>
+            </div>
+        }
+
+        <div style="text-align: center; margin-top: 24px; border-top: 1px solid #ede9fe; padding-top: 20px;">
+            @if (bookingId > 0)
+            {
+                <a href="/Booking/Details/@bookingId" style="color: #7c3aed; text-decoration: none; font-size: 14px; font-weight: 600;">
+                    <i class="fas fa-arrow-left" style="margin-right: 6px;"></i> Back to Booking Details
+                </a>
+            }
+            else
+            {
+                <a href="/Booking" style="color: #7c3aed; text-decoration: none; font-size: 14px; font-weight: 600;">
+                    <i class="fas fa-arrow-left" style="margin-right: 6px;"></i> Back to My Bookings
+                </a>
+            }
+        </div>
+    </div>
+</div>

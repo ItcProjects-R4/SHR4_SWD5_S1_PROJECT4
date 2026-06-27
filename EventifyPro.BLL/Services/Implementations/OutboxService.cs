@@ -2,6 +2,7 @@ namespace EventifyPro.BLL.Services.Implementations;
 
 public class OutboxService : IOutboxService
 {
+    private static readonly System.Threading.SemaphoreSlim _semaphore = new System.Threading.SemaphoreSlim(1, 1);
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEmailService _emailService;
     private readonly IMapper _mapper;
@@ -47,44 +48,52 @@ public class OutboxService : IOutboxService
 
     public async Task ProcessPendingAsync(CancellationToken cancellationToken = default)
     {
-        var messages = await _unitOfWork.OutboxMessages.GetMessagesForRetryAsync(maxRetries: 3, cancellationToken);
-
-        if (messages.Count == 0)
+        await _semaphore.WaitAsync(cancellationToken);
+        try
         {
-            return;
+            var messages = await _unitOfWork.OutboxMessages.GetMessagesForRetryAsync(maxRetries: 3, batchSize: 10, cancellationToken);
+
+            if (messages.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var message in messages)
+            {
+                try
+                {
+                    // To prevent double processing by other workers in parallel, we can increment retry count or mark temporary state,
+                    // but since it's a BackgroundService, we will do it within a transaction.
+                    
+                    await ProcessMessagePayloadAsync(message, cancellationToken);
+                    
+                    // Fetch the entity in tracking context to modify state
+                    var trackedMessage = await _unitOfWork.OutboxMessages.GetByIdAsync(message.Id, cancellationToken);
+                    if (trackedMessage != null)
+                    {
+                        trackedMessage.ProcessedAt = DateTime.UtcNow;
+                        trackedMessage.LastError = null;
+                        _unitOfWork.OutboxMessages.Update(trackedMessage);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    var trackedMessage = await _unitOfWork.OutboxMessages.GetByIdAsync(message.Id, cancellationToken);
+                    if (trackedMessage != null)
+                    {
+                        trackedMessage.RetryCount += 1;
+                        trackedMessage.LastError = $"{ex.Message} \n {ex.StackTrace}";
+                        _unitOfWork.OutboxMessages.Update(trackedMessage);
+                    }
+                }
+                
+                // Save after each message processing to ensure partial successes are stored
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+            }
         }
-
-        foreach (var message in messages)
+        finally
         {
-            try
-            {
-                // To prevent double processing by other workers in parallel, we can increment retry count or mark temporary state,
-                // but since it's a BackgroundService, we will do it within a transaction.
-                
-                await ProcessMessagePayloadAsync(message, cancellationToken);
-                
-                // Fetch the entity in tracking context to modify state
-                var trackedMessage = await _unitOfWork.OutboxMessages.GetByIdAsync(message.Id, cancellationToken);
-                if (trackedMessage != null)
-                {
-                    trackedMessage.ProcessedAt = DateTime.UtcNow;
-                    trackedMessage.LastError = null;
-                    _unitOfWork.OutboxMessages.Update(trackedMessage);
-                }
-            }
-            catch (Exception ex)
-            {
-                var trackedMessage = await _unitOfWork.OutboxMessages.GetByIdAsync(message.Id, cancellationToken);
-                if (trackedMessage != null)
-                {
-                    trackedMessage.RetryCount += 1;
-                    trackedMessage.LastError = $"{ex.Message} \n {ex.StackTrace}";
-                    _unitOfWork.OutboxMessages.Update(trackedMessage);
-                }
-            }
-            
-            // Save after each message processing to ensure partial successes are stored
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            _semaphore.Release();
         }
     }
 
@@ -106,7 +115,7 @@ public class OutboxService : IOutboxService
                 var verify = JsonSerializer.Deserialize<VerificationPayload>(message.Payload, options);
                 if (verify != null)
                 {
-                    await _emailService.SendEmailVerificationAsync(verify.RecipientEmail, verify.RecipientName, verify.VerificationLink, cancellationToken);
+                    await _emailService.SendEmailVerificationAsync(verify.RecipientEmail, verify.RecipientName, verify.OtpCode, cancellationToken);
                 }
                 break;
 
@@ -114,7 +123,7 @@ public class OutboxService : IOutboxService
                 var pwdReset = JsonSerializer.Deserialize<PasswordResetPayload>(message.Payload, options);
                 if (pwdReset != null)
                 {
-                    await _emailService.SendPasswordResetAsync(pwdReset.RecipientEmail, pwdReset.RecipientName, pwdReset.ResetLink, cancellationToken);
+                    await _emailService.SendPasswordResetAsync(pwdReset.RecipientEmail, pwdReset.RecipientName, pwdReset.OtpCode, cancellationToken);
                 }
                 break;
 
@@ -217,6 +226,14 @@ public class OutboxService : IOutboxService
                 }
                 break;
 
+            case "Email.OrganizerActivated":
+                var activated = JsonSerializer.Deserialize<WelcomePayload>(message.Payload, options);
+                if (activated != null)
+                {
+                    await _emailService.SendOrganizerAccountActivatedAsync(activated.RecipientEmail, activated.RecipientName, cancellationToken);
+                }
+                break;
+
             case "Email.OrganizerEventApproved":
                 var approved = JsonSerializer.Deserialize<OrganizerEmailPayload>(message.Payload, options);
                 if (approved != null)
@@ -278,6 +295,34 @@ public class OutboxService : IOutboxService
                 }
                 break;
 
+            case "Email.PayoutStatus":
+                var payout = JsonSerializer.Deserialize<PayoutStatusPayload>(message.Payload, options);
+                if (payout != null)
+                {
+                    await _emailService.SendPayoutStatusEmailAsync(
+                        payout.RecipientEmail,
+                        payout.RecipientName,
+                        payout.Amount,
+                        payout.Status,
+                        payout.ReferenceNumber,
+                        payout.Notes,
+                        cancellationToken);
+                }
+                break;
+
+            case "Email.ScannerCredentials":
+                var scanCreds = JsonSerializer.Deserialize<ScannerCredentialsPayload>(message.Payload, options);
+                if (scanCreds != null)
+                {
+                    await _emailService.SendScannerCredentialsEmailAsync(
+                        scanCreds.RecipientEmail,
+                        scanCreds.RecipientName,
+                        scanCreds.TemporaryPassword,
+                        scanCreds.OrganizerName,
+                        cancellationToken);
+                }
+                break;
+
             default:
                 throw new NotSupportedException($"Outbox message type '{message.Type}' is not supported by the email service dispatcher.");
         }
@@ -295,14 +340,14 @@ public class OutboxService : IOutboxService
     {
         public string RecipientEmail { get; set; } = string.Empty;
         public string RecipientName { get; set; } = string.Empty;
-        public string VerificationLink { get; set; } = string.Empty;
+        public string OtpCode { get; set; } = string.Empty;
     }
 
     public class PasswordResetPayload
     {
         public string RecipientEmail { get; set; } = string.Empty;
         public string RecipientName { get; set; } = string.Empty;
-        public string ResetLink { get; set; } = string.Empty;
+        public string OtpCode { get; set; } = string.Empty;
     }
 
     public class SecurityNotificationPayload
@@ -413,6 +458,24 @@ public class OutboxService : IOutboxService
         public string TicketTypeName { get; set; } = string.Empty;
         public string ClaimUrl { get; set; } = string.Empty;
         public DateTime ExpiresAt { get; set; }
+    }
+
+    public class PayoutStatusPayload
+    {
+        public string RecipientEmail { get; set; } = string.Empty;
+        public string RecipientName { get; set; } = string.Empty;
+        public decimal Amount { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public string? ReferenceNumber { get; set; }
+        public string? Notes { get; set; }
+    }
+
+    public class ScannerCredentialsPayload
+    {
+        public string RecipientEmail { get; set; } = string.Empty;
+        public string RecipientName { get; set; } = string.Empty;
+        public string TemporaryPassword { get; set; } = string.Empty;
+        public string OrganizerName { get; set; } = string.Empty;
     }
 
     #endregion

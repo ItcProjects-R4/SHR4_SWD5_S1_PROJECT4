@@ -1,0 +1,500 @@
+@model EventifyPro.Web.ViewModels.Organizer.OrganizerProfileViewModel
+@{
+    Layout = "_OrganizerLayout";
+    ViewData["Title"] = "Organizer Profile";
+    ViewData["HeaderTitle"] = "Organizer Profile 👤";
+    ViewData["HeaderSubtitle"] = "Manage your organizer details and account security.";
+}
+
+@section Styles {
+    <style>
+        .form-card {
+            background: white;
+            padding: 40px 48px;
+            border-radius: 24px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .form-card h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-top: 36px;
+            margin-bottom: 28px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary-dark);
+            border-bottom: 1px dashed var(--border);
+            padding-bottom: 12px;
+        }
+
+        .form-card h3:first-of-type {
+            margin-top: 0;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 14.5px;
+            color: var(--text);
+            background: var(--bg);
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+            background: white;
+        }
+
+        .form-control[readonly] {
+            background: var(--bg);
+            color: var(--text-light);
+            cursor: not-allowed;
+            border-color: transparent;
+        }
+
+        .text-danger {
+            color: var(--error);
+            font-size: 12.5px;
+            margin-top: 6px;
+            display: block;
+        }
+
+        label .text-danger {
+            display: inline;
+            margin-top: 0;
+        }
+
+        .row-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .profile-picture-container {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            margin-bottom: 36px;
+            padding: 24px;
+            background: var(--bg);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .profile-preview {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid white;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            background: var(--gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 36px;
+            font-weight: 700;
+        }
+
+        .file-upload-btn {
+            position: relative;
+            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--soft-purple);
+            color: var(--primary);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 1px solid transparent;
+        }
+
+        .file-upload-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .file-upload-btn input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+            height: 100%;
+        }
+
+        .upload-hint {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 8px;
+            display: block;
+        }
+
+        .password-section {
+            margin-top: 40px;
+            padding-top: 10px;
+        }
+
+        .alert-success, .alert-error {
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            font-weight: 600;
+            font-size: 14.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+        
+        .form-actions {
+            margin-top: 32px;
+            text-align: right;
+            border-top: 1px solid var(--border);
+            padding-top: 24px;
+        }
+
+        @@media (max-width: 768px) {
+            .form-card {
+                padding: 24px 20px;
+            }
+            .row-group {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+            .profile-picture-container {
+                flex-direction: column;
+                text-align: center;
+                padding: 20px;
+            }
+            .profile-preview {
+                width: 90px;
+                height: 90px;
+                font-size: 28px;
+            }
+        }
+    </style>
+}
+
+<div class="form-card">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert-success">
+            <i class="fas fa-check-circle"></i>
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert-error">
+            <i class="fas fa-exclamation-circle"></i>
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <form asp-action="Index" asp-controller="OrganizerProfile" method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-danger" style="margin-bottom: 20px;"></div>
+
+        <h3><i class="fas fa-user-edit"></i> Basic Information</h3>
+
+        <div class="profile-picture-container">
+            @if (!string.IsNullOrEmpty(Model.ProfileImageUrl))
+            {
+                <img src="@Model.ProfileImageUrl" alt="Profile Picture" class="profile-preview" id="imagePreview" />
+            }
+            else
+            {
+                <div class="profile-preview" id="imagePreview">
+                    @(string.IsNullOrWhiteSpace(Model.FullName) ? "O" : Model.FullName.Trim().Substring(0, 1).ToUpper())
+                </div>
+            }
+
+            <div>
+                <label class="file-upload-btn">
+                    <i class="fas fa-camera"></i> Change Photo
+                    <input asp-for="ProfilePicture" type="file" accept="image/*" onchange="previewImage(this);" />
+                </label>
+                <span asp-validation-for="ProfilePicture" class="text-danger"></span>
+                <span class="upload-hint">Recommended: 200x200px. Max size: 2MB.</span>
+            </div>
+        </div>
+
+        <div class="row-group">
+            <div class="form-group">
+                <label asp-for="FullName" class="form-label">Full Name <span class="text-danger">*</span></label>
+                <input asp-for="FullName" class="form-control" />
+                <span asp-validation-for="FullName" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group">
+                <label asp-for="PhoneNumber" class="form-label">Phone Number</label>
+                <input asp-for="PhoneNumber" class="form-control" placeholder="+1 234 567 8900" />
+                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Email" class="form-label">Email Address</label>
+            <input asp-for="Email" class="form-control" readonly title="Email cannot be changed." />
+            <span class="upload-hint" style="margin-top: 4px;">To change your email address, please contact support.</span>
+        </div>
+
+        <h3><i class="fas fa-briefcase"></i> Organization Details</h3>
+
+        <div class="form-group">
+            <label asp-for="OrganizationName" class="form-label">Organization / Company Name</label>
+            <input asp-for="OrganizationName" class="form-control" placeholder="e.g., Eventify Pro Ltd." />
+            <span asp-validation-for="OrganizationName" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Bio" class="form-label">About the Organizer (Bio)</label>
+            <textarea asp-for="Bio" class="form-control" rows="4" placeholder="Tell your attendees about yourself or your organization..." style="resize: none;"></textarea>
+            <span asp-validation-for="Bio" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="WebsiteUrl" class="form-label">Official Website URL</label>
+            <input asp-for="WebsiteUrl" class="form-control" placeholder="e.g., https://yourwebsite.com" />
+            <span asp-validation-for="WebsiteUrl" class="text-danger"></span>
+        </div>
+
+        <div class="row-group">
+            <div class="form-group">
+                <label asp-for="FacebookUrl" class="form-label">Facebook Profile Link</label>
+                <input asp-for="FacebookUrl" class="form-control" placeholder="https://facebook.com/yourpage" />
+                <span asp-validation-for="FacebookUrl" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="LinkedInUrl" class="form-label">LinkedIn Profile Link</label>
+                <input asp-for="LinkedInUrl" class="form-control" placeholder="https://linkedin.com/in/yourprofile" />
+                <span asp-validation-for="LinkedInUrl" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="password-section" style="background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-top: 24px; box-shadow: var(--shadow-sm);">
+            <h3><i class="fas fa-lock"></i> Security Settings</h3>
+            
+            @if (TempData["OtpError"] != null)
+            {
+                <div class="alert-error" style="margin-bottom: 24px;">
+                    <i class="fas fa-exclamation-circle"></i>
+                    @foreach (var errorLine in (TempData["OtpError"]?.ToString() ?? "").Split(new[] { "<br/>" }, StringSplitOptions.None))
+                    {
+                        <div>@errorLine</div>
+                    }
+                </div>
+            }
+            <div id="otpSuccessNotice" class="alert-success" style="display: none; margin-bottom: 24px;">
+                <i class="fas fa-check-circle"></i>
+                <span id="otpSuccessMessage"></span>
+            </div>
+            <div id="otpErrorNotice" class="alert-error" style="display: none; margin-bottom: 24px;"></div>
+
+            <!-- Standard Change Password block -->
+            <div id="standardPasswordFormBlock" style="display: @(ViewData["ShowOtpForm"] != null ? "none" : "block");">
+                <div class="form-group">
+                    <label asp-for="CurrentPassword" class="form-label">Current Password</label>
+                    <input asp-for="CurrentPassword" type="password" class="form-control" placeholder="Leave blank to keep current password" autocomplete="new-password" />
+                    <span asp-validation-for="CurrentPassword" class="text-danger"></span>
+                </div>
+
+                <div class="row-group">
+                    <div class="form-group">
+                        <label asp-for="NewPassword" class="form-label">New Password</label>
+                        <input asp-for="NewPassword" type="password" class="form-control" placeholder="Minimum 8 characters" autocomplete="new-password" />
+                        <span asp-validation-for="NewPassword" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label asp-for="ConfirmPassword" class="form-label">Confirm New Password</label>
+                        <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="Retype new password" autocomplete="new-password" />
+                        <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <button type="button" onclick="showOtpForm()" class="file-upload-btn" style="background: transparent; color: var(--primary); padding: 8px 0; border: none; box-shadow: none;">
+                        Forgot Password? Reset via OTP Email
+                    </button>
+                </div>
+            </div>
+
+            <!-- OTP Reset Password Form block -->
+            <div id="otpPasswordFormBlock" style="display: @(ViewData["ShowOtpForm"] != null ? "block" : "none");">
+                <div style="margin-bottom: 24px; padding: 16px; background-color: var(--bg); border-radius: 12px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                    <p style="font-size: 13px; color: var(--text); margin: 0; font-weight: 500;">
+                        Click "Send OTP" to receive a 6-digit verification code on your email.
+                    </p>
+                    <button type="button" id="btnSendOtp" onclick="sendOtp()" class="file-upload-btn" style="box-shadow: none;">
+                        <i class="fas fa-paper-plane"></i> Send OTP Code
+                    </button>
+                </div>
+
+                <form asp-controller="OrganizerProfile" asp-action="ResetPasswordWithOtp" method="post" id="otpResetForm">
+                    @Html.AntiForgeryToken()
+                    
+                    <div class="form-group">
+                        <label class="form-label">OTP Verification Code</label>
+                        <input name="OtpCode" type="text" id="otpCode" class="form-control" placeholder="Enter 6-char OTP" required maxlength="6" minlength="6" autocomplete="off" />
+                    </div>
+                    
+                    <div class="row-group">
+                        <div class="form-group">
+                            <label class="form-label">New Password</label>
+                            <input name="NewPassword" type="password" class="form-control" placeholder="Minimum 8 characters" required minlength="6" autocomplete="new-password" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Confirm New Password</label>
+                            <input name="ConfirmPassword" type="password" class="form-control" placeholder="Confirm new password" required autocomplete="new-password" />
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+                        <button type="button" onclick="showStandardForm()" class="file-upload-btn" style="background: transparent; color: var(--text-light); padding: 8px 0; border: none; box-shadow: none;">
+                            Back to Standard Change
+                        </button>
+                        <button type="submit" class="btn-primary" style="padding: 10px 24px; border-radius: 10px; border: none; font-weight: 600;">
+                            Reset Password
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="form-actions" id="mainFormActions" style="display: @(ViewData["ShowOtpForm"] != null ? "none" : "block");">
+            <button type="submit" class="btn-primary">
+                <i class="fas fa-save" style="margin-right: 6px;"></i> Save Changes
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var preview = document.getElementById('imagePreview');
+                    
+                    // If it's currently a div containing a letter, we need to replace it with an img
+                    if(preview.tagName === 'DIV') {
+                        var img = document.createElement('img');
+                        img.id = 'imagePreview';
+                        img.className = 'profile-preview';
+                        img.src = e.target.result;
+                        preview.parentNode.replaceChild(img, preview);
+                    } else {
+                        preview.src = e.target.result;
+                    }
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function showOtpForm() {
+            document.getElementById('standardPasswordFormBlock').style.display = 'none';
+            document.getElementById('otpPasswordFormBlock').style.display = 'block';
+            document.getElementById('mainFormActions').style.display = 'none';
+        }
+
+        function showStandardForm() {
+            document.getElementById('standardPasswordFormBlock').style.display = 'block';
+            document.getElementById('otpPasswordFormBlock').style.display = 'none';
+            document.getElementById('mainFormActions').style.display = 'block';
+        }
+
+        async function sendOtp() {
+            const btn = document.getElementById('btnSendOtp');
+            const successNotice = document.getElementById('otpSuccessNotice');
+            const errorNotice = document.getElementById('otpErrorNotice');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            successNotice.style.display = 'none';
+            errorNotice.style.display = 'none';
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            try {
+                const response = await fetch('/OrganizerProfile/SendPasswordOtp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams({
+                        '__RequestVerificationToken': token
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    successNotice.style.display = 'flex';
+                    document.getElementById('otpSuccessMessage').innerText = result.message;
+                    btn.innerHTML = '<i class="fas fa-sync-alt"></i> Resend OTP';
+                } else {
+                    errorNotice.style.display = 'block';
+                    errorNotice.innerText = result.message;
+                    btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send OTP';
+                }
+            } catch (err) {
+                console.error(err);
+                errorNotice.style.display = 'block';
+                errorNotice.innerText = 'Failed to connect to server. Please try again.';
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send OTP';
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // Auto uppercase OTP
+        document.addEventListener("DOMContentLoaded", function() {
+            const otpCode = document.getElementById("otpCode");
+            if (otpCode) {
+                otpCode.addEventListener("input", function() {
+                    this.value = this.value.toUpperCase();
+                });
+            }
+        });
+    </script>
+}

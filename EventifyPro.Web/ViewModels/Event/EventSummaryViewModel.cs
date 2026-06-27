@@ -26,4 +26,7 @@ public class EventSummaryViewModel
 
     public string CategoryName { get; set; } = string.Empty;
     public decimal MinPrice { get; set; }
+    public string Location { get; set; } = string.Empty;
+    public decimal MinTicketPrice { get; set; }
+    public decimal MaxTicketPrice { get; set; }
 }

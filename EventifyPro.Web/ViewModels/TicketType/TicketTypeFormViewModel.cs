@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 
 namespace EventifyPro.Web.ViewModels.TicketType;
 
@@ -12,7 +11,7 @@ public class TicketTypeFormViewModel
     [Required, StringLength(100)]
     public string Name { get; set; } = string.Empty;
 
-    [Required, Range(typeof(decimal), "0.01", "79228162514264337593543950335", ErrorMessage = "Price must be greater than 0")]
+    [Required, Range(typeof(decimal), "0.00", "79228162514264337593543950335", ErrorMessage = "Price must be greater than or equal to 0")]
     public decimal Price { get; set; }
 
     [Required, Range(1, int.MaxValue)]

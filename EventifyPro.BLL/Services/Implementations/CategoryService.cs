@@ -1,6 +1,3 @@
-using Mapster;
-using Microsoft.EntityFrameworkCore;
-
 namespace EventifyPro.BLL.Services.Implementations;
 
 /// <summary>
@@ -14,19 +11,25 @@ public class CategoryService : ICategoryService
     private readonly ILogger<CategoryService> _logger;
     private readonly IValidator<CategoryCreateDto> _createValidator;
     private readonly IValidator<CategoryUpdateDto> _updateValidator;
+    private readonly ICacheInvalidationService _cacheInvalidationService;
+    private readonly IMemoryCache _cache;
 
     public CategoryService(
         IUnitOfWork unitOfWork,
         IMapper mapper,
         ILogger<CategoryService> logger,
         IValidator<CategoryCreateDto> createValidator,
-        IValidator<CategoryUpdateDto> updateValidator)
+        IValidator<CategoryUpdateDto> updateValidator,
+        ICacheInvalidationService cacheInvalidationService,
+        IMemoryCache cache)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _logger = logger;
         _createValidator = createValidator;
         _updateValidator = updateValidator;
+        _cacheInvalidationService = cacheInvalidationService;
+        _cache = cache;
     }
 
     /// <summary>
@@ -38,7 +41,14 @@ public class CategoryService : ICategoryService
     {
         try
         {
-            _logger.LogDebug("Retrieving all categories");
+            var cacheKey = "AllCategoriesList";
+            if (_cache.TryGetValue(cacheKey, out IReadOnlyList<CategoryDto>? cachedCategories) && cachedCategories != null)
+            {
+                _logger.LogDebug("Retrieving all categories from memory cache");
+                return Result<IReadOnlyList<CategoryDto>>.Success(cachedCategories);
+            }
+
+            _logger.LogDebug("Retrieving all categories from database");
 
             // Project directly to CategoryDto using Mapster to compile Count() directly into SQL SELECT for optimal DB performance
             var categoryDtos = await _unitOfWork.Categories.GetQuery()
@@ -47,14 +57,13 @@ public class CategoryService : ICategoryService
                 .ProjectToType<CategoryDto>()
                 .ToListAsync(cancellationToken);
 
-            if (!categoryDtos.Any())
-            {
-                _logger.LogDebug("No categories found");
-                return Result<IReadOnlyList<CategoryDto>>.Success(new List<CategoryDto>().AsReadOnly());
-            }
+            var result = categoryDtos.AsReadOnly();
+            
+            // Cache categories for 1 hour
+            _cache.Set(cacheKey, result, TimeSpan.FromHours(1));
 
             _logger.LogDebug("Successfully retrieved {Count} categories", categoryDtos.Count);
-            return Result<IReadOnlyList<CategoryDto>>.Success(categoryDtos.AsReadOnly());
+            return Result<IReadOnlyList<CategoryDto>>.Success(result);
         }
         catch (Exception ex)
         {
@@ -97,6 +106,10 @@ public class CategoryService : ICategoryService
 
             // Commit changes
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            _cache.Remove("AllCategoriesList");
+
+            await _cacheInvalidationService.InvalidateEventCacheAsync(cancellationToken);
 
             _logger.LogInformation("Category '{Name}' created successfully with ID {Id}", sanitizedName, category.Id);
 
@@ -160,6 +173,10 @@ public class CategoryService : ICategoryService
             // Commit changes
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+            _cache.Remove("AllCategoriesList");
+
+            await _cacheInvalidationService.InvalidateEventCacheAsync(cancellationToken);
+
             _logger.LogInformation("Category with ID {Id} updated successfully to name '{Name}'", id, sanitizedName);
 
             // Map back to DTO and return
@@ -209,6 +226,10 @@ public class CategoryService : ICategoryService
             // Commit changes
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+            _cache.Remove("AllCategoriesList");
+
+            await _cacheInvalidationService.InvalidateEventCacheAsync(cancellationToken);
+
             _logger.LogInformation("Category with ID {Id} deleted successfully", id);
 
             return Result.Success();
@@ -220,4 +241,16 @@ public class CategoryService : ICategoryService
             return Result.Failure("Failed to delete category");
         }
     }
+
+    public async Task<bool> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default)
+    {
+        var query = _unitOfWork.Categories.GetQuery().AsNoTracking();
+        if (excludeId.HasValue)
+        {
+            query = query.Where(c => c.Id != excludeId.Value);
+        }
+        var trimmedName = name.Trim();
+        return await query.AnyAsync(c => c.Name.ToLower() == trimmedName.ToLower(), cancellationToken);
+    }
 }
+

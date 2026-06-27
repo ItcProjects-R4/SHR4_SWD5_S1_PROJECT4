@@ -1,0 +1,563 @@
+@model EventifyPro.Web.ViewModels.Event.EventFormViewModel
+@{
+    Layout = "_OrganizerLayout";
+    ViewData["Title"] = "Edit Event";
+    ViewData["HeaderTitle"] = "Edit Event ✏️";
+    ViewData["HeaderSubtitle"] = "Update details for your event.";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <style>
+        .form-card {
+            background: white;
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 14.5px;
+            color: var(--text);
+            background: var(--bg);
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+            background: white;
+        }
+
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .btn-ai {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--primary-light);
+            background: var(--soft-purple);
+            color: var(--primary);
+            transition: var(--transition);
+        }
+        .btn-ai:hover {
+            background: var(--primary-light);
+            color: white;
+            transform: translateY(-1px);
+        }
+        .btn-ai:disabled {
+            background: var(--border);
+            border-color: var(--border);
+            color: var(--text-light);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .text-danger {
+            color: var(--error);
+            font-size: 12.5px;
+            margin-top: 6px;
+            display: block;
+        }
+
+        label .text-danger {
+            display: inline;
+            margin-top: 0;
+        }
+
+        .row-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .image-preview-wrapper {
+            margin-bottom: 16px;
+        }
+
+        .image-preview-wrapper img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            object-fit: cover;
+        }
+
+        .image-upload-wrapper {
+            border: 2px dashed var(--border);
+            border-radius: 16px;
+            padding: 40px 20px;
+            text-align: center;
+            background: var(--soft-purple);
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .image-upload-wrapper:hover {
+            border-color: var(--primary);
+            background: #f3e8ff; /* Light purple */
+        }
+
+        .image-upload-wrapper i {
+            font-size: 40px;
+            color: var(--primary-light);
+            margin-bottom: 12px;
+        }
+
+        .image-upload-wrapper p {
+            color: var(--text-light);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .image-upload-wrapper input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .form-actions {
+            margin-top: 32px;
+            display: flex;
+            gap: 16px;
+            justify-content: flex-end;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        @@media (max-width: 768px) {
+            .row-group {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+}
+
+<div class="form-card">
+    @if (ViewBag.Status == "Rejected" && !string.IsNullOrEmpty(ViewBag.ReviewNotes))
+    {
+        <div style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--error); padding: 16px; border-radius: 12px; margin-bottom: 24px; color: var(--error); font-family: inherit;">
+            <h4 style="font-weight: 700; margin-bottom: 6px; font-size: 14.5px;"><i class="fas fa-exclamation-triangle"></i> Event Rejected by Administrator</h4>
+            <p style="font-size: 13.5px; line-height: 1.5; margin: 0;"><strong>Reason:</strong> @ViewBag.ReviewNotes</p>
+            <p style="font-size: 12.5px; margin-top: 8px; font-style: italic; margin-bottom: 0;">Please correct the details below and save to resubmit the event for review.</p>
+        </div>
+    }
+
+    <form asp-action="Edit" asp-controller="Events" method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="ImageUrl" />
+
+        <div class="form-group">
+            <label asp-for="Title" class="form-label">Event Title <span class="text-danger">*</span></label>
+            <input asp-for="Title" class="form-control" placeholder="e.g., Tech Conference 2026" maxlength="200" id="Title" />
+            <div style="text-align: right; font-size: 11px; color: var(--text-light); margin-top: 4px;"><span id="titleCount">0</span>/200 characters</div>
+            <span asp-validation-for="Title" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <label asp-for="Description" class="form-label" style="margin-bottom: 0;">Event Description <span class="text-danger">*</span></label>
+                <button type="button" id="btnGenerateAi" class="btn-ai">
+                    <i class="fas fa-magic"></i> Generate by AI
+                </button>
+            </div>
+            <textarea asp-for="Description" class="form-control" placeholder="Describe your event, agenda, speakers..." maxlength="2000" id="Description"></textarea>
+            <div style="text-align: right; font-size: 11px; color: var(--text-light); margin-top: 4px;"><span id="descCount">0</span>/2000 characters</div>
+            <span asp-validation-for="Description" class="text-danger"></span>
+        </div>
+
+        <div class="row-group">
+            <div class="form-group">
+                <label asp-for="CategoryId" class="form-label">Category <span class="text-danger">*</span></label>
+                <select asp-for="CategoryId" class="form-control" asp-items="@(new SelectList(Model.Categories, "Id", "Name"))">
+                    <option value="">-- Select Category --</option>
+                </select>
+                <span asp-validation-for="CategoryId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="MaxCapacity" class="form-label">Maximum Capacity</label>
+                <input asp-for="MaxCapacity" type="number" class="form-control" placeholder="Leave empty for unlimited" />
+                <span asp-validation-for="MaxCapacity" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="row-group">
+            <div class="form-group">
+                <label asp-for="StartDate" class="form-label">Start Date & Time <span class="text-danger">*</span></label>
+                @if (ViewBag.TicketsSold as int? > 0)
+                {
+                    <input asp-for="StartDate" type="datetime-local" class="form-control" readonly />
+                    <div style="font-size: 11.5px; color: var(--warning); margin-top: 4px;"><i class="fas fa-info-circle"></i> Cannot change date because tickets are sold.</div>
+                }
+                else
+                {
+                    <input asp-for="StartDate" type="datetime-local" class="form-control" min="@DateTime.UtcNow.ToEgyptTime().ToString("yyyy-MM-ddTHH:mm")" />
+                }
+                <span asp-validation-for="StartDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="EndDate" class="form-label">End Date & Time <span class="text-danger">*</span></label>
+                @if (ViewBag.TicketsSold as int? > 0)
+                {
+                    <input asp-for="EndDate" type="datetime-local" class="form-control" readonly />
+                    <div style="font-size: 11.5px; color: var(--warning); margin-top: 4px;"><i class="fas fa-info-circle"></i> Cannot change date because tickets are sold.</div>
+                }
+                else
+                {
+                    <input asp-for="EndDate" type="datetime-local" class="form-control" min="@DateTime.UtcNow.ToEgyptTime().ToString("yyyy-MM-ddTHH:mm")" />
+                }
+                <span asp-validation-for="EndDate" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="row-group">
+            <div class="form-group">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <label asp-for="Location" class="form-label" style="margin-bottom: 0;">Venue / Location <span class="text-danger">*</span></label>
+                    <button type="button" class="btn-secondary" id="btnOpenMap" style="padding: 4px 10px; font-size: 11.5px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; background: var(--soft-purple); color: var(--primary); border-color: rgba(124,58,237,0.15);">
+                        <i class="fas fa-map-marked-alt"></i> Select from Map
+                    </button>
+                </div>
+                <input asp-for="Location" class="form-control" placeholder="e.g., Grand Hyatt Hotel" />
+                <span asp-validation-for="Location" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="City" class="form-label">City <span class="text-danger">*</span></label>
+                <input asp-for="City" class="form-control" placeholder="e.g., Cairo" required />
+                <span asp-validation-for="City" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Event Cover Image</label>
+            @if (!string.IsNullOrEmpty(Model.ImageUrl))
+            {
+                <div class="image-preview-wrapper">
+                    <img src="@Model.ImageUrl" alt="Current Cover Image" />
+                    <p style="font-size: 13px; color: var(--text-light); margin-top: 8px;">Current image will be kept unless you upload a new one.</p>
+                </div>
+            }
+            
+            <div class="image-upload-wrapper">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p id="fileName">Click or drag a new image here to upload</p>
+                <input type="file" name="imageFile" id="imageFile" accept="image/jpeg, image/png, image/webp" onchange="updateFileName(this)" />
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <a href="/Events/OrganizerIndex" class="btn-secondary">Cancel</a>
+            <button type="submit" class="btn-primary">
+                <i class="fas fa-save"></i> Save Changes
+            </button>
+        </div>
+    </form>
+
+    <!-- Map Selection Modal -->
+    <div id="mapModal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+        <div style="background: white; border-radius: 20px; width: 90%; max-width: 700px; box-shadow: var(--shadow-lg); overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; margin: auto;">
+            <div style="padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--soft-purple);">
+                <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: var(--primary-dark); display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-map-marker-alt"></i> Select Location
+                </h3>
+                <button type="button" id="btnCloseMap" style="background: none; border: none; font-size: 20px; color: var(--text-light); cursor: pointer; transition: var(--transition);">&times;</button>
+            </div>
+            
+            <div style="padding: 16px 24px; border-bottom: 1px solid var(--border); background: var(--bg); display: flex; gap: 10px;">
+                <input type="text" id="mapSearchInput" class="form-control" placeholder="Search for a place or address..." style="padding: 10px 16px; font-size: 13.5px;" />
+                <button type="button" id="btnMapSearch" class="btn-primary" style="padding: 10px 20px; font-size: 13.5px; border-radius: 12px; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-search"></i> Search
+                </button>
+            </div>
+
+            <div style="flex-grow: 1; min-height: 350px; position: relative;">
+                <div id="mapContainer" style="width: 100%; height: 100%; min-height: 350px;"></div>
+            </div>
+
+            <div style="padding: 16px 24px; background: var(--bg); border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 12px;">
+                <div>
+                    <div style="font-size: 12px; font-weight: 600; color: var(--text-light); margin-bottom: 4px;">Selected Location Details:</div>
+                    <div id="selectedLocationDetails" style="font-size: 13.5px; font-weight: 500; color: var(--text); padding: 8px 12px; background: white; border: 1px solid var(--border); border-radius: 8px; min-height: 38px; display: flex; align-items: center; word-break: break-all;">
+                        <span style="font-style: italic; color: var(--text-light);">No location selected yet. Click on the map or search above.</span>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                    <button type="button" id="btnMapCancel" class="btn-secondary" style="font-size: 13.5px;">Cancel</button>
+                    <button type="button" id="btnMapConfirm" class="btn-primary" style="font-size: 13.5px;" disabled>Confirm Selection</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script>
+        function updateFileName(input) {
+            var fileName = document.getElementById('fileName');
+            if (input.files && input.files.length > 0) {
+                fileName.textContent = input.files[0].name;
+                fileName.style.color = "var(--primary)";
+                fileName.style.fontWeight = "700";
+            } else {
+                fileName.textContent = "Click or drag a new image here to upload";
+                fileName.style.color = "var(--text-light)";
+                fileName.style.fontWeight = "500";
+            }
+        }
+
+        const titleInput = document.getElementById('Title');
+        const titleCount = document.getElementById('titleCount');
+        if (titleInput && titleCount) {
+            titleCount.textContent = titleInput.value.length;
+            titleInput.addEventListener('input', () => {
+                titleCount.textContent = titleInput.value.length;
+            });
+        }
+
+        const descInput = document.getElementById('Description');
+        const descCount = document.getElementById('descCount');
+        if (descInput && descCount) {
+            descCount.textContent = descInput.value.length;
+            descInput.addEventListener('input', () => {
+                descCount.textContent = descInput.value.length;
+            });
+        }
+
+        const btnGenerateAi = document.getElementById('btnGenerateAi');
+        if (btnGenerateAi) {
+            btnGenerateAi.addEventListener('click', async () => {
+                const titleVal = titleInput ? titleInput.value.trim() : '';
+                const cityInput = document.getElementById('City');
+                const cityVal = cityInput ? cityInput.value.trim() : '';
+                const categorySelect = document.getElementById('CategoryId');
+                let categoryVal = '';
+                if (categorySelect && categorySelect.selectedIndex > 0) {
+                    categoryVal = categorySelect.options[categorySelect.selectedIndex].text;
+                }
+
+                if (!titleVal) {
+                    alert('Please fill in the Event Title first to generate a description.');
+                    if (titleInput) titleInput.focus();
+                    return;
+                }
+
+                // Show loading state
+                const originalHtml = btnGenerateAi.innerHTML;
+                btnGenerateAi.disabled = true;
+                btnGenerateAi.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+
+                // Set placeholder
+                if (descInput) {
+                    descInput.placeholder = 'AI is writing a rich description for your event... Please wait...';
+                    descInput.value = '';
+                }
+
+                try {
+                    const response = await fetch('/Events/GenerateDescription', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        },
+                        body: JSON.stringify({
+                            title: titleVal,
+                            city: cityVal,
+                            category: categoryVal
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        if (descInput) {
+                            descInput.value = data.description;
+                            descInput.dispatchEvent(new Event('input'));
+                        }
+                    } else {
+                        alert(data.error || 'Failed to generate description.');
+                    }
+                } catch (error) {
+                    console.error('Error generating description:', error);
+                    alert('An error occurred while connecting to the server. Please try again.');
+                } finally {
+                    btnGenerateAi.disabled = false;
+                    btnGenerateAi.innerHTML = originalHtml;
+                    if (descInput) {
+                        descInput.placeholder = 'Describe your event, agenda, speakers...';
+                    }
+                }
+            });
+        }
+
+        // ===== MAP LOCATION SELECTION LOGIC =====
+        let map = null;
+        let mapMarker = null;
+        let selectedLocationData = null;
+
+        document.getElementById('btnOpenMap')?.addEventListener('click', () => {
+            const modal = document.getElementById('mapModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                initMap();
+            }
+        });
+
+        function closeMapModal() {
+            document.getElementById('mapModal').style.display = 'none';
+        }
+        document.getElementById('btnCloseMap')?.addEventListener('click', closeMapModal);
+        document.getElementById('btnMapCancel')?.addEventListener('click', closeMapModal);
+
+        function initMap() {
+            if (map !== null) {
+                setTimeout(() => {
+                    map.invalidateSize();
+                }, 200);
+                return;
+            }
+
+            const defaultLat = 30.0444;
+            const defaultLng = 31.2357;
+
+            map = L.map('mapContainer').setView([defaultLat, defaultLng], 12);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            map.on('click', function(e) {
+                placeMarker(e.latlng);
+            });
+        }
+
+        function placeMarker(latlng) {
+            if (mapMarker === null) {
+                mapMarker = L.marker(latlng, { draggable: true }).addTo(map);
+                mapMarker.on('dragend', function(e) {
+                    reverseGeocode(mapMarker.getLatLng());
+                });
+            } else {
+                mapMarker.setLatLng(latlng);
+            }
+            map.panTo(latlng);
+            reverseGeocode(latlng);
+        }
+
+        function reverseGeocode(latlng) {
+            const detailsDiv = document.getElementById('selectedLocationDetails');
+            const confirmBtn = document.getElementById('btnMapConfirm');
+            detailsDiv.innerHTML = '<span style="color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Getting address details...</span>';
+            confirmBtn.disabled = true;
+
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latlng.lat}&lon=${latlng.lng}&accept-language=en`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.address) {
+                        const addr = data.address;
+                        const city = addr.city || addr.town || addr.village || addr.suburb || addr.governorate || addr.state || '';
+                        const locationName = data.display_name || '';
+
+                        selectedLocationData = {
+                            city: city,
+                            location: locationName
+                        };
+
+                        detailsDiv.textContent = locationName;
+                        confirmBtn.disabled = false;
+                    } else {
+                        detailsDiv.textContent = "Could not retrieve address details for this point.";
+                    }
+                })
+                .catch(error => {
+                    console.error("Reverse geocoding error:", error);
+                    detailsDiv.textContent = "Error loading address details.";
+                });
+        }
+
+        document.getElementById('btnMapSearch')?.addEventListener('click', performMapSearch);
+        document.getElementById('mapSearchInput')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performMapSearch();
+            }
+        });
+
+        function performMapSearch() {
+            const query = document.getElementById('mapSearchInput').value.trim();
+            if (!query) return;
+
+            const detailsDiv = document.getElementById('selectedLocationDetails');
+            detailsDiv.innerHTML = '<span style="color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Searching...</span>';
+
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&accept-language=en`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        const res = data[0];
+                        const latlng = L.latLng(parseFloat(res.lat), parseFloat(res.lon));
+                        placeMarker(latlng);
+                        map.setView(latlng, 15);
+                    } else {
+                        detailsDiv.textContent = "No locations found for this query.";
+                    }
+                })
+                .catch(error => {
+                    console.error("Map search error:", error);
+                    detailsDiv.textContent = "Error searching address.";
+                });
+        }
+
+        document.getElementById('btnMapConfirm')?.addEventListener('click', () => {
+            if (selectedLocationData) {
+                const locInput = document.getElementById('Location');
+                const cityInput = document.getElementById('City');
+
+                if (locInput) {
+                    locInput.value = selectedLocationData.location;
+                    locInput.dispatchEvent(new Event('input'));
+                }
+                if (cityInput) {
+                    cityInput.value = selectedLocationData.city;
+                    cityInput.dispatchEvent(new Event('input'));
+                }
+
+                closeMapModal();
+            }
+        });
+    </script>
+}

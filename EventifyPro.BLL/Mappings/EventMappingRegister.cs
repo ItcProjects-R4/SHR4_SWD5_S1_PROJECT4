@@ -10,17 +10,20 @@ public sealed class EventMappingRegister : IRegister
     {
         config.NewConfig<DomainEvent, EventSummaryDto>()
             .Map(dest => dest.Status, src => src.Status.ToString())
-            .Map(dest => dest.OrganizerName, src => src.Organizer.FullName)
-            .Map(dest => dest.CategoryName, src => src.Category.Name);
+            .Map(dest => dest.OrganizerName, src => src.Organizer != null ? src.Organizer.FullName : string.Empty)
+            .Map(dest => dest.CategoryName, src => src.Category != null ? src.Category.Name : string.Empty)
+            .Map(dest => dest.MinTicketPrice, src => src.TicketTypes != null && src.TicketTypes.Any() ? src.TicketTypes.Min(t => t.Price) : 0m)
+            .Map(dest => dest.MaxTicketPrice, src => src.TicketTypes != null && src.TicketTypes.Any() ? src.TicketTypes.Max(t => t.Price) : 0m)
+            .Map(dest => dest.Location, src => src.Location);
 
         config.NewConfig<DomainEvent, EventDetailDto>()
             .Map(dest => dest.Status, src => src.Status.ToString())
-            .Map(dest => dest.OrganizerName, src => src.Organizer.FullName)
-            .Map(dest => dest.CategoryName, src => src.Category.Name)
-            .Map(dest => dest.TotalBookings, src => src.Bookings.Count)
-            .Map(dest => dest.TotalTicketsSold, src => src.TicketTypes.Sum(ticketType => ticketType.SoldQuantity))
-            .Map(dest => dest.TotalRevenue, src => src.Bookings.Sum(booking => booking.TotalAmount))
-            .Map(dest => dest.AverageRating, src => src.Reviews.Any()
+            .Map(dest => dest.OrganizerName, src => src.Organizer != null ? src.Organizer.FullName : string.Empty)
+            .Map(dest => dest.CategoryName, src => src.Category != null ? src.Category.Name : string.Empty)
+            .Map(dest => dest.TotalBookings, src => src.Bookings != null ? src.Bookings.Count : 0)
+            .Map(dest => dest.TotalTicketsSold, src => src.TicketTypes != null ? src.TicketTypes.Sum(ticketType => ticketType.SoldQuantity) : 0)
+            .Map(dest => dest.TotalRevenue, src => src.Bookings != null ? src.Bookings.Sum(booking => booking.TotalAmount) : 0)
+            .Map(dest => dest.AverageRating, src => src.Reviews != null && src.Reviews.Any()
                 ? src.Reviews.Average(review => review.Rating)
                 : 0);
 

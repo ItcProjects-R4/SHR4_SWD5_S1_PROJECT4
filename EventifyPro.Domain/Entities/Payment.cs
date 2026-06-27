@@ -1,4 +1,4 @@
-﻿namespace Eventify.Domain.Entities;
+namespace Eventify.Domain.Entities;
 
 /// <summary>
 /// Represents a payment made for a booking.
@@ -9,7 +9,7 @@
 /// including the payment method used, current processing status, and any refunds issued
 /// against this payment.
 /// </remarks>
-public class Payment
+public class Payment : IAuditable
 {
     /// <summary>
     /// Gets or sets the unique identifier for the payment.
@@ -46,6 +46,11 @@ public class Payment
     /// </summary>
     /// <value>The external transaction identifier, or null for local payments.</value>
     public string? TransactionId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the currency for the payment (e.g., EGP, USD).
+    /// </summary>
+    public string Currency { get; set; } = "EGP";
 
     public DateTime PaymentDate { get; set; }
     public DateTime? UpdatedAt { get; set; }

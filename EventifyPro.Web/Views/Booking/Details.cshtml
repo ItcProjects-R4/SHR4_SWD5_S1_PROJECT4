@@ -1,0 +1,465 @@
+@model EventifyPro.Web.ViewModels.Booking.BookingDetailViewModel
+@{
+    var isAttendee = User.IsInRole(Eventify.Domain.Constants.RoleNames.Attendee);
+    Layout = isAttendee ? "_AttendeeLayout" : "_Layout";
+    ViewData["Title"] = $"Booking Details - {Model.BookingReference}";
+}
+
+@if (!isAttendee)
+{
+    <div class="bg-animation">
+        <div class="bg-blob blob-1"></div>
+        <div class="bg-blob blob-2"></div>
+        <div class="bg-blob blob-3"></div>
+    </div>
+
+    <div class="page-header">
+        <div class="container">
+            <h1>Booking <span class="gradient-text">Details</span></h1>
+            <p>Reference: @Model.BookingReference</p>
+        </div>
+    </div>
+}
+else
+{
+    <div class="workspace-header">
+        <h1 class="workspace-title">Booking Details</h1>
+        <p class="workspace-subtitle">Reference: @Model.BookingReference</p>
+    </div>
+}
+
+<div class="@(isAttendee ? "" : "container")" style="padding-bottom: 80px;">
+    @if (TempData["BookingError"] != null)
+    {
+        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--error); color: var(--error); padding: 16px 20px; border-radius: 12px; margin-bottom: 30px; font-weight: 600;">
+            <i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i> @TempData["BookingError"]
+        </div>
+    }
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success); color: var(--success); padding: 16px 20px; border-radius: 12px; margin-bottom: 30px; font-weight: 600;">
+            <i class="fas fa-check-circle" style="margin-right: 8px;"></i> @TempData["SuccessMessage"]
+        </div>
+    }
+
+    <!-- Booking Timeline -->
+    @{
+        int completedCount = 1;
+        if (Model.IsPaymentConfirmed) completedCount = 2;
+        if (Model.AreTicketsGenerated) completedCount = 3;
+        if (Model.IsEventPassed) completedCount = 4;
+        if (Model.IsTicketScanned) completedCount = 5;
+        double progressPercent = (completedCount - 1) * 25.0;
+    }
+    <div class="checkout-card timeline-card" style="margin-bottom: 30px;">
+        <h3 style="margin-bottom: 20px; font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+            <i class="fas fa-route" style="color: var(--primary);"></i> Booking Timeline
+        </h3>
+        <div class="timeline-steps">
+            <div class="timeline-progress-container">
+                <div class="timeline-progress-track"></div>
+                <div class="timeline-progress-bar" style="width: @(progressPercent)%;"></div>
+            </div>
+            <!-- Step 1: Booking Created -->
+            <div class="timeline-step completed">
+                <div class="step-icon">
+                    <i class="fas fa-calendar-plus"></i>
+                </div>
+                <div class="step-info">
+                    <strong>Booking Created</strong>
+                    <span class="step-date">@Model.BookingDate.ToEgyptTime().ToString("g")</span>
+                </div>
+            </div>
+
+            <!-- Step 2: Payment Confirmed -->
+            <div class="timeline-step @(Model.IsPaymentConfirmed ? "completed" : "pending")">
+                <div class="step-icon">
+                    <i class="fas fa-credit-card"></i>
+                </div>
+                <div class="step-info">
+                    <strong>Payment Confirmed</strong>
+                    <span class="step-date">@(Model.IsPaymentConfirmed ? Model.PaymentDate?.ToEgyptTime().ToString("g") : "Pending")</span>
+                </div>
+            </div>
+
+            <!-- Step 3: Tickets Generated -->
+            <div class="timeline-step @(Model.AreTicketsGenerated ? "completed" : "pending")">
+                <div class="step-icon">
+                    <i class="fas fa-ticket-alt"></i>
+                </div>
+                <div class="step-info">
+                    <strong>Tickets Generated</strong>
+                    <span class="step-date">@(Model.AreTicketsGenerated ? Model.TicketsGeneratedDate?.ToEgyptTime().ToString("g") : "Awaiting Payment")</span>
+                </div>
+            </div>
+
+            <!-- Step 4: Event Date -->
+            <div class="timeline-step @(Model.IsEventPassed ? "completed" : "upcoming")">
+                <div class="step-icon">
+                    <i class="fas fa-calendar-day"></i>
+                </div>
+                <div class="step-info">
+                    <strong>Event Starts</strong>
+                    <span class="step-date">@Model.EventStartDate.ToEgyptTime().ToString("g")</span>
+                </div>
+            </div>
+
+            <!-- Step 5: Ticket Scanned -->
+            <div class="timeline-step @(Model.IsTicketScanned ? "completed" : "pending")">
+                <div class="step-icon">
+                    <i class="fas fa-qrcode"></i>
+                </div>
+                <div class="step-info">
+                    <strong>Ticket Scanned</strong>
+                    <span class="step-date">@(Model.IsTicketScanned ? Model.TicketScannedDate?.ToEgyptTime().ToString("g") : "Not scanned yet")</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="checkout-grid">
+        <!-- Left: Receipt and Items -->
+        <div class="checkout-card" style="margin-bottom: 0;">
+            <h3><i class="fas fa-receipt"></i> Booking Receipt</h3>
+
+            <div style="margin-bottom: 30px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; padding: 20px; background: var(--soft-purple); border-radius: 16px;">
+                <div>
+                    <span style="font-size: 12px; color: var(--text-light); display: block;">Event</span>
+                    <strong style="color: var(--primary-dark); font-size: 16px;">@Model.EventTitle</strong>
+                </div>
+                <div>
+                    <span style="font-size: 12px; color: var(--text-light); display: block;">Booking Date</span>
+                    <strong>@Model.BookingDate.ToEgyptTime().ToString("MMMM dd, yyyy - hh:mm tt")</strong>
+                </div>
+                <div>
+                    <span style="font-size: 12px; color: var(--text-light); display: block;">Status</span>
+                    @{
+                        var statusStyle = Model.Status.ToLower() switch
+                        {
+                            "confirmed" => "color: var(--success); font-weight: 700;",
+                            "pending" => "color: var(--warning); font-weight: 700;",
+                            _ => "color: var(--error); font-weight: 700;"
+                        };
+                    }
+                    <span style="@statusStyle">@Model.Status</span>
+                </div>
+            </div>
+
+            <h4 style="margin-bottom: 16px; font-size: 18px; font-weight: 700;">Ticket Summary</h4>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--border); text-align: left;">
+                            <th style="padding: 12px 8px; color: var(--text-light); font-weight: 600; font-size: 14px;">Ticket Type</th>
+                            <th style="padding: 12px 8px; color: var(--text-light); font-weight: 600; font-size: 14px; text-align: center;">Quantity</th>
+                            <th style="padding: 12px 8px; color: var(--text-light); font-weight: 600; font-size: 14px; text-align: right;">Price</th>
+                            <th style="padding: 12px 8px; color: var(--text-light); font-weight: 600; font-size: 14px; text-align: right;">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr style="border-bottom: 1px solid var(--border);">
+                                <td style="padding: 16px 8px; font-weight: 600;">@item.TicketTypeName</td>
+                                <td style="padding: 16px 8px; text-align: center;">@item.Quantity</td>
+                                <td style="padding: 16px 8px; text-align: right;">@item.UnitPrice.ToString("C")</td>
+                                <td style="padding: 16px 8px; text-align: right; font-weight: 700; color: var(--primary);">@item.Subtotal.ToString("C")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px; border-top: 1px dashed var(--border); padding-top: 20px;">
+                @{
+                    var ticketSubtotal = Model.TotalAmount - Model.ServiceFee;
+                    if (ticketSubtotal < 0) ticketSubtotal = 0;
+                }
+                <div style="display: flex; justify-content: space-between; width: 220px; font-size: 14px;">
+                    <span style="color: var(--text-light);">Ticket Subtotal:</span>
+                    <strong style="color: var(--text);">@ticketSubtotal.ToString("C")</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; width: 220px; font-size: 14px;">
+                    <span style="color: var(--text-light);">Processing Fee:</span>
+                    <strong style="color: var(--text);">@Model.ServiceFee.ToString("C")</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; width: 220px; font-size: 18px; font-weight: 800; color: var(--primary); margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px;">
+                    <span>Total Paid:</span>
+                    <span>@Model.TotalAmount.ToString("C")</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Actions & Status Details -->
+        <div class="order-summary">
+            <div class="summary-card">
+                <h3>Options</h3>
+                
+                @if (Model.Status.Equals("Confirmed", StringComparison.OrdinalIgnoreCase))
+                {
+                    <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.15); border-radius: 16px; padding: 20px; margin-bottom: 24px; text-align: center;">
+                        <i class="fas fa-check-circle" style="font-size: 40px; color: var(--success); margin-bottom: 12px;"></i>
+                        <h4 style="font-weight: 700; margin-bottom: 8px; color: var(--success);">Booking Confirmed</h4>
+                        <p style="font-size: 13px; color: var(--text-light); margin-bottom: 16px;">Your tickets are ready for use. Access them now to check-in.</p>
+                        <a href="/Ticket/MyTickets" class="btn-primary btn-full">
+                            <i class="fas fa-ticket-alt"></i> View Tickets
+                        </a>
+                        <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 8px;">
+                            <button onclick="addToGoogleCalendar()" class="btn-outline btn-full btn-small" style="display: flex; align-items: center; justify-content: center; gap: 8px; border-color: #db4437; color: #db4437; background: transparent; cursor: pointer;">
+                                <i class="fab fa-google"></i> Add to Google Calendar
+                            </button>
+                        </div>
+                    </div>
+                }
+                else if (Model.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase))
+                {
+                    <div style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.15); border-radius: 16px; padding: 20px; margin-bottom: 24px; text-align: center;">
+                        <i class="fas fa-clock" style="font-size: 40px; color: var(--warning); margin-bottom: 12px;"></i>
+                        <h4 style="font-weight: 700; margin-bottom: 8px; color: var(--warning);">Pending Payment</h4>
+                        <p style="font-size: 13px; color: var(--text-light); margin-bottom: 16px;">Your booking is awaiting payment confirmation.</p>
+                        <a href="/Payment/Checkout/@Model.Id" class="btn-primary btn-full">
+                            <i class="fas fa-credit-card"></i> Pay Now
+                        </a>
+                    </div>
+                }
+                else if (Model.Status.Equals("Cancelled", StringComparison.OrdinalIgnoreCase))
+                {
+                    <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.15); border-radius: 16px; padding: 20px; margin-bottom: 24px; text-align: center;">
+                        <i class="fas fa-ban" style="font-size: 40px; color: var(--error); margin-bottom: 12px;"></i>
+                        <h4 style="font-weight: 700; margin-bottom: 8px; color: var(--error);">Cancelled</h4>
+                        @if (!string.IsNullOrWhiteSpace(Model.CancellationReason))
+                        {
+                            <p style="font-size: 13px; color: var(--text-light); font-style: italic;">Reason: "@Model.CancellationReason"</p>
+                        }
+                    </div>
+                }
+
+                @if (Model.Status.Equals("Confirmed", StringComparison.OrdinalIgnoreCase) || Model.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase))
+                {
+                    <div style="border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px;">
+                        <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 12px; color: var(--error);">Cancel Booking</h4>
+                        <form id="cancelBookingForm" asp-action="Cancel" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <div class="input-group" style="margin-bottom: 12px;">
+                                <textarea name="reason" id="cancelReasonInput" placeholder="Reason for cancellation..." required style="min-height: 80px; padding: 12px 14px; font-size: 13px; border-radius: 8px;"></textarea>
+                            </div>
+                            <button type="button" class="btn-outline btn-full btn-small" onclick="showCancelModal()" style="border-color: var(--error); color: var(--error); background: transparent;">
+                                <i class="fas fa-trash-alt"></i> Cancel Booking
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Custom Cancel Confirmation Modal -->
+                    <div id="cancelModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
+                        <div class="checkout-card" style="max-width: 420px; width: 90%; text-align: center; padding: 36px 30px; border-radius: 24px; background: var(--white); box-shadow: var(--shadow-lg); border: 1px solid var(--border);">
+                            <div style="background: rgba(239,68,68,0.1); width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: var(--error);">
+                                <i class="fas fa-exclamation-triangle" style="font-size: 28px;"></i>
+                            </div>
+                            <h3 style="font-size: 19px; font-weight: 800; color: var(--text); margin-bottom: 10px;">Cancel Booking</h3>
+                            <p style="font-size: 13.5px; color: var(--text-light); line-height: 1.5; margin-bottom: 24px;">Are you sure you want to cancel this booking? This action is permanent and cannot be undone.</p>
+                            
+                            <div style="display: flex; gap: 12px; justify-content: center;">
+                                <button type="button" class="btn-outline btn-small" onclick="closeCancelModal()" style="flex: 1; padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: 13.5px; cursor: pointer; transition: all 0.3s ease;">
+                                    No, Keep it
+                                </button>
+                                <button type="button" class="btn-primary btn-small" id="confirmCancelBtn" style="flex: 1; background: var(--error); border-color: var(--error); color: var(--white); padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: 13.5px; cursor: pointer; transition: all 0.3s ease;">
+                                    Yes, Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <a href="/Booking" class="btn-ghost btn-full btn-small" style="margin-top: 10px; text-align: center;">
+                    <i class="fas fa-chevron-left"></i> Back to My Bookings
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .timeline-steps {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        position: relative;
+        margin-top: 20px;
+        padding-bottom: 10px;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    /* Connecting progress line for desktop */
+    .timeline-progress-container {
+        display: none;
+    }
+
+    @@media (min-width: 768px) {
+        .timeline-progress-container {
+            display: block;
+            position: absolute;
+            top: 20px;
+            left: 40px;
+            right: 40px;
+            height: 4px;
+            z-index: 1;
+        }
+
+        .timeline-progress-track {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            background: var(--border);
+            border-radius: 2px;
+        }
+
+        .timeline-progress-bar {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            background: var(--primary);
+            border-radius: 2px;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 8px rgba(124, 58, 237, 0.4);
+        }
+    }
+
+    .timeline-step {
+        flex: 1;
+        min-width: 150px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        position: relative;
+        z-index: 2;
+    }
+
+    .step-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: var(--bg);
+        border: 3px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-light);
+        font-size: 16px;
+        transition: all 0.3s ease;
+        margin-bottom: 12px;
+    }
+
+    .timeline-step.completed .step-icon {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: var(--white);
+        box-shadow: 0 0 12px rgba(124, 58, 237, 0.3);
+    }
+
+    .timeline-step.upcoming .step-icon {
+        background: var(--soft-purple);
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    .step-info strong {
+        display: block;
+        font-size: 13.5px;
+        color: var(--text);
+        margin-bottom: 4px;
+        font-weight: 700;
+    }
+
+    .step-date {
+        font-size: 11px;
+        color: var(--text-light);
+        font-weight: 500;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        function showCancelModal() {
+            const reason = document.getElementById('cancelReasonInput').value.trim();
+            if (!reason) {
+                document.getElementById('cancelReasonInput').reportValidity();
+                return;
+            }
+            document.getElementById('cancelModal').style.display = 'flex';
+        }
+
+        function closeCancelModal() {
+            document.getElementById('cancelModal').style.display = 'none';
+        }
+
+        document.getElementById('confirmCancelBtn').addEventListener('click', function() {
+            document.getElementById('cancelBookingForm').submit();
+        });
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(e) {
+            const modal = document.getElementById('cancelModal');
+            if (e.target === modal) {
+                closeCancelModal();
+            }
+        });
+
+        function formatGoogleDate(dateStr) {
+            const d = new Date(dateStr);
+            return d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+        }
+
+        function addToGoogleCalendar() {
+            const title = encodeURIComponent("@Model.EventTitle");
+            const startDate = formatGoogleDate("@Model.EventStartDate.ToString("o")");
+            const endDate = formatGoogleDate("@Model.EventEndDate.ToString("o")");
+            const details = encodeURIComponent("Event booked via Eventify Pro. Reference: @Model.BookingReference. URL: " + window.location.href);
+            const location = encodeURIComponent("@Model.EventLocation, @Model.EventCity");
+            
+            const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startDate}/${endDate}&details=${details}&location=${location}`;
+            window.open(url, '_blank');
+        }
+
+        function downloadICS() {
+            const title = "@Model.EventTitle";
+            const startDate = formatGoogleDate("@Model.EventStartDate.ToString("o")");
+            const endDate = formatGoogleDate("@Model.EventEndDate.ToString("o")");
+            const location = "@Model.EventLocation, @Model.EventCity";
+            const details = "Event booked via Eventify Pro. Reference: @Model.BookingReference. URL: " + window.location.href;
+            
+            const icsContent = [
+                "BEGIN:VCALENDAR",
+                "VERSION:2.0",
+                "BEGIN:VEVENT",
+                `SUMMARY:${title}`,
+                `DTSTART:${startDate}`,
+                `DTEND:${endDate}`,
+                `LOCATION:${location}`,
+                `DESCRIPTION:${details}`,
+                "STATUS:CONFIRMED",
+                "SEQUENCE:0",
+                "BEGIN:VALARM",
+                "TRIGGER:-PT15M",
+                "ACTION:DISPLAY",
+                "DESCRIPTION:Reminder",
+                "END:VALARM",
+                "END:VEVENT",
+                "END:VCALENDAR"
+            ].join("\r\n");
+
+            const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", `event-${"@Model.Id"}.ics`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+}

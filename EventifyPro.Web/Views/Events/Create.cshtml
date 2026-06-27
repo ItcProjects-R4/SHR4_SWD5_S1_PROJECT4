@@ -1,0 +1,1212 @@
+@model EventifyPro.Web.ViewModels.Event.EventFormViewModel
+@{
+    Layout = "_OrganizerLayout";
+    ViewData["Title"] = "Create New Event";
+    ViewData["HeaderTitle"] = "Create New Event ✨";
+    ViewData["HeaderSubtitle"] = "Fill in the details to publish your new event on Eventify Pro.";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <style>
+        .form-card {
+            background: white;
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* ===== STEPPER ===== */
+        .stepper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            position: relative;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .stepper::before {
+            content: '';
+            position: absolute;
+            top: 24px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--border);
+            z-index: 1;
+        }
+
+        .stepper-progress {
+            position: absolute;
+            top: 24px;
+            left: 0;
+            height: 2px;
+            background: var(--primary);
+            z-index: 1;
+            transition: width 0.4s ease;
+            width: 0%;
+        }
+
+        .step-item {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+
+        .step-circle {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: var(--text-light);
+            font-weight: 700;
+            transition: var(--transition);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+        }
+
+        .step-item.active .step-circle {
+            border-color: var(--primary);
+            color: var(--primary);
+            box-shadow: 0 0 0 4px var(--light-purple);
+        }
+
+        .step-item.completed .step-circle {
+            border-color: var(--success);
+            background: var(--success);
+            color: white;
+        }
+
+        .step-label {
+            margin-top: 10px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--text-light);
+            transition: var(--transition);
+        }
+
+        .step-item.active .step-label {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .step-item.completed .step-label {
+            color: var(--success);
+        }
+
+        /* ===== WIZARD PANELS ===== */
+        .wizard-panel {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .wizard-panel.active {
+            display: block;
+        }
+
+        @@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 14.5px;
+            color: var(--text);
+            background: var(--bg);
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+            background: white;
+        }
+
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .btn-ai {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--primary-light);
+            background: var(--soft-purple);
+            color: var(--primary);
+            transition: var(--transition);
+        }
+        .btn-ai:hover {
+            background: var(--primary-light);
+            color: white;
+            transform: translateY(-1px);
+        }
+        .btn-ai:disabled {
+            background: var(--border);
+            border-color: var(--border);
+            color: var(--text-light);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .text-danger {
+            color: var(--error);
+            font-size: 12.5px;
+            margin-top: 6px;
+            display: block;
+        }
+
+        label .text-danger {
+            display: inline;
+            margin-top: 0;
+        }
+
+        .row-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .image-upload-wrapper {
+            border: 2px dashed var(--border);
+            border-radius: 16px;
+            padding: 40px 20px;
+            text-align: center;
+            background: var(--soft-purple);
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .image-upload-wrapper:hover {
+            border-color: var(--primary);
+            background: #f3e8ff;
+        }
+
+        .image-upload-wrapper i {
+            font-size: 40px;
+            color: var(--primary-light);
+            margin-bottom: 12px;
+        }
+
+        .image-upload-wrapper p {
+            color: var(--text-light);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .image-upload-wrapper input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* ===== TICKETS WIZARD STEP ===== */
+        .ticket-builder-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 28px;
+        }
+
+        .ticket-builder-card h4 {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--primary-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tickets-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .tickets-table th {
+            background: var(--soft-purple);
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 12.5px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .tickets-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13.5px;
+            color: var(--text);
+            vertical-align: middle;
+        }
+
+        .tickets-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .btn-add-ticket {
+            background: var(--gradient);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 13.5px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-add-ticket:hover {
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
+            transform: translateY(-1px);
+        }
+
+        /* ===== LOCKED SCANNER VIEW ===== */
+        .locked-scanner-view {
+            text-align: center;
+            padding: 48px 32px;
+            background: var(--soft-purple);
+            border-radius: 20px;
+            border: 1px dashed var(--accent);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .locked-scanner-view .lock-icon {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            color: var(--primary-light);
+            margin-bottom: 24px;
+            box-shadow: 0 8px 24px rgba(124, 58, 237, 0.15);
+            border: 2px solid var(--light-purple);
+        }
+
+        .locked-scanner-view h4 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin-bottom: 12px;
+        }
+
+        .locked-scanner-view p {
+            font-size: 14px;
+            color: var(--text-light);
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .form-actions {
+            margin-top: 32px;
+            display: flex;
+            gap: 16px;
+            justify-content: flex-end;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        @@media (max-width: 768px) {
+            .row-group {
+                grid-template-columns: 1fr;
+            }
+            .form-card {
+                padding: 24px 20px;
+            }
+        }
+    </style>
+}
+
+<div class="form-card">
+    <!-- Stepper Header -->
+    <div class="stepper">
+        <div class="stepper-progress" id="wizardProgress"></div>
+        
+        <div class="step-item active" id="step1-header">
+            <div class="step-circle"><i class="fas fa-calendar-day"></i></div>
+            <div class="step-label">Event Info</div>
+        </div>
+        <div class="step-item" id="step2-header">
+            <div class="step-circle"><i class="fas fa-ticket-alt"></i></div>
+            <div class="step-label">Tickets</div>
+        </div>
+        <div class="step-item" id="step3-header">
+            <div class="step-circle"><i class="fas fa-qrcode"></i></div>
+            <div class="step-label">Scanner</div>
+        </div>
+    </div>
+
+    <form id="createEventForm" asp-action="Create" asp-controller="Events" method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-danger" style="margin-bottom: 20px;"></div>
+
+        <!-- Hidden input container for tickets list -->
+        <div id="ticketsHiddenContainer"></div>
+
+        <!-- STEP 1: EVENT INFO -->
+        <div class="wizard-panel active" id="step1-panel">
+            <div class="form-group">
+                <label asp-for="Title" class="form-label">Event Title <span class="text-danger">*</span></label>
+                <input asp-for="Title" class="form-control" placeholder="e.g., Tech Conference 2026" maxlength="200" id="Title" required />
+                <div style="text-align: right; font-size: 11px; color: var(--text-light); margin-top: 4px;"><span id="titleCount">0</span>/200 characters</div>
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <label asp-for="Description" class="form-label" style="margin-bottom: 0;">Event Description <span class="text-danger">*</span></label>
+                    <button type="button" id="btnGenerateAi" class="btn-ai">
+                        <i class="fas fa-magic"></i> Generate by AI
+                    </button>
+                </div>
+                <textarea asp-for="Description" class="form-control" placeholder="Describe your event, agenda, speakers..." maxlength="2000" id="Description" required></textarea>
+                <div style="text-align: right; font-size: 11px; color: var(--text-light); margin-top: 4px;"><span id="descCount">0</span>/2000 characters</div>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+
+            <div class="row-group">
+                <div class="form-group">
+                    <label asp-for="CategoryId" class="form-label">Category <span class="text-danger">*</span></label>
+                    <select asp-for="CategoryId" class="form-control" asp-items="@(new SelectList(Model.Categories, "Id", "Name"))" required>
+                        <option value="">-- Select Category --</option>
+                    </select>
+                    <span asp-validation-for="CategoryId" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="MaxCapacity" class="form-label">Maximum Capacity</label>
+                    <input asp-for="MaxCapacity" type="number" class="form-control" placeholder="Leave empty for unlimited" min="1" />
+                    <span asp-validation-for="MaxCapacity" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="row-group">
+                <div class="form-group">
+                    <label asp-for="StartDate" class="form-label">Start Date & Time <span class="text-danger">*</span></label>
+                    <input asp-for="StartDate" type="datetime-local" class="form-control" min="@DateTime.UtcNow.ToEgyptTime().ToString("yyyy-MM-ddTHH:mm")" required />
+                    <span asp-validation-for="StartDate" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="EndDate" class="form-label">End Date & Time <span class="text-danger">*</span></label>
+                    <input asp-for="EndDate" type="datetime-local" class="form-control" min="@DateTime.UtcNow.ToEgyptTime().ToString("yyyy-MM-ddTHH:mm")" required />
+                    <span asp-validation-for="EndDate" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="row-group">
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label asp-for="Location" class="form-label" style="margin-bottom: 0;">Venue / Location <span class="text-danger">*</span></label>
+                        <button type="button" class="btn-secondary" id="btnOpenMap" style="padding: 4px 10px; font-size: 11.5px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; background: var(--soft-purple); color: var(--primary); border-color: rgba(124,58,237,0.15);">
+                            <i class="fas fa-map-marked-alt"></i> Select from Map
+                        </button>
+                    </div>
+                    <input asp-for="Location" class="form-control" placeholder="e.g., Grand Hyatt Hotel" required />
+                    <span asp-validation-for="Location" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="City" class="form-label">City <span class="text-danger">*</span></label>
+                    <input asp-for="City" class="form-control" placeholder="e.g., Cairo" required />
+                    <span asp-validation-for="City" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Event Cover Image</label>
+                <div class="image-upload-wrapper">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p id="fileName">Click or drag an image here to upload</p>
+                    <input type="file" name="imageFile" id="imageFile" accept="image/jpeg, image/png, image/webp" onchange="updateFileName(this)" />
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 2: TICKETS -->
+        <div class="wizard-panel" id="step2-panel">
+            <div class="ticket-builder-card">
+                <h4><i class="fas fa-plus-circle"></i> Create Ticket Type</h4>
+                
+                <div class="row-group">
+                    <div class="form-group">
+                        <label class="form-label">Ticket Name <span class="text-danger">*</span></label>
+                        <input type="text" id="ticketName" class="form-control" placeholder="e.g., VIP, Standard, Early Bird" />
+                        <span class="text-danger" id="ticketNameError" style="display:none;">Ticket name is required</span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Price (EGP) <span class="text-danger">*</span></label>
+                        <input type="number" id="ticketPrice" class="form-control" min="0" step="0.01" placeholder="Enter price (0 for Free)" />
+                        <span class="text-danger" id="ticketPriceError" style="display:none;">Valid price is required</span>
+                    </div>
+                </div>
+
+                <div class="row-group">
+                    <div class="form-group">
+                        <label class="form-label">Total Quantity Available <span class="text-danger">*</span></label>
+                        <input type="number" id="ticketQuantity" class="form-control" min="1" placeholder="e.g., 100" />
+                        <span class="text-danger" id="ticketQuantityError" style="display:none;">Quantity must be at least 1</span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Ticket Description</label>
+                        <input type="text" id="ticketDescription" class="form-control" placeholder="e.g., Includes front row seats, lunch buffet" />
+                    </div>
+                </div>
+
+                <div class="row-group">
+                    <div class="form-group">
+                        <label class="form-label">Sale Start Date</label>
+                        <input type="datetime-local" id="ticketSaleStart" class="form-control" />
+                        <span class="text-danger" id="ticketSaleStartError" style="display:none;"></span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Sale End Date</label>
+                        <input type="datetime-local" id="ticketSaleEnd" class="form-control" />
+                        <span class="text-danger" id="ticketSaleEndError" style="display:none;"></span>
+                    </div>
+                </div>
+
+                <div style="text-align: right;">
+                    <button type="button" class="btn-add-ticket" onclick="addTicketType()">
+                        <i class="fas fa-plus"></i> Add Ticket Type
+                    </button>
+                </div>
+            </div>
+
+            <!-- List of added tickets -->
+            <div class="form-group">
+                <label class="form-label" style="font-size: 15px;">Added Ticket Types <span class="text-danger" id="ticketsListValidationError" style="display:inline; font-weight:normal; margin-left:8px;">* Add at least one ticket type</span></label>
+                <div id="noTicketsMessage" style="padding: 24px; text-align: center; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; color: var(--text-light); font-style: italic;">
+                    No ticket types added yet. Use the form above to add ticket types to this event.
+                </div>
+                <table class="tickets-table" id="ticketsTable" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>Ticket Name</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Description</th>
+                            <th>Sale Window</th>
+                            <th style="width: 80px; text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ticketsListBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- STEP 3: SCANNER -->
+        <div class="wizard-panel" id="step3-panel">
+            <div class="locked-scanner-view">
+                <div class="lock-icon">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <h4>Scanner Assignment Locked</h4>
+                <p>
+                    Scanner accounts can only be assigned to events that have been reviewed and approved by the System Administrator. 
+                    <br /><br />
+                    Once the Admin approves your event, you will be able to assign scanners instantly from the <strong>Scanners</strong> section in the sidebar.
+                </p>
+                <a href="/OrganizerScanners/Create" target="_blank" class="btn-secondary" style="display: inline-flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-user-plus"></i> Create New Scanner Account
+                </a>
+            </div>
+        </div>
+
+        <!-- Wizard Navigation buttons -->
+        <div class="form-actions">
+            <a href="/Events/OrganizerIndex" id="btnCancel" class="btn-secondary">Cancel</a>
+            <button type="button" id="btnBack" class="btn-secondary" style="display: none;" onclick="navigateStep(-1)">
+                <i class="fas fa-chevron-left"></i> Back
+            </button>
+            <button type="button" id="btnNext" class="btn-primary" onclick="navigateStep(1)">
+                Next <i class="fas fa-chevron-right"></i>
+            </button>
+            <button type="submit" id="btnSubmit" class="btn-primary" style="display: none;">
+                <i class="fas fa-save"></i> Submit Event for Review
+            </button>
+        </div>
+    </form>
+
+    <!-- Map Selection Modal -->
+    <div id="mapModal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+        <div style="background: white; border-radius: 20px; width: 90%; max-width: 700px; box-shadow: var(--shadow-lg); overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; margin: auto;">
+            <div style="padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--soft-purple);">
+                <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: var(--primary-dark); display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-map-marker-alt"></i> Select Location
+                </h3>
+                <button type="button" id="btnCloseMap" style="background: none; border: none; font-size: 20px; color: var(--text-light); cursor: pointer; transition: var(--transition);">&times;</button>
+            </div>
+            
+            <div style="padding: 16px 24px; border-bottom: 1px solid var(--border); background: var(--bg); display: flex; gap: 10px;">
+                <input type="text" id="mapSearchInput" class="form-control" placeholder="Search for a place or address..." style="padding: 10px 16px; font-size: 13.5px;" />
+                <button type="button" id="btnMapSearch" class="btn-primary" style="padding: 10px 20px; font-size: 13.5px; border-radius: 12px; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-search"></i> Search
+                </button>
+            </div>
+
+            <div style="flex-grow: 1; min-height: 350px; position: relative;">
+                <div id="mapContainer" style="width: 100%; height: 100%; min-height: 350px;"></div>
+            </div>
+
+            <div style="padding: 16px 24px; background: var(--bg); border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 12px;">
+                <div>
+                    <div style="font-size: 12px; font-weight: 600; color: var(--text-light); margin-bottom: 4px;">Selected Location Details:</div>
+                    <div id="selectedLocationDetails" style="font-size: 13.5px; font-weight: 500; color: var(--text); padding: 8px 12px; background: white; border: 1px solid var(--border); border-radius: 8px; min-height: 38px; display: flex; align-items: center; word-break: break-all;">
+                        <span style="font-style: italic; color: var(--text-light);">No location selected yet. Click on the map or search above.</span>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                    <button type="button" id="btnMapCancel" class="btn-secondary" style="font-size: 13.5px;">Cancel</button>
+                    <button type="button" id="btnMapConfirm" class="btn-primary" style="font-size: 13.5px;" disabled>Confirm Selection</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script>
+        let currentStep = 1;
+        const totalSteps = 3;
+        let ticketsList = [];
+
+        function updateFileName(input) {
+            var fileName = document.getElementById('fileName');
+            if (input.files && input.files.length > 0) {
+                fileName.textContent = input.files[0].name;
+                fileName.style.color = "var(--primary)";
+                fileName.style.fontWeight = "700";
+            } else {
+                fileName.textContent = "Click or drag an image here to upload";
+                fileName.style.color = "var(--text-light)";
+                fileName.style.fontWeight = "500";
+            }
+        }
+
+        const titleInput = document.getElementById('Title');
+        const titleCount = document.getElementById('titleCount');
+        if (titleInput && titleCount) {
+            titleCount.textContent = titleInput.value.length;
+            titleInput.addEventListener('input', () => {
+                titleCount.textContent = titleInput.value.length;
+            });
+        }
+
+        const descInput = document.getElementById('Description');
+        const descCount = document.getElementById('descCount');
+        if (descInput && descCount) {
+            descCount.textContent = descInput.value.length;
+            descInput.addEventListener('input', () => {
+                descCount.textContent = descInput.value.length;
+            });
+        }
+
+        const btnGenerateAi = document.getElementById('btnGenerateAi');
+        if (btnGenerateAi) {
+            btnGenerateAi.addEventListener('click', async () => {
+                const titleVal = titleInput ? titleInput.value.trim() : '';
+                const cityInput = document.getElementById('City');
+                const cityVal = cityInput ? cityInput.value.trim() : '';
+                const categorySelect = document.getElementById('CategoryId');
+                let categoryVal = '';
+                if (categorySelect && categorySelect.selectedIndex > 0) {
+                    categoryVal = categorySelect.options[categorySelect.selectedIndex].text;
+                }
+
+                if (!titleVal) {
+                    alert('Please fill in the Event Title first to generate a description.');
+                    if (titleInput) titleInput.focus();
+                    return;
+                }
+
+                // Show loading state
+                const originalHtml = btnGenerateAi.innerHTML;
+                btnGenerateAi.disabled = true;
+                btnGenerateAi.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+
+                // Set placeholder
+                if (descInput) {
+                    descInput.placeholder = 'AI is writing a rich description for your event... Please wait...';
+                    descInput.value = '';
+                }
+
+                try {
+                    const response = await fetch('/Events/GenerateDescription', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        },
+                        body: JSON.stringify({
+                            title: titleVal,
+                            city: cityVal,
+                            category: categoryVal
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        if (descInput) {
+                            descInput.value = data.description;
+                            descInput.dispatchEvent(new Event('input'));
+                        }
+                    } else {
+                        alert(data.error || 'Failed to generate description.');
+                    }
+                } catch (error) {
+                    console.error('Error generating description:', error);
+                    alert('An error occurred while connecting to the server. Please try again.');
+                } finally {
+                    btnGenerateAi.disabled = false;
+                    btnGenerateAi.innerHTML = originalHtml;
+                    if (descInput) {
+                        descInput.placeholder = 'Describe your event, agenda, speakers...';
+                    }
+                }
+            });
+        }
+
+        // ===== WIZARD NAVIGATION =====
+        function navigateStep(direction) {
+            const form = $("#createEventForm");
+
+            if (direction === 1) {
+                // If moving forward from Step 1, trigger standard jQuery validation
+                if (currentStep === 1) {
+                    if (!form.valid()) {
+                        return; // Stop if step 1 details are invalid
+                    }
+                    
+                    const startDateInput = document.getElementById('StartDate');
+                    const endDateInput = document.getElementById('EndDate');
+                    const startSpan = document.querySelector('[data-valmsg-for="StartDate"]');
+                    const endSpan = document.querySelector('[data-valmsg-for="EndDate"]');
+                    let datesValid = true;
+
+                    if (startDateInput && startDateInput.value) {
+                        const startDate = new Date(startDateInput.value);
+                        const now = new Date();
+                        if (startDate <= now) {
+                            if (startSpan) {
+                                startSpan.textContent = "Event start date must be in the future.";
+                                startSpan.className = "text-danger field-validation-error";
+                            }
+                            datesValid = false;
+                        } else {
+                            if (startSpan) {
+                                startSpan.textContent = "";
+                                startSpan.className = "text-danger field-validation-valid";
+                            }
+                        }
+                    }
+
+                    if (endDateInput && endDateInput.value && startDateInput && startDateInput.value) {
+                        const startDate = new Date(startDateInput.value);
+                        const endDate = new Date(endDateInput.value);
+                        if (endDate <= startDate) {
+                            if (endSpan) {
+                                endSpan.textContent = "Event end date must be after the start date.";
+                                endSpan.className = "text-danger field-validation-error";
+                            }
+                            datesValid = false;
+                        } else {
+                            if (endSpan) {
+                                endSpan.textContent = "";
+                                endSpan.className = "text-danger field-validation-valid";
+                            }
+                        }
+                    }
+
+                    if (!datesValid) {
+                        return;
+                    }
+                }
+                // If moving forward from Step 2, ensure at least one ticket type exists
+                if (currentStep === 2) {
+                    const errEl = document.getElementById('ticketsListValidationError');
+                    errEl.textContent = "* Add at least one ticket type";
+                    errEl.style.color = "";
+                    errEl.style.fontWeight = "";
+
+                    if (ticketsList.length === 0) {
+                        errEl.style.color = 'var(--error)';
+                        errEl.style.fontWeight = '700';
+                        return;
+                    }
+
+                    // Validate sum of ticket quantities against Max Capacity
+                    const maxCapInput = document.getElementById('MaxCapacity');
+                    if (maxCapInput && maxCapInput.value) {
+                        const maxCap = parseInt(maxCapInput.value);
+                        if (!isNaN(maxCap) && maxCap > 0) {
+                            const sumCap = ticketsList.reduce((acc, t) => acc + t.totalQuantity, 0);
+                            if (sumCap > maxCap) {
+                                errEl.textContent = `* Total ticket quantity (${sumCap}) exceeds event capacity (${maxCap}).`;
+                                errEl.style.color = 'var(--error)';
+                                errEl.style.fontWeight = '700';
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Update step count
+            currentStep += direction;
+            if (currentStep < 1) currentStep = 1;
+            if (currentStep > totalSteps) currentStep = totalSteps;
+
+            // Update UI panels visibility
+            document.querySelectorAll('.wizard-panel').forEach((panel, idx) => {
+                panel.classList.toggle('active', (idx + 1) === currentStep);
+            });
+
+            // Update Stepper Headers state
+            for (let i = 1; i <= totalSteps; i++) {
+                const header = document.getElementById(`step${i}-header`);
+                if (i === currentStep) {
+                    header.classList.add('active');
+                    header.classList.remove('completed');
+                } else if (i < currentStep) {
+                    header.classList.add('completed');
+                    header.classList.remove('active');
+                } else {
+                    header.classList.remove('active', 'completed');
+                }
+            }
+
+            // Update progress line width
+            const progressPct = ((currentStep - 1) / (totalSteps - 1)) * 100;
+            document.getElementById('wizardProgress').style.width = `${progressPct}%`;
+
+            // Update buttons visibility
+            document.getElementById('btnBack').style.display = currentStep > 1 ? 'inline-flex' : 'none';
+            document.getElementById('btnCancel').style.display = currentStep === 1 ? 'inline-flex' : 'none';
+            document.getElementById('btnNext').style.display = currentStep < totalSteps ? 'inline-flex' : 'none';
+            document.getElementById('btnSubmit').style.display = currentStep === totalSteps ? 'inline-flex' : 'none';
+        }
+
+        // ===== TICKETS WIZARD MANAGEMENT =====
+        function addTicketType() {
+            const nameInput = document.getElementById('ticketName');
+            const priceInput = document.getElementById('ticketPrice');
+            const quantityInput = document.getElementById('ticketQuantity');
+            const descInput = document.getElementById('ticketDescription');
+            const startInput = document.getElementById('ticketSaleStart');
+            const endInput = document.getElementById('ticketSaleEnd');
+
+            const nameErr = document.getElementById('ticketNameError');
+            const priceErr = document.getElementById('ticketPriceError');
+            const quantErr = document.getElementById('ticketQuantityError');
+            const startErr = document.getElementById('ticketSaleStartError');
+            const endErr = document.getElementById('ticketSaleEndError');
+
+            let isValid = true;
+
+            // Reset errors
+            nameErr.style.display = 'none';
+            priceErr.style.display = 'none';
+            quantErr.style.display = 'none';
+            if (startErr) startErr.style.display = 'none';
+            if (endErr) endErr.style.display = 'none';
+
+            if (!nameInput.value.trim()) {
+                nameErr.style.display = 'block';
+                isValid = false;
+            }
+
+            const price = parseFloat(priceInput.value);
+            if (isNaN(price) || price < 0) {
+                priceErr.style.display = 'block';
+                isValid = false;
+            }
+
+            const quantity = parseInt(quantityInput.value);
+            if (isNaN(quantity) || quantity < 1) {
+                quantErr.style.display = 'block';
+                isValid = false;
+            }
+
+            // Dates validations
+            const saleStartVal = startInput.value;
+            const saleEndVal = endInput.value;
+            const now = new Date();
+            const graceNow = new Date(now.getTime() - 5 * 60 * 1000); // 5 min grace
+
+            const eventEndVal = document.getElementById('EndDate')?.value;
+            let eventEndDate = null;
+            if (eventEndVal) {
+                eventEndDate = new Date(eventEndVal);
+            }
+
+            if (saleStartVal) {
+                const saleStart = new Date(saleStartVal);
+                if (saleStart < graceNow) {
+                    if (startErr) {
+                        startErr.textContent = "Sale start date must be in the future.";
+                        startErr.style.display = 'block';
+                    }
+                    isValid = false;
+                }
+                if (eventEndDate && saleStart > eventEndDate) {
+                    if (startErr) {
+                        startErr.textContent = "Sale start date cannot be after the event ends.";
+                        startErr.style.display = 'block';
+                    }
+                    isValid = false;
+                }
+            }
+
+            if (saleEndVal) {
+                const saleEnd = new Date(saleEndVal);
+                if (eventEndDate && saleEnd > eventEndDate) {
+                    if (endErr) {
+                        endErr.textContent = "Sale end date cannot be after the event ends.";
+                        endErr.style.display = 'block';
+                    }
+                    isValid = false;
+                }
+                if (saleStartVal) {
+                    const saleStart = new Date(saleStartVal);
+                    if (saleEnd <= saleStart) {
+                        if (endErr) {
+                            endErr.textContent = "Sale end date must be after the sale start date.";
+                            endErr.style.display = 'block';
+                        }
+                        isValid = false;
+                    }
+                }
+            }
+
+            if (!isValid) return;
+
+            // Add ticket type to local array
+            const ticket = {
+                name: nameInput.value.trim(),
+                price: price,
+                totalQuantity: quantity,
+                description: descInput.value.trim(),
+                saleStartDate: startInput.value ? startInput.value : null,
+                saleEndDate: endInput.value ? endInput.value : null
+            };
+
+            ticketsList.push(ticket);
+
+            // Clear subform inputs
+            nameInput.value = '';
+            priceInput.value = '';
+            quantityInput.value = '';
+            descInput.value = '';
+            startInput.value = '';
+            endInput.value = '';
+
+            // Update UI list and hidden inputs
+            renderTicketsTable();
+            generateHiddenInputs();
+
+            // Clear any ticket list validation error indicators
+            document.getElementById('ticketsListValidationError').style.color = '';
+            document.getElementById('ticketsListValidationError').style.fontWeight = '';
+        }
+
+        function removeTicket(idx) {
+            ticketsList.splice(idx, 1);
+            renderTicketsTable();
+            generateHiddenInputs();
+        }
+
+        function renderTicketsTable() {
+            const tbody = document.getElementById('ticketsListBody');
+            const table = document.getElementById('ticketsTable');
+            const noTickets = document.getElementById('noTicketsMessage');
+
+            if (ticketsList.length === 0) {
+                table.style.display = 'none';
+                noTickets.style.display = 'block';
+                return;
+            }
+
+            noTickets.style.display = 'none';
+            table.style.display = 'table';
+            tbody.innerHTML = '';
+
+            ticketsList.forEach((ticket, idx) => {
+                const tr = document.createElement('tr');
+                
+                let saleWindowStr = "Always on sale";
+                if (ticket.saleStartDate || ticket.saleEndDate) {
+                    const startStr = ticket.saleStartDate ? new Date(ticket.saleStartDate).toLocaleDateString() : 'Start';
+                    const endStr = ticket.saleEndDate ? new Date(ticket.saleEndDate).toLocaleDateString() : 'End';
+                    saleWindowStr = `${startStr} - ${endStr}`;
+                }
+
+                tr.innerHTML = `
+                    <td><strong>${escapeHtml(ticket.name)}</strong></td>
+                    <td>${ticket.price === 0 ? '<span class="badge-success">Free</span>' : ticket.price.toFixed(2) + ' EGP'}</td>
+                    <td>${ticket.totalQuantity}</td>
+                    <td><span style="color:var(--text-light); font-size:12.5px;">${escapeHtml(ticket.description || 'N/A')}</span></td>
+                    <td><span style="font-size:12.5px;"><i class="far fa-clock"></i> ${saleWindowStr}</span></td>
+                    <td style="text-align: center;">
+                        <button type="button" class="btn-secondary" onclick="removeTicket(${idx})" style="padding: 6px 10px; border-radius: 8px; color: var(--error); border-color: rgba(239, 68, 68, 0.2); background: transparent;">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function generateHiddenInputs() {
+            const container = document.getElementById('ticketsHiddenContainer');
+            container.innerHTML = '';
+
+            ticketsList.forEach((ticket, idx) => {
+                // Name
+                const nameInput = document.createElement('input');
+                nameInput.type = 'hidden';
+                nameInput.name = `Tickets[${idx}].Name`;
+                nameInput.value = ticket.name;
+                container.appendChild(nameInput);
+
+                // Price
+                const priceInput = document.createElement('input');
+                priceInput.type = 'hidden';
+                priceInput.name = `Tickets[${idx}].Price`;
+                priceInput.value = ticket.price;
+                container.appendChild(priceInput);
+
+                // Quantity
+                const qtyInput = document.createElement('input');
+                qtyInput.type = 'hidden';
+                qtyInput.name = `Tickets[${idx}].TotalQuantity`;
+                qtyInput.value = ticket.totalQuantity;
+                container.appendChild(qtyInput);
+
+                // Description
+                if (ticket.description) {
+                    const descInput = document.createElement('input');
+                    descInput.type = 'hidden';
+                    descInput.name = `Tickets[${idx}].Description`;
+                    descInput.value = ticket.description;
+                    container.appendChild(descInput);
+                }
+
+                // Sale Start
+                if (ticket.saleStartDate) {
+                    const startInput = document.createElement('input');
+                    startInput.type = 'hidden';
+                    startInput.name = `Tickets[${idx}].SaleStartDate`;
+                    startInput.value = ticket.saleStartDate;
+                    container.appendChild(startInput);
+                }
+
+                // Sale End
+                if (ticket.saleEndDate) {
+                    const endInput = document.createElement('input');
+                    endInput.type = 'hidden';
+                    endInput.name = `Tickets[${idx}].SaleEndDate`;
+                    endInput.value = ticket.saleEndDate;
+                    container.appendChild(endInput);
+                }
+            });
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // ===== MAP LOCATION SELECTION LOGIC =====
+        let map = null;
+        let mapMarker = null;
+        let selectedLocationData = null;
+
+        document.getElementById('btnOpenMap')?.addEventListener('click', () => {
+            const modal = document.getElementById('mapModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                initMap();
+            }
+        });
+
+        function closeMapModal() {
+            document.getElementById('mapModal').style.display = 'none';
+        }
+        document.getElementById('btnCloseMap')?.addEventListener('click', closeMapModal);
+        document.getElementById('btnMapCancel')?.addEventListener('click', closeMapModal);
+
+        function initMap() {
+            if (map !== null) {
+                setTimeout(() => {
+                    map.invalidateSize();
+                }, 200);
+                return;
+            }
+
+            const defaultLat = 30.0444;
+            const defaultLng = 31.2357;
+
+            map = L.map('mapContainer').setView([defaultLat, defaultLng], 12);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            map.on('click', function(e) {
+                placeMarker(e.latlng);
+            });
+        }
+
+        function placeMarker(latlng) {
+            if (mapMarker === null) {
+                mapMarker = L.marker(latlng, { draggable: true }).addTo(map);
+                mapMarker.on('dragend', function(e) {
+                    reverseGeocode(mapMarker.getLatLng());
+                });
+            } else {
+                mapMarker.setLatLng(latlng);
+            }
+            map.panTo(latlng);
+            reverseGeocode(latlng);
+        }
+
+        function reverseGeocode(latlng) {
+            const detailsDiv = document.getElementById('selectedLocationDetails');
+            const confirmBtn = document.getElementById('btnMapConfirm');
+            detailsDiv.innerHTML = '<span style="color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Getting address details...</span>';
+            confirmBtn.disabled = true;
+
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latlng.lat}&lon=${latlng.lng}&accept-language=en`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.address) {
+                        const addr = data.address;
+                        const city = addr.city || addr.town || addr.village || addr.suburb || addr.governorate || addr.state || '';
+                        const locationName = data.display_name || '';
+
+                        selectedLocationData = {
+                            city: city,
+                            location: locationName
+                        };
+
+                        detailsDiv.textContent = locationName;
+                        confirmBtn.disabled = false;
+                    } else {
+                        detailsDiv.textContent = "Could not retrieve address details for this point.";
+                    }
+                })
+                .catch(error => {
+                    console.error("Reverse geocoding error:", error);
+                    detailsDiv.textContent = "Error loading address details.";
+                });
+        }
+
+        document.getElementById('btnMapSearch')?.addEventListener('click', performMapSearch);
+        document.getElementById('mapSearchInput')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performMapSearch();
+            }
+        });
+
+        function performMapSearch() {
+            const query = document.getElementById('mapSearchInput').value.trim();
+            if (!query) return;
+
+            const detailsDiv = document.getElementById('selectedLocationDetails');
+            detailsDiv.innerHTML = '<span style="color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Searching...</span>';
+
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&accept-language=en`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        const res = data[0];
+                        const latlng = L.latLng(parseFloat(res.lat), parseFloat(res.lon));
+                        placeMarker(latlng);
+                        map.setView(latlng, 15);
+                    } else {
+                        detailsDiv.textContent = "No locations found for this query.";
+                    }
+                })
+                .catch(error => {
+                    console.error("Map search error:", error);
+                    detailsDiv.textContent = "Error searching address.";
+                });
+        }
+
+        document.getElementById('btnMapConfirm')?.addEventListener('click', () => {
+            if (selectedLocationData) {
+                const locInput = document.getElementById('Location');
+                const cityInput = document.getElementById('City');
+
+                if (locInput) {
+                    locInput.value = selectedLocationData.location;
+                    locInput.dispatchEvent(new Event('input'));
+                }
+                if (cityInput) {
+                    cityInput.value = selectedLocationData.city;
+                    cityInput.dispatchEvent(new Event('input'));
+                }
+
+                closeMapModal();
+            }
+        });
+    </script>
+}

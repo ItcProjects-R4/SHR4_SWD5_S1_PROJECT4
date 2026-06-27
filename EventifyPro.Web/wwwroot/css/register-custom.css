@@ -1,0 +1,96 @@
+.logo-upload-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    margin: 30px 0;
+}
+.logo-preview-wrapper {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    border: 2px dashed rgba(138, 43, 226, 0.3);
+    background: rgba(138, 43, 226, 0.02);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.03);
+    transition: all 0.3s ease;
+}
+.logo-preview-wrapper:hover {
+    border-color: #8A2BE2;
+    background: rgba(138, 43, 226, 0.05);
+}
+.logo-preview-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.preview-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: #888;
+    font-size: 0.9rem;
+}
+.preview-placeholder i {
+    font-size: 2.2rem;
+    color: rgba(138, 43, 226, 0.4);
+}
+.file-upload-label {
+    cursor: pointer;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid rgba(138, 43, 226, 0.2);
+    background: #fff;
+    color: #8A2BE2;
+    transition: all 0.2s ease;
+}
+.file-upload-label:hover {
+    transform: translateY(-2px);
+    background: rgba(138, 43, 226, 0.05);
+    border-color: #8A2BE2;
+}
+.logo-preview-wrapper.drag-over {
+    border-color: #8A2BE2;
+    background: rgba(138, 43, 226, 0.1);
+    transform: scale(1.05);
+}
+.password-strength-wrapper {
+    margin-top: 8px;
+    width: 100%;
+    text-align: left;
+}
+.strength-bar-container {
+    height: 6px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 3px;
+    overflow: hidden;
+    display: flex;
+    gap: 3px;
+}
+.strength-segment {
+    flex: 1;
+    height: 100%;
+    background: transparent;
+    border-radius: 3px;
+    transition: background 0.3s ease;
+}
+.strength-text {
+    font-size: 0.75rem;
+    margin-top: 4px;
+    display: block;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+.strength-text.weak { color: #dc3545; }
+.strength-text.medium { color: #ffc107; }
+.strength-text.strong { color: #28a745; }

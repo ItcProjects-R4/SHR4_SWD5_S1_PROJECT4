@@ -1,0 +1,606 @@
+@model IEnumerable<Eventify.Domain.Entities.ApplicationUser>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Manage Users";
+    ViewData["HeaderTitle"] = "Manage Users 🛡️";
+    ViewData["HeaderSubtitle"] = "Search, activate, deactivate, or assign roles to platform members.";
+
+    var searchTerm = Context.Request.Query["searchTerm"].ToString();
+    var roleFilter = Context.Request.Query["roleFilter"].ToString();
+    var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+    // Calculate user statistics from ViewBag
+    int totalUsersCount = ViewBag.TotalUsersCount ?? 0;
+    int activeUsersCount = ViewBag.ActiveUsersCount ?? 0;
+    int inactiveUsersCount = ViewBag.InactiveUsersCount ?? 0;
+    int organizersCount = ViewBag.OrganizersCount ?? 0;
+    int adminsCount = ViewBag.AdminsCount ?? 0;
+    int scannersCount = ViewBag.ScannersCount ?? 0;
+    int attendeesCount = ViewBag.AttendeesCount ?? 0;
+
+    var userRolesDict = ViewBag.UserRoles as Dictionary<string, string> ?? new Dictionary<string, string>();
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+}
+
+@section Styles {
+    <style>
+        .user-avatar-small {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .role-tag {
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .role-tag.organizer {
+            background: rgba(124, 58, 237, 0.1);
+            color: var(--primary);
+        }
+        .role-tag.attendee {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+        .role-tag.scanner {
+            background: rgba(236, 72, 153, 0.1);
+            color: #ec4899;
+        }
+        .role-tag.admin {
+            background: rgba(220, 38, 38, 0.1);
+            color: #dc2626;
+        }
+
+        .action-btn {
+            width: 34px;
+            height: 34px;
+            border: none;
+            background: var(--soft-purple);
+            color: var(--primary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-right: 4px;
+            font-size: 13px;
+        }
+        .action-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Search Panel */
+        .filter-panel {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 20px 24px;
+            margin-bottom: 28px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+            box-shadow: var(--shadow-sm);
+        }
+        .filter-input {
+            padding: 10px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            transition: var(--transition);
+        }
+        .filter-input:focus {
+            border-color: var(--primary);
+        }
+
+        /* ===== STATS CARDS ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+        .stat-card {
+            background: white;
+            padding: 24px;
+            border-radius: 20px;
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: var(--soft-purple);
+            border-radius: 50%;
+            transform: translate(40px, -40px);
+            opacity: 0.5;
+            transition: var(--transition);
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+        }
+        .stat-card:hover::before {
+            transform: translate(30px, -30px) scale(1.2);
+        }
+
+        .stat-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 22px;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 1;
+            transition: var(--transition);
+        }
+        .stat-card:hover .stat-icon {
+            transform: rotate(-8deg) scale(1.05);
+        }
+        .icon-purple {
+            background: linear-gradient(135deg, #5b21b6, #7c3aed);
+        }
+        .icon-pink {
+            background: linear-gradient(135deg, #ec4899, #f472b6);
+        }
+        .icon-blue {
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
+        }
+        .icon-green {
+            background: linear-gradient(135deg, #10b981, #34d399);
+        }
+
+        .stat-info {
+            position: relative;
+            z-index: 1;
+        }
+        .stat-info p {
+            font-size: 13px;
+            color: var(--text-light);
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+        .stat-info h3 {
+            font-size: 26px;
+            font-weight: 800;
+            margin-bottom: 6px;
+            color: var(--text);
+        }
+        .trend {
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .trend.up {
+            color: var(--success);
+        }
+
+        /* Modal styling */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-card {
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 440px;
+            padding: 28px;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+        }
+        .table-card {
+            background: white;
+            padding: 28px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            overflow-x: auto;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 700px;
+        }
+        .data-table th {
+            padding: 14px 18px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .data-table td {
+            padding: 16px 18px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+        .data-table tbody tr {
+            transition: var(--transition);
+        }
+        .data-table tbody tr:hover {
+            background: var(--soft-purple);
+        }
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .user-details-link {
+            color: var(--primary);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        .user-details-link:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+    </style>
+}
+
+<!-- User Stats Grid -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon icon-purple">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-info">
+            <p>Total Users</p>
+            <h3>@totalUsersCount</h3>
+            <span class="trend up"><i class="fas fa-arrow-up"></i> Registered</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon icon-pink">
+            <i class="fas fa-user-tie"></i>
+        </div>
+        <div class="stat-info">
+            <p>Organizers</p>
+            <h3>@organizersCount</h3>
+            <span class="trend up"><i class="fas fa-arrow-up"></i> Profile owners</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon icon-blue">
+            <i class="fas fa-user-graduate"></i>
+        </div>
+        <div class="stat-info">
+            <p>Attendees</p>
+            <h3>@attendeesCount</h3>
+            <span class="trend up"><i class="fas fa-arrow-up"></i> Event goers</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon icon-green">
+            <i class="fas fa-user-check"></i>
+        </div>
+        <div class="stat-info">
+            <p>Active Users</p>
+            <h3>@activeUsersCount</h3>
+            <span class="trend up" style="color: var(--success);"><i class="fas fa-check-circle"></i> @inactiveUsersCount Inactive</span>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Panel -->
+<form method="get" class="filter-panel">
+    <div style="display: flex; gap: 10px; align-items: center; flex: 1; min-width: 250px;">
+        <i class="fas fa-search" style="color: var(--text-light);"></i>
+        <input type="text" name="searchTerm" value="@searchTerm" placeholder="Search by name or email..." class="filter-input" style="flex: 1;" />
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <span style="font-size: 13px; font-weight: 600; color: var(--text-light);">Role:</span>
+        <select name="roleFilter" class="filter-input" onchange="this.form.submit()">
+            <option value="">All Roles</option>
+            <option value="Admin" selected="@(roleFilter == "Admin")">Admin</option>
+            <option value="Organizer" selected="@(roleFilter == "Organizer")">Organizer</option>
+            <option value="Attendee" selected="@(roleFilter == "Attendee")">Attendee</option>
+            <option value="Scanner" selected="@(roleFilter == "Scanner")">Scanner</option>
+        </select>
+    </div>
+    <button type="submit" class="btn-primary btn-small">
+        <i class="fas fa-filter"></i> Filter
+    </button>
+    @if (!string.IsNullOrEmpty(searchTerm) || !string.IsNullOrEmpty(roleFilter))
+    {
+        <a href="/Admin/Users" class="btn-secondary btn-small">
+            <i class="fas fa-times"></i> Clear
+        </a>
+    }
+</form>
+
+<!-- Users Table -->
+<div class="table-card">
+    @if (Model.Any())
+    {
+        <table class="data-table">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--border); background: var(--soft-purple);">
+                    <th>User Info</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model)
+                {
+                    var primaryRole = userRolesDict.TryGetValue(user.Id, out var role) ? role : "Attendee";
+                    var roleClass = primaryRole.ToLower();
+                    var isSelf = user.Id == currentUserId;
+
+                    <tr>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                @if (!string.IsNullOrEmpty(user.ProfileImageUrl))
+                                {
+                                    <img src="@user.ProfileImageUrl" alt="Avatar" class="user-avatar-small" />
+                                }
+                                else
+                                {
+                                    <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--soft-purple); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px;">
+                                        @user.FullName.Substring(0, Math.Min(2, user.FullName.Length)).ToUpper()
+                                    </div>
+                                }
+                                <div>
+                                    <h4 style="font-size: 14px; font-weight: 700; color: var(--text);">
+                                        <a href="@Url.Action("UserDetails", "AdminUsers", new { id = user.Id, returnUrl = returnUrl })" class="user-details-link">@user.FullName</a>
+                                    </h4>
+                                    <p style="font-size: 11px; color: var(--text-light);">Joined: @user.CreatedAt.ToEgyptTime().ToString("yyyy-MM-dd")</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td>@user.Email</td>
+                        <td>
+                            <span class="role-tag @roleClass">@primaryRole</span>
+                        </td>
+                        <td>
+                             @if (user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow)
+                             {
+                                 <span class="status inactive" style="background: rgba(239, 68, 68, 0.1); color: var(--error); display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 50px; font-size: 11px; font-weight: 700;">
+                                     <i class="fas fa-lock" style="font-size: 8px;"></i> Locked
+                                 </span>
+                                 <div style="font-size: 10px; color: var(--text-light); margin-top: 4px;" title="@user.LockoutEnd.Value.ToEgyptTime().ToString("F")">
+                                     Until: @user.LockoutEnd.Value.ToEgyptTime().ToString("g")
+                                 </div>
+                             }
+                             else if (user.IsActive)
+                             {
+                                 <span class="status active"><i class="fas fa-circle" style="font-size: 8px;"></i> Active</span>
+                             }
+                             else
+                             {
+                                 <span class="status inactive"><i class="fas fa-circle" style="font-size: 8px;"></i> Inactive</span>
+                             }
+                        </td>
+                        <td style="text-align: right;">
+                             <div style="display: inline-flex; gap: 6px; align-items: center; justify-content: flex-end;">
+                                 @if (user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow)
+                                 {
+                                     <form asp-controller="AdminUsers" asp-action="UnlockUser" method="post" style="display: inline;" onsubmit="triggerUnlock(this); return false;">
+                                         @Html.AntiForgeryToken()
+                                         <input type="hidden" name="userId" value="@user.Id" />
+                                         <input type="hidden" name="searchTerm" value="@searchTerm" />
+                                         <input type="hidden" name="roleFilter" value="@roleFilter" />
+                                         <input type="hidden" name="page" value="@ViewBag.PageNumber" />
+                                         <button type="submit" class="action-btn" title="Unlock User Account" style="background: rgba(16, 185, 129, 0.1); color: var(--success);">
+                                             <i class="fas fa-unlock"></i>
+                                         </button>
+                                     </form>
+                                 }
+                                 @if (isSelf)
+                                 {
+                                     <button type="button" class="action-btn" disabled title="You cannot modify your own account" style="opacity: 0.5; cursor: not-allowed;">
+                                         <i class="fas fa-user-slash"></i>
+                                     </button>
+                                 }
+                                 else
+                                 {
+                                     <button type="button" class="action-btn" onclick="openEditModal('@user.Id', '@user.FullName.Replace("'", "\\'")', '@primaryRole', @(user.IsActive ? "true" : "false"))" title="Edit Role / Status">
+                                         <i class="fas fa-user-edit"></i>
+                                     </button>
+                                 }
+                             </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <!-- Pagination Controls -->
+        @if (ViewBag.TotalPages > 1)
+        {
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 24px; flex-wrap: wrap; gap: 16px;">
+                <div style="font-size: 13px; color: var(--text-light); font-weight: 500;">
+                    Showing Page <b>@ViewBag.PageNumber</b> of <b>@ViewBag.TotalPages</b> (@ViewBag.TotalCount total users)
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    @if (ViewBag.PageNumber > 1)
+                    {
+                        <a href="@Url.Action("Users", new { page = ViewBag.PageNumber - 1, searchTerm = ViewBag.SearchTerm, roleFilter = ViewBag.RoleFilter })" class="btn-primary btn-small" style="background: var(--soft-purple); color: var(--primary); box-shadow: none; border: 1px solid var(--border); padding: 8px 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-chevron-left"></i> Prev
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="btn-primary btn-small" style="background: var(--border); color: var(--text-light); box-shadow: none; cursor: not-allowed; border: 1px solid var(--border); opacity: 0.6; padding: 8px 14px; display: inline-flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-chevron-left"></i> Prev
+                        </span>
+                    }
+
+                    @{
+                        int startPage = Math.Max(1, ViewBag.PageNumber - 2);
+                        int endPage = Math.Min(ViewBag.TotalPages, ViewBag.PageNumber + 2);
+                    }
+                    @if (startPage > 1)
+                    {
+                        <a href="@Url.Action("Users", new { page = 1, searchTerm = ViewBag.SearchTerm, roleFilter = ViewBag.RoleFilter })" class="btn-primary btn-small" style="background: var(--soft-purple); color: var(--primary); box-shadow: none; border: 1px solid var(--border); padding: 8px 14px; text-decoration: none;">1</a>
+                        if (startPage > 2)
+                        {
+                            <span style="align-self: center; color: var(--text-light); margin: 0 4px;">...</span>
+                        }
+                    }
+                    @for (int i = startPage; i <= endPage; i++)
+                    {
+                        if (i == ViewBag.PageNumber)
+                        {
+                            <span class="btn-primary btn-small" style="box-shadow: none; padding: 8px 14px; color: white; background: var(--gradient);">@i</span>
+                        }
+                        else
+                        {
+                            <a href="@Url.Action("Users", new { page = i, searchTerm = ViewBag.SearchTerm, roleFilter = ViewBag.RoleFilter })" class="btn-primary btn-small" style="background: var(--soft-purple); color: var(--primary); box-shadow: none; border: 1px solid var(--border); padding: 8px 14px; text-decoration: none;">@i</a>
+                        }
+                    }
+                    @if (endPage < ViewBag.TotalPages)
+                    {
+                        if (endPage < ViewBag.TotalPages - 1)
+                        {
+                            <span style="align-self: center; color: var(--text-light); margin: 0 4px;">...</span>
+                        }
+                        <a href="@Url.Action("Users", new { page = ViewBag.TotalPages, searchTerm = ViewBag.SearchTerm, roleFilter = ViewBag.RoleFilter })" class="btn-primary btn-small" style="background: var(--soft-purple); color: var(--primary); box-shadow: none; border: 1px solid var(--border); padding: 8px 14px; text-decoration: none;">@ViewBag.TotalPages</a>
+                    }
+
+                    @if (ViewBag.PageNumber < ViewBag.TotalPages)
+                    {
+                        <a href="@Url.Action("Users", new { page = ViewBag.PageNumber + 1, searchTerm = ViewBag.SearchTerm, roleFilter = ViewBag.RoleFilter })" class="btn-primary btn-small" style="background: var(--soft-purple); color: var(--primary); box-shadow: none; border: 1px solid var(--border); padding: 8px 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="btn-primary btn-small" style="background: var(--border); color: var(--text-light); box-shadow: none; cursor: not-allowed; border: 1px solid var(--border); opacity: 0.6; padding: 8px 14px; display: inline-flex; align-items: center; gap: 6px;">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </span>
+                    }
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div style="text-align: center; padding: 48px; color: var(--text-light);">
+            <i class="fas fa-users-slash" style="font-size: 44px; color: var(--accent); margin-bottom: 16px;"></i>
+            <h3 style="font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 4px;">No Users Found</h3>
+            <p style="font-size: 14px;">We couldn't find any user profiles matching your filter criteria.</p>
+        </div>
+    }
+</div>
+
+<!-- Edit User Modal -->
+<div id="editUserModal" class="modal-overlay" onclick="handleOverlayClick(event)">
+    <div class="modal-card">
+        <button onclick="closeEditModal()" style="position: absolute; top: 16px; right: 16px; border: none; background: transparent; font-size: 20px; cursor: pointer; color: var(--text-light);">&times;</button>
+        <h3 style="font-size: 18px; font-weight: 800; color: var(--primary); margin-bottom: 12px;">Manage User Account</h3>
+        <p id="modalUserTitle" style="font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 24px;">-</p>
+
+        <form asp-controller="AdminUsers" asp-action="ManageUserRole" method="post" style="display: flex; flex-direction: column; gap: 16px;">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="modalUserId" name="userId" />
+            <input type="hidden" name="searchTerm" value="@searchTerm" />
+            <input type="hidden" name="roleFilter" value="@roleFilter" />
+            <input type="hidden" name="page" value="@ViewBag.PageNumber" />
+
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label style="font-size: 12px; font-weight: 700; color: var(--text-light); text-transform: uppercase;">Assign Role</label>
+                <select id="modalUserRole" name="newRole" class="filter-input" style="width: 100%;">
+                    <option value="Attendee">Attendee</option>
+                    <option value="Organizer">Organizer</option>
+                    <option value="Scanner">Scanner</option>
+                    <option value="Admin">Admin</option>
+                </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
+                <input type="checkbox" id="modalUserActive" name="isActive" value="true" style="width: 18px; height: 18px; cursor: pointer;" />
+                <label for="modalUserActive" style="font-size: 14px; font-weight: 600; color: var(--text); cursor: pointer;">Account Active</label>
+            </div>
+
+            <button type="submit" class="btn-primary" style="margin-top: 16px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <i class="fas fa-save"></i> Save Changes
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Custom Unlock Action Confirmation Modal -->
+<div id="unlockModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
+    <div class="checkout-card" style="max-width: 420px; width: 90%; text-align: center; padding: 36px 30px; border-radius: 24px; background: var(--white); box-shadow: var(--shadow-lg); border: 1px solid var(--border);">
+        <div style="background: rgba(16, 185, 129, 0.1); width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: var(--success);">
+            <i class="fas fa-unlock" style="font-size: 28px;"></i>
+        </div>
+        <h3 style="font-size: 19px; font-weight: 800; color: var(--text); margin-bottom: 10px;">Unlock Account</h3>
+        <p style="font-size: 13.5px; color: var(--text-light); line-height: 1.5; margin-bottom: 24px;">Are you sure you want to unlock this user account and restore access?</p>
+        
+        <div style="display: flex; gap: 12px; justify-content: center;">
+            <button type="button" class="btn-outline btn-small" onclick="closeUnlockModal()" style="flex: 1; padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: 13.5px; cursor: pointer; transition: all 0.3s ease;">
+                Cancel
+            </button>
+            <button type="button" class="btn-primary btn-small" id="confirmUnlockBtn" style="flex: 1; background: var(--success); border-color: var(--success); color: var(--white); padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: 13.5px; cursor: pointer; transition: all 0.3s ease;">
+                Unlock User
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/admin-users.js" asp-append-version="true"></script>
+    <script>
+        let activeUnlockForm = null;
+
+        function triggerUnlock(form) {
+            activeUnlockForm = form;
+            document.getElementById('unlockModal').style.display = 'flex';
+        }
+
+        function closeUnlockModal() {
+            document.getElementById('unlockModal').style.display = 'none';
+            activeUnlockForm = null;
+        }
+
+        document.getElementById('confirmUnlockBtn').addEventListener('click', function() {
+            if (activeUnlockForm) {
+                activeUnlockForm.submit();
+            }
+        });
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(e) {
+            const modal = document.getElementById('unlockModal');
+            if (e.target === modal) {
+                closeUnlockModal();
+            }
+        });
+    </script>
+}

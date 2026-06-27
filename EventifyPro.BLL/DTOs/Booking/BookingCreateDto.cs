@@ -16,4 +16,9 @@ public record BookingCreateDto
     /// </summary>
     [Required, MinLength(1)]
     public List<BookingItemRequestDto> Items { get; init; } = [];
+
+    /// <summary>
+    /// Gets or sets the optional waiting list entry identifier.
+    /// </summary>
+    public int? WaitingListId { get; init; }
 }

@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace EventifyPro.Web.ViewModels.Account
+﻿namespace EventifyPro.Web.ViewModels.Account
 {
     public class ForgotPasswordViewModel
     {

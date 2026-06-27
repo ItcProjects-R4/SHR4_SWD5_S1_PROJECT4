@@ -59,6 +59,7 @@ public class OutboxMessageRepository : GenericRepository<OutboxMessage>, IOutbox
  
     public async Task<IReadOnlyList<OutboxMessage>> GetMessagesForRetryAsync(
         int maxRetries = 3, 
+        int batchSize = 10,
         CancellationToken cancellationToken = default)
     {
         var utcNow = DateTime.UtcNow;
@@ -69,6 +70,7 @@ public class OutboxMessageRepository : GenericRepository<OutboxMessage>, IOutbox
                 && (m.ScheduledFor == null || m.ScheduledFor <= utcNow))
             .OrderBy(m => m.CreatedAt)
             .AsNoTracking()
+            .Take(batchSize)
             .ToListAsync(cancellationToken);
     }
 }

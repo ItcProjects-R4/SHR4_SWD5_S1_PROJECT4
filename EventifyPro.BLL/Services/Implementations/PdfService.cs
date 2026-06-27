@@ -1,8 +1,3 @@
-using DinkToPdf;
-using DinkToPdf.Contracts;
-using EventifyPro.BLL.Services.Interfaces;
-using EventifyPro.DAL.Repositories.Interfaces;
-
 namespace EventifyPro.BLL.Services.Implementations;
 
 public class PdfService : IPdfService
@@ -51,7 +46,7 @@ public class PdfService : IPdfService
         var eventTitle = eventEntity.Title;
         var categoryName = category?.Name ?? "General";
         var attendeeName = user?.FullName ?? "Valued Attendee";
-        var eventDate = eventEntity.StartDate.ToString("dd MMM yyyy, hh:mm tt") + " - " + eventEntity.EndDate.ToString("hh:mm tt");
+        var eventDate = eventEntity.StartDate.ToEgyptTime().ToString("dd MMM yyyy, hh:mm tt") + " - " + eventEntity.EndDate.ToEgyptTime().ToString("hh:mm tt");
         var location = eventEntity.Location;
         var city = eventEntity.City;
         var ticketTypeName = ticketType?.Name ?? "Standard";
@@ -64,149 +59,263 @@ public class PdfService : IPdfService
 <html>
 <head>
     <meta charset=""utf-8"">
+    <link href=""https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"" rel=""stylesheet"">
     <style>
         body {{
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
             margin: 0;
-            padding: 20px;
-            background-color: #fafaff;
-            color: #1f1b2e;
+            padding: 30px;
+            background-color: #f1f5f9;
+            color: #1e293b;
+            -webkit-print-color-adjust: exact;
         }}
         .ticket-container {{
-            max-width: 700px;
+            position: relative;
+            width: 700px;
             margin: 40px auto;
-            border-radius: 16px;
-            overflow: hidden;
-            border: 1px solid #ede9fe;
-            background-color: #ffffff;
         }}
-        .header {{
-            background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%);
-            padding: 30px;
-            color: #ffffff;
-        }}
-        .header h1 {{
-            margin: 0;
-            font-size: 24px;
-            font-weight: 800;
-        }}
-        .header .category-badge {{
-            background-color: rgba(255, 255, 255, 0.2);
-            padding: 6px 12px;
-            border-radius: 50px;
-            font-size: 11px;
-            text-transform: uppercase;
-            font-weight: bold;
-            display: inline-block;
-            margin-top: 8px;
-        }}
-        .ticket-body {{
-            padding: 30px;
+        .ticket-card {{
             width: 100%;
+            height: 380px;
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            border-collapse: separate;
+            border-spacing: 0;
+            overflow: hidden;
         }}
-        .info-col {{
-            width: 60%;
-            float: left;
+        .left-section {{
+            width: 480px;
+            vertical-align: top;
+            background-color: #ffffff;
+            border-top-left-radius: 19px;
+            border-bottom-left-radius: 19px;
+            padding: 0;
         }}
-        .qr-col {{
-            width: 35%;
-            float: right;
-            text-align: center;
-            border-left: 2px dashed #ede9fe;
-            padding-left: 20px;
+        .header-banner {{
+            background-color: #4f46e5;
+            background: -webkit-linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            padding: 15px 30px;
+            color: #ffffff;
+            height: 100px;
+            box-sizing: border-box;
+            position: relative;
+            border-top-left-radius: 19px;
         }}
-        .detail-row {{
-            margin-bottom: 20px;
-        }}
-        .detail-label {{
-            font-size: 11px;
-            color: #6b7280;
+        .brand {{
+            font-family: 'Outfit', sans-serif;
+            font-size: 10px;
+            font-weight: 800;
             text-transform: uppercase;
-            font-weight: bold;
+            letter-spacing: 1.5px;
+            color: rgba(255, 255, 255, 0.8);
             margin-bottom: 4px;
         }}
-        .detail-value {{
-            font-size: 15px;
-            font-weight: 600;
+        .event-title {{
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 800;
+            margin: 0 0 6px 0;
+            line-height: 1.25;
+            word-wrap: break-word;
+            max-height: 50px;
+            overflow: hidden;
         }}
-        .qr-img {{
-            width: 150px;
-            height: 150px;
-            border: 4px solid #ffffff;
-            border-radius: 8px;
-            margin-bottom: 12px;
+        .category-badge {{
+            background-color: rgba(255, 255, 255, 0.18);
+            padding: 3px 10px;
+            border-radius: 50px;
+            font-size: 9px;
+            text-transform: uppercase;
+            font-weight: 700;
+            display: inline-block;
+            letter-spacing: 0.5px;
         }}
-        .qr-tip {{
-            font-size: 10px;
-            color: #6b7280;
-            text-align: center;
-            line-height: 1.4;
+        .details-section {{
+            padding: 20px 30px;
+            box-sizing: border-box;
         }}
-        .footer {{
-            background-color: #f5f3ff;
-            padding: 15px 30px;
-            border-top: 1px solid #ede9fe;
-            font-size: 11px;
-            color: #6b7280;
-            clear: both;
+        .details-row {{
+            margin-bottom: 15px;
+            width: 100%;
         }}
-        .footer-left {{
+        .col-58 {{
+            width: 58%;
             float: left;
         }}
-        .footer-right {{
-            float: right;
+        .col-42 {{
+            width: 42%;
+            float: left;
         }}
-        .clearfix::after {{
-            content: """";
+        .col-100 {{
+            width: 100%;
+            float: left;
+        }}
+        .col-33 {{
+            width: 33%;
+            float: left;
+        }}
+        .col-34 {{
+            width: 34%;
+            float: left;
+        }}
+        .clear {{
             clear: both;
-            display: table;
+        }}
+        .label {{
+            font-size: 9px;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            margin-bottom: 2px;
+        }}
+        .value {{
+            font-size: 12px;
+            font-weight: 600;
+            color: #0f172a;
+        }}
+        .right-section {{
+            width: 220px;
+            vertical-align: top;
+            background-color: #f8fafc;
+            border-left: 2px dashed #cbd5e1;
+            padding: 24px 20px;
+            text-align: center;
+            position: relative;
+            border-top-right-radius: 19px;
+            border-bottom-right-radius: 19px;
+        }}
+        .qr-wrapper {{
+            background: #ffffff;
+            padding: 10px;
+            border-radius: 12px;
+            display: inline-block;
+            border: 1px solid #e2e8f0;
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }}
+        .qr-image {{
+            width: 130px;
+            height: 130px;
+            display: block;
+        }}
+        .scan-text {{
+            font-family: 'Outfit', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            color: #7c3aed;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }}
+        .scan-desc {{
+            font-size: 9px;
+            color: #64748b;
+            line-height: 1.3;
+        }}
+        .ticket-id {{
+            font-family: 'Outfit', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            color: #0f172a;
+            position: absolute;
+            bottom: 24px;
+            width: 100%;
+            left: 0;
+            text-align: center;
+        }}
+        .notch-top {{
+            position: absolute;
+            top: -11px;
+            right: 209px;
+            width: 22px;
+            height: 22px;
+            background-color: #f1f5f9;
+            border-radius: 50%;
+            border: 1px solid #cbd5e1;
+            z-index: 10;
+        }}
+        .notch-bottom {{
+            position: absolute;
+            bottom: -11px;
+            right: 209px;
+            width: 22px;
+            height: 22px;
+            background-color: #f1f5f9;
+            border-radius: 50%;
+            border: 1px solid #cbd5e1;
+            z-index: 10;
         }}
     </style>
 </head>
 <body>
     <div class=""ticket-container"">
-        <div class=""header"">
-            <h1>{eventTitle}</h1>
-            <span class=""category-badge"">{categoryName}</span>
-        </div>
-        <div class=""ticket-body clearfix"">
-            <div class=""info-col"">
-                <div class=""detail-row"">
-                    <div class=""detail-label"">Attendee Name</div>
-                    <div class=""detail-value"">{attendeeName}</div>
-                </div>
-                <div class=""detail-row"">
-                    <div class=""detail-label"">Date & Time</div>
-                    <div class=""detail-value"">{eventDate}</div>
-                </div>
-                <div class=""detail-row"">
-                    <div class=""detail-label"">Location</div>
-                    <div class=""detail-value"">{location}, {city}</div>
-                </div>
-                <div class=""clearfix"">
-                    <div class=""detail-row"" style=""width: 50%; float: left;"">
-                        <div class=""detail-label"">Ticket Type</div>
-                        <div class=""detail-value"">{ticketTypeName}</div>
+        <div class=""notch-top""></div>
+        <div class=""notch-bottom""></div>
+        <table class=""ticket-card"" cellpadding=""0"" cellspacing=""0"" border=""0"">
+            <tr>
+                <td class=""left-section"">
+                    <div class=""header-banner"">
+                        <div class=""brand"">Eventify Pro Ticket</div>
+                        <h1 class=""event-title"">{eventTitle}</h1>
+                        <span class=""category-badge"">{categoryName}</span>
                     </div>
-                    <div class=""detail-row"" style=""width: 50%; float: left;"">
-                        <div class=""detail-label"">Price</div>
-                        <div class=""detail-value"">{price} EGP</div>
+                    
+                    <div class=""details-section"">
+                        <!-- Row 1 -->
+                        <div class=""details-row"">
+                            <div class=""col-58"">
+                                <div class=""label"">Attendee Name</div>
+                                <div class=""value"">{attendeeName}</div>
+                            </div>
+                            <div class=""col-42"">
+                                <div class=""label"">Date & Time</div>
+                                <div class=""value"">{eventDate}</div>
+                            </div>
+                            <div class=""clear""></div>
+                        </div>
+                        
+                        <!-- Row 2 -->
+                        <div class=""details-row"">
+                            <div class=""col-100"">
+                                <div class=""label"">Venue / Location</div>
+                                <div class=""value"">{location}, {city}</div>
+                            </div>
+                            <div class=""clear""></div>
+                        </div>
+                        
+                        <!-- Row 3 -->
+                        <div class=""details-row"">
+                            <div class=""col-33"">
+                                <div class=""label"">Ticket Type</div>
+                                <div class=""value"">{ticketTypeName}</div>
+                            </div>
+                            <div class=""col-33"">
+                                <div class=""label"">Price</div>
+                                <div class=""value"">{price} EGP</div>
+                            </div>
+                            <div class=""col-34"">
+                                <div class=""label"">Booking Ref</div>
+                                <div class=""value"">#{bookingRef}</div>
+                            </div>
+                            <div class=""clear""></div>
+                        </div>
                     </div>
-                </div>
-            </div>
-            <div class=""qr-col"">
-                <img class=""qr-img"" src=""{qrCodeImgSrc}"" alt=""Ticket QR Code"" />
-                <div class=""qr-tip"">Present this QR code at the door for entry verification</div>
-            </div>
-        </div>
-        <div class=""footer clearfix"">
-            <div class=""footer-left"">
-                Booking Reference: <strong>{bookingRef}</strong>
-            </div>
-            <div class=""footer-right"">
-                Ticket ID: <strong>{ticketId}</strong>
-            </div>
-        </div>
+                </td>
+                
+                <td class=""right-section"">
+                    <div class=""scan-text"">Entry Pass</div>
+                    <div class=""qr-wrapper"">
+                        <img class=""qr-image"" src=""{qrCodeImgSrc}"" alt=""QR Code"" />
+                    </div>
+                    <div class=""scan-desc"">Present this QR code for gate check-in verification</div>
+                    <div class=""ticket-id"">Ticket ID: #{ticketId}</div>
+                </td>
+            </tr>
+        </table>
     </div>
 </body>
 </html>
@@ -233,7 +342,19 @@ public class PdfService : IPdfService
             }
         };
 
-        var pdfBytes = _pdfConverter.Convert(doc);
+        var pdfBytes = await Task.Run(() => _pdfConverter.Convert(doc), cancellationToken);
         return pdfBytes;
+    }
+
+    public async Task<byte[]> GenerateBookingPdfAsync(int bookingId, CancellationToken cancellationToken = default)
+    {
+        var tickets = await _unitOfWork.Tickets.FindAsync(t => t.BookingId == bookingId, cancellationToken);
+        var firstTicket = tickets.FirstOrDefault();
+        if (firstTicket == null)
+        {
+            throw new ArgumentException($"No tickets found for booking ID {bookingId} to generate PDF.");
+        }
+
+        return await GenerateTicketPdfAsync(firstTicket.Id, cancellationToken);
     }
 }

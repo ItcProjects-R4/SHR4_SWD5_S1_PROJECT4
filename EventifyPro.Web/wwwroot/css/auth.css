@@ -1,4 +1,4 @@
-﻿* {
+* {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
@@ -47,6 +47,12 @@ ul {
     flex-direction: column;
 }
 
+#main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
 .auth-header {
     width: 100%;
     padding: 22px 40px;
@@ -69,16 +75,24 @@ ul {
     }
 
 .logo-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    background: var(--gradient);
-    color: var(--white);
+    width: 65px;
+    height: 65px;
+    border-radius: 8px;
+    background: transparent !important;
+    color: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: var(--shadow-sm);
-    animation: pulse-icon 3s infinite;
+    box-shadow: none !important;
+    /* animation: pulse-icon 3s infinite; */
+}
+
+.logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+    mix-blend-mode: multiply;
 }
 
 @keyframes pulse-icon {
@@ -1037,3 +1051,50 @@ ul {
         transform: translateY(0);
     }
 }
+/* تنسيق صندوق التحذير (Terms Warning) */
+.terms-warning-alert {
+    display: none; 
+    align-items: center;
+    gap: 10px;
+    background-color: rgba(234, 67, 53, 0.1); 
+    border: 1px solid #EA4335;
+    color: #ca3030 !important;
+    padding: 12px;
+    border-radius: 14px;
+    margin-top: 15px;
+    font-size: 0.9rem;
+    font-family: 'Inter', sans-serif;
+}
+
+    .terms-warning-alert i {
+        font-size: 1.1rem;
+    }
+
+/* حركة الاهتزاز (Shake Animation) عند عدم الموافقة على الشروط */
+@keyframes shakeTerms {
+    0% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-6px);
+    }
+
+    75% {
+        transform: translateX(6px);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+}
+
+/* الاستايل لما الـ Checkbox Group يكون فيها خطأ */
+.checkbox-group.has-error {
+    color: #EA4335;
+    transition: color 0.3s ease;
+}
+
+    .checkbox-group.has-error .checkmark {
+        border-color: #EA4335;
+    }

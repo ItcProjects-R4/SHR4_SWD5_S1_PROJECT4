@@ -47,4 +47,5 @@ public class EventDetailViewModel
     public decimal TotalRevenue { get; set; }
 
     public double AverageRating { get; set; }
+    public bool IsSaved { get; set; }
 }

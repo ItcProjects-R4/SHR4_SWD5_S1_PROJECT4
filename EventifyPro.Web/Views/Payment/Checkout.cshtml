@@ -1,0 +1,402 @@
+@model PaymentCheckoutViewModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Payment Checkout";
+}
+
+<style>
+    /* Checkout Page Premium Styling */
+    .checkout-grid {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 32px;
+        margin-top: 24px;
+        align-items: start;
+    }
+
+    @@media (max-width: 992px) {
+        .checkout-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .checkout-card {
+        background: var(--white);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border);
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+        scroll-margin-top: 130px;
+    }
+
+    .checkout-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: var(--gradient);
+    }
+
+    .checkout-card-title {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 24px;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .checkout-card-title i {
+        color: var(--primary);
+    }
+
+    /* Ticket Review List */
+    .ticket-review-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-bottom: 12px;
+    }
+
+    .ticket-review-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px;
+        border-radius: 12px;
+        background: var(--soft-purple);
+        border: 1px dashed var(--accent);
+    }
+
+    .ticket-type-info h4 {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin-bottom: 4px;
+    }
+
+    .ticket-type-info p {
+        font-size: 13px;
+        color: var(--text-light);
+    }
+
+    .ticket-item-subtotal {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text);
+    }
+
+    /* Payment Methods Selector Grid */
+    .payment-methods-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .payment-option-card {
+        border: 2px solid var(--border);
+        border-radius: 16px;
+        padding: 20px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        transition: var(--transition);
+        position: relative;
+    }
+
+    .payment-option-card:hover {
+        border-color: var(--accent);
+        transform: translateY(-2px);
+        background: var(--soft-purple);
+    }
+
+    .payment-option-card input[type="radio"] {
+        position: absolute;
+        right: 20px;
+        width: 20px;
+        height: 20px;
+        accent-color: var(--primary);
+        cursor: pointer;
+    }
+
+    .payment-option-card input[type="radio"]:checked + .payment-option-content {
+        color: var(--primary-dark);
+    }
+
+    .payment-option-card.selected {
+        border-color: var(--primary);
+        background: var(--light-purple);
+        box-shadow: 0 4px 15px rgba(91, 33, 182, 0.1);
+    }
+
+    .payment-icon-wrapper {
+        width: 54px;
+        height: 54px;
+        border-radius: 12px;
+        background: var(--white);
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: var(--primary);
+        box-shadow: var(--shadow-sm);
+        flex-shrink: 0;
+    }
+
+    .payment-option-card.selected .payment-icon-wrapper {
+        border-color: var(--primary-light);
+        color: var(--primary-light);
+    }
+
+    .payment-option-text h4 {
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .payment-option-text p {
+        font-size: 13px;
+        color: var(--text-light);
+    }
+
+    .payment-logos {
+        display: flex;
+        gap: 8px;
+        margin-top: 6px;
+    }
+
+    .payment-logo-img {
+        height: 18px;
+        object-fit: contain;
+        opacity: 0.8;
+    }
+
+    /* Order Summary Side Card */
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 16px;
+        font-size: 15px;
+        color: var(--text-light);
+    }
+
+    .summary-row.total-row {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border);
+        font-size: 20px;
+        font-weight: 800;
+        color: var(--primary);
+    }
+
+    .summary-row strong {
+        color: var(--text);
+    }
+
+    /* Safe & Security Badge */
+    .security-badge {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 12px;
+        color: #166534;
+        font-size: 13px;
+        font-weight: 500;
+        margin-top: 24px;
+    }
+
+    .security-badge i {
+        font-size: 20px;
+        color: var(--success);
+    }
+
+    .event-meta-info {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 24px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .event-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: var(--text-light);
+    }
+
+    .event-meta-item i {
+        color: var(--primary);
+    }
+</style>
+<section class="content-page section enhanced-bg-glow" style="padding-top: 120px;">
+    <div class="container">
+        @if (TempData["PaymentError"] != null)
+        {
+            <div class="alert alert-danger" style="background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 16px; border-radius: 12px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 20px;"></i>
+                <div>@TempData["PaymentError"]</div>
+            </div>
+        }
+
+        <div class="checkout-grid">
+            
+            <!-- Left Side: Order details and Payment Methods -->
+            <div style="display: flex; flex-direction: column; gap: 24px;">
+                
+                <!-- Booking details card -->
+                <div id="bookingDetailsCard" class="checkout-card">
+                    <div class="checkout-card-title">
+                        <i class="fas fa-calendar-check"></i>
+                        <span>Event & Booking Review</span>
+                    </div>
+
+                    <div style="margin-bottom: 12px;">
+                        <h2 style="font-size: 22px; font-weight: 800; color: var(--primary-dark); margin-bottom: 12px;">@Model.EventTitle</h2>
+                        
+                        <div class="event-meta-info">
+                            <span class="event-meta-item"><i class="fas fa-ticket-alt"></i> Ref: <strong>#@Model.BookingReference</strong></span>
+                            <span class="event-meta-item"><i class="fas fa-calendar-alt"></i> Booked on @Model.BookingDate.ToEgyptTime().ToString("MMMM dd, yyyy")</span>
+                        </div>
+                    </div>
+
+                    <div class="ticket-review-list">
+                        @if (Model.Items != null && Model.Items.Any())
+                        {
+                            @foreach (var item in Model.Items)
+                            {
+                                <div class="ticket-review-item">
+                                    <div class="ticket-type-info">
+                                        <h4>@item.TicketTypeName</h4>
+                                        <p>@item.UnitPrice.ToString("F2") EGP × @item.Quantity</p>
+                                    </div>
+                                    <div class="ticket-item-subtotal">
+                                        @item.Subtotal.ToString("F2") EGP
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p style="color: var(--text-light); text-align: center; padding: 20px;">No items in this booking.</p>
+                        }
+                    </div>
+                </div>
+
+
+
+                <!-- Simplified Payment Form -->
+                <form id="paymentForm" asp-controller="Payment" asp-action="Initiate" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="BookingId" value="@Model.Id" />
+                    <input type="hidden" name="Amount" value="@Model.TotalAmount" />
+                    <input type="hidden" name="Method" value="Unified" />
+                </form>
+
+            </div>
+
+            <!-- Right Side: Order Summary -->
+            <div class="checkout-card" style="position: sticky; top: 130px;">
+                <div class="checkout-card-title">
+                    <i class="fas fa-receipt"></i>
+                    <span>Order Summary</span>
+                </div>
+
+                @{
+                    var subtotal = Model.TotalAmount - Model.ServiceFee;
+                    if (subtotal < 0) subtotal = 0;
+                }
+                <div class="summary-details">
+                    <div class="summary-row">
+                        <span>Ticket(s) Subtotal</span>
+                        <strong>@subtotal.ToString("F2") EGP</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Processing Fee</span>
+                        <strong style="color: var(--success);">@Model.ServiceFee.ToString("F2") EGP</strong>
+                    </div>
+                    
+                    <div class="summary-row total-row">
+                        <span>Total to Pay</span>
+                        <span>@Model.TotalAmount.ToString("F2") EGP</span>
+                    </div>
+                </div>
+
+                @if (Model.TotalAmount == 0)
+                {
+                    <button type="button" onclick="submitPayment()" class="btn-primary btn-large btn-full" style="margin-top: 24px; border-radius: 12px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);">
+                        <i class="fas fa-check-circle"></i> Confirm Booking (Free)
+                    </button>
+                }
+                else
+                {
+                    <button type="button" onclick="submitPayment()" class="btn-primary btn-large btn-full" style="margin-top: 24px; border-radius: 12px;">
+                        <i class="fas fa-shield-alt"></i> Proceed to Paymob Secure Pay
+                    </button>
+
+                    @if (Context.Request.Host.Host == "localhost")
+                    {
+                        <form asp-controller="Payment" asp-action="MockConfirm" method="post" style="margin-top: 12px; width: 100%;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="BookingId" value="@Model.Id" />
+                            <button type="submit" class="btn-secondary btn-large btn-full" style="border-radius: 12px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; font-weight: 600; padding: 12px; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                <i class="fas fa-flask"></i> Simulate Sandbox Payment (Dev Bypass)
+                            </button>
+                        </form>
+                    }
+                }
+
+                @if (Model.TotalAmount == 0)
+                {
+                    <div class="security-badge" style="background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534;">
+                        <i class="fas fa-check-circle" style="color: #22c55e;"></i>
+                        <div>
+                            <strong>Free Ticket Booking</strong>
+                            <p style="margin: 4px 0 0 0; font-size: 11px; opacity: 0.8; line-height: 1.3;">This booking is entirely free. No payment credentials or credit cards are required.</p>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="security-badge">
+                        <i class="fas fa-user-shield"></i>
+                        <div>
+                            <strong>100% Encrypted Transactions</strong>
+                            <p style="margin: 4px 0 0 0; font-size: 11px; opacity: 0.8; line-height: 1.3;">Payments are processed securely by Paymob complying with PCI-DSS standards.</p>
+                        </div>
+                    </div>
+                }
+            </div>
+
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        function submitPayment() {
+            const button = document.querySelector('button[onclick="submitPayment()"]');
+            button.disabled = true;
+            const isFree = @(Model.TotalAmount == 0 ? "true" : "false");
+            if (isFree) {
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Confirming your booking...';
+            } else {
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redirecting to Secure Payment...';
+            }
+            document.getElementById('paymentForm').submit();
+        }
+    </script>
+}

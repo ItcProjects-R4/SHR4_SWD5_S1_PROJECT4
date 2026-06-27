@@ -59,4 +59,7 @@ public record EventSummaryDto
     /// </summary>
     public string CategoryName { get; init; } = string.Empty;
     public decimal MinPrice { get; init; }
+    public string Location { get; init; } = string.Empty;
+    public decimal MinTicketPrice { get; init; }
+    public decimal MaxTicketPrice { get; init; }
 }

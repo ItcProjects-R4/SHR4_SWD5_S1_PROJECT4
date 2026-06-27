@@ -18,7 +18,8 @@ public class EventConfiguration : IEntityTypeConfiguration<Event>
                 .HasMaxLength(200);
 
         builder.Property(e => e.Description)
-            .IsRequired();
+            .IsRequired()
+            .HasMaxLength(5000);
 
         builder.Property(e => e.StartDate)
             .IsRequired();
@@ -61,6 +62,10 @@ public class EventConfiguration : IEntityTypeConfiguration<Event>
         builder.Property(e => e.MaxCapacity);
 
         builder.Property(e => e.MaxTicketsPerUser);
+
+        builder.Property(e => e.ViewCount)
+            .IsRequired()
+            .HasDefaultValue(0);
 
         builder.ToTable(t =>
         {

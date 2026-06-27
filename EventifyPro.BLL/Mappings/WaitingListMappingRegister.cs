@@ -18,8 +18,8 @@ public sealed class WaitingListMappingRegister : IRegister
             .Map(dest => dest.JoinedAt, _ => DateTime.UtcNow);
 
         config.NewConfig<WaitingList, WaitingListResponseDto>()
-            .Map(dest => dest.EventTitle, src => src.Event.Title)
-            .Map(dest => dest.TicketTypeName, src => src.TicketType.Name)
+            .Map(dest => dest.EventTitle, src => src.Event != null ? src.Event.Title : string.Empty)
+            .Map(dest => dest.TicketTypeName, src => src.TicketType != null ? src.TicketType.Name : string.Empty)
             .Map(dest => dest.Status, src => src.Status.ToString())
             .Map(dest => dest.CreatedAt, src => src.JoinedAt);
     }

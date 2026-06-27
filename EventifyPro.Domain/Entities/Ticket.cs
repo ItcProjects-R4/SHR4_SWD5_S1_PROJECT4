@@ -1,4 +1,4 @@
-﻿namespace Eventify.Domain.Entities;
+namespace Eventify.Domain.Entities;
 
 /// <summary>
 /// Represents a single ticket issued for a booking.
@@ -9,7 +9,7 @@
 /// and assigned unique QR codes for validation at event entry. The ticket tracks whether it has been
 /// used and by whom, supporting attendance verification and re-entry prevention.
 /// </remarks>
-public class Ticket
+public class Ticket : AuditableEntity
 {
     /// <summary>
     /// Gets or sets the unique identifier for the ticket.
@@ -58,8 +58,6 @@ public class Ticket
     /// </summary>
     /// <value>The scanner's user ID, or null if not yet scanned.</value>
     public string? ScannedById { get; set; }
-
-    public DateTime CreatedAt { get; set; }
 
     // Navigation
     public Event Event { get; set; } = null!;

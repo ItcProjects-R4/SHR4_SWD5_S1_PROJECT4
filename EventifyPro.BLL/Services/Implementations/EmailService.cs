@@ -108,7 +108,7 @@ public class EmailService : IEmailService
 
     private string BuildLayout(string subject, string bodyContent)
     {
-        var baseUrl = _configuration["BaseUrl"] ?? "https://localhost:7198";
+        var baseUrl = _configuration["BaseUrl"] ?? "https://eventifypro.runasp.net";
         
         return $@"<!DOCTYPE html>
 <html lang=""en"">
@@ -285,7 +285,12 @@ public class EmailService : IEmailService
     <div class=""wrapper"">
         <div class=""container"">
             <div class=""header"">
-                <h1>🎫 Eventify Pro</h1>
+                <h1 style=""display: inline-flex; align-items: center; justify-content: center; gap: 10px; margin: 0; font-size: 28px; font-weight: 800; color: #ffffff;"">
+                    <span style=""background: #ffffff; padding: 4px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px;"">
+                        <img src=""{baseUrl}/Images/Logo.png"" alt="""" style=""width: 100%; height: 100%; object-fit: contain; border-radius: 4px;"" />
+                    </span>
+                    <span>Eventify Pro</span>
+                </h1>
             </div>
             <div class=""content"">
                 {bodyContent}
@@ -310,7 +315,7 @@ public class EmailService : IEmailService
     #region Scenario 1: Welcome Email
     public async Task SendWelcomeEmailAsync(string recipientEmail, string recipientName, CancellationToken cancellationToken = default)
     {
-        var baseUrl = _configuration["BaseUrl"] ?? "https://localhost:7198";
+        var baseUrl = _configuration["BaseUrl"] ?? "https://eventifypro.runasp.net";
         var subject = "Welcome to EventifyPro! 🎉";
         var body = $@"
             <h2>Welcome aboard, {recipientName}!</h2>
@@ -352,7 +357,7 @@ public class EmailService : IEmailService
                     <div class=""event-item"">
                         <div class=""event-title"">{evt.Title} <span class=""badge badge-info"">{evt.Category}</span></div>
                         <div class=""event-meta"">
-                            📅 {evt.StartDate:dd MMM yyyy, hh:mm tt} | 📍 {evt.Location}
+                            📅 {evt.StartDate.ToEgyptTime():dd MMM yyyy, hh:mm tt} | 📍 {evt.Location}
                         </div>
                         <p style=""margin: 6px 0;""><a href=""{evt.Url}"" style=""color: #4f46e5; font-weight:600;"">View Details &rarr;</a></p>
                     </div>
@@ -368,7 +373,7 @@ public class EmailService : IEmailService
             </div>
             <p>Book your spots before they sell out!</p>
             <div class=""button-wrapper"">
-                <a href=""{_configuration["BaseUrl"] ?? "https://localhost:7198"}"" class=""button"">Browse All Events</a>
+                <a href=""{_configuration["BaseUrl"] ?? "https://eventifypro.runasp.net"}"" class=""button"">Browse All Events</a>
             </div>
         ";
         await SendEmailAsync(recipientEmail, subject, body, null, null, cancellationToken);
@@ -436,7 +441,7 @@ public class EmailService : IEmailService
                 </div>
                 <div class=""details-row"">
                     <span class=""details-label"">Starts At:</span>
-                    <span class=""details-value"">{startDate:dd MMM yyyy, hh:mm tt}</span>
+                    <span class=""details-value"">{startDate.ToEgyptTime():dd MMM yyyy, hh:mm tt}</span>
                 </div>
                 <div class=""details-row"">
                     <span class=""details-label"">Location:</span>
@@ -445,7 +450,7 @@ public class EmailService : IEmailService
             </div>
             <p>Make sure to have your tickets ready. You can find them in your dashboard profile or attached to your booking confirmation email.</p>
             <div class=""button-wrapper"">
-                <a href=""{_configuration["BaseUrl"] ?? "https://localhost:7198"}/Account/Login"" class=""button"">View My Tickets</a>
+                <a href=""{_configuration["BaseUrl"] ?? "https://eventifypro.runasp.net"}/Account/Login"" class=""button"">View My Tickets</a>
             </div>
         ";
         await SendEmailAsync(recipientEmail, subject, body, null, null, cancellationToken);
@@ -533,7 +538,7 @@ public class EmailService : IEmailService
                 </div>
                 <div class=""details-row"">
                     <span class=""details-label"">Refund Date:</span>
-                    <span class=""details-value"">{refundDate:dd MMM yyyy, hh:mm tt}</span>
+                    <span class=""details-value"">{refundDate.ToEgyptTime():dd MMM yyyy, hh:mm tt}</span>
                 </div>
                 <div class=""details-row"">
                     <span class=""details-label"">Status:</span>
@@ -550,20 +555,22 @@ public class EmailService : IEmailService
     public async Task SendPasswordResetAsync(
         string recipientEmail, 
         string recipientName, 
-        string resetLink, 
+        string otpCode, 
         CancellationToken cancellationToken = default)
     {
         var subject = "Reset Your Password - Eventify Pro 🔑";
         var body = $@"
             <h2>Reset Your Password</h2>
             <p>Hi <strong>{recipientName}</strong>,</p>
-            <p>We received a request to reset the password for your Eventify Pro account. Click the button below to securely set a new password:</p>
-            <div class=""button-wrapper"">
-                <a href=""{resetLink}"" class=""button"">Reset Password</a>
+            <p>We received a request to reset the password for your Eventify Pro account. Please use the 6-character verification code below to reset your password:</p>
+            <div style=""text-align: center; margin: 36px 0;"">
+                <span style=""font-size: 32px; font-weight: 800; letter-spacing: 6px; color: #ffffff; background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%); padding: 14px 28px; border-radius: 12px; box-shadow: 0 8px 24px rgba(124, 58, 237, 0.3); display: inline-block;"">
+                    {otpCode}
+                </span>
             </div>
             <div class=""details-card"">
                 <p style=""margin: 0; font-size: 13px; color: #6b7280;"">
-                    ⚠️ <strong>Security Notice:</strong> This password reset link will expire in <strong>2 hours</strong>. If you did not request a password reset, please ignore this email or contact support if you suspect unauthorized access.
+                    ⚠️ <strong>Security Notice:</strong> This verification code is valid for 15 minutes. If you did not request a password reset, please ignore this email or contact support if you suspect unauthorized access.
                 </p>
             </div>
         ";
@@ -575,26 +582,24 @@ public class EmailService : IEmailService
     public async Task SendEmailVerificationAsync(
         string recipientEmail, 
         string recipientName, 
-        string verificationLink, 
+        string otpCode, 
         CancellationToken cancellationToken = default)
     {
         var subject = "Verify Your Email Address - Eventify Pro ✉️";
         var body = $@"
             <h2>Welcome to Eventify Pro! 🎉</h2>
             <p>Hi <strong>{recipientName}</strong>,</p>
-            <p>Thank you for signing up! To fully activate and secure your account, please confirm your email address by clicking the button below:</p>
-            <div class=""button-wrapper"">
-                <a href=""{verificationLink}"" class=""button"">Verify Email Address</a>
+            <p>Thank you for signing up! To fully activate and secure your account, please confirm your email address by entering the 6-character verification code below on the confirmation page:</p>
+            <div style=""text-align: center; margin: 36px 0;"">
+                <span style=""font-size: 32px; font-weight: 800; letter-spacing: 6px; color: #ffffff; background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%); padding: 14px 28px; border-radius: 12px; box-shadow: 0 8px 24px rgba(124, 58, 237, 0.3); display: inline-block;"">
+                    {otpCode}
+                </span>
             </div>
             <div class=""details-card"">
                 <p style=""margin: 0; font-size: 13px; color: #6b7280;"">
-                    Confirming your email ensures you will receive your ticket purchase confirmations, PDF tickets, and QR code access passes directly to your inbox.
+                    This verification code is valid for 15 minutes. Confirming your email ensures you will receive your ticket purchase confirmations, PDF tickets, and QR code access passes directly to your inbox.
                 </p>
             </div>
-            <p style=""font-size: 13px; color: #9ca3af; margin-top: 20px;"">
-                If the button above does not work, copy and paste this link into your browser:<br/>
-                <a href=""{verificationLink}"" style=""color: #5b21b6; word-break: break-all;"">{verificationLink}</a>
-            </p>
         ";
         await SendEmailAsync(recipientEmail, subject, body, null, null, cancellationToken);
     }
@@ -635,6 +640,27 @@ public class EmailService : IEmailService
 
     #region Scenario 11: Organizer Emails
 
+    public async Task SendOrganizerAccountActivatedAsync(string recipientEmail, string recipientName, CancellationToken cancellationToken = default)
+    {
+        var baseUrl = _configuration["BaseUrl"] ?? "https://eventifypro.runasp.net";
+        var subject = "Your Organizer Account has been Activated! 🚀";
+        var body = $@"
+            <h2>Congratulations, {recipientName}!</h2>
+            <p>We are excited to let you know that our administration team has verified your business details and successfully activated your Organizer Account on EventifyPro.</p>
+            <p>You can now:</p>
+            <ul>
+                <li>Create and publish public or private events.</li>
+                <li>Design custom ticket types (Free, Paid, VIP) and set prices.</li>
+                <li>Access the Organizer Dashboard to track sales, view statistics, and scan tickets at the gate.</li>
+            </ul>
+            <p>Let's get started by creating your very first event!</p>
+            <div class=""button-wrapper"">
+                <a href=""{baseUrl}/Organizer"" class=""button"">Go to Organizer Dashboard</a>
+            </div>
+        ";
+        await SendEmailAsync(recipientEmail, subject, body, null, null, cancellationToken);
+    }
+
     public async Task SendOrganizerEventApprovedAsync(string recipientEmail, string recipientName, string eventTitle, CancellationToken cancellationToken = default)
     {
         var subject = $"Event Approved: {eventTitle} ✅";
@@ -644,7 +670,7 @@ public class EmailService : IEmailService
             <p>Your event <strong>{eventTitle}</strong> has been successfully reviewed and approved by our moderation team.</p>
             <p>It is now live on our platform and users can browse and buy tickets!</p>
             <div class=""button-wrapper"">
-                <a href=""{_configuration["BaseUrl"] ?? "https://localhost:7198"}/Account/Login"" class=""button"">Go to Management Dashboard</a>
+                <a href=""{_configuration["BaseUrl"] ?? "https://eventifypro.runasp.net"}/Account/Login"" class=""button"">Go to Management Dashboard</a>
             </div>
         ";
         await SendEmailAsync(recipientEmail, subject, body, null, null, cancellationToken);
@@ -687,7 +713,7 @@ public class EmailService : IEmailService
             <p>Your event <strong>{eventTitle}</strong> is completely sold out! All <strong>{totalTickets}</strong> available tickets have been purchased.</p>
             <p>You can view attendee lists and download scanners logs on your dashboard.</p>
             <div class=""button-wrapper"">
-                <a href=""{_configuration["BaseUrl"] ?? "https://localhost:7198"}/Account/Login"" class=""button"">Manage Attendees</a>
+                <a href=""{_configuration["BaseUrl"] ?? "https://eventifypro.runasp.net"}/Account/Login"" class=""button"">Manage Attendees</a>
             </div>
         ";
         await SendEmailAsync(recipientEmail, subject, body, null, null, cancellationToken);
@@ -703,7 +729,7 @@ public class EmailService : IEmailService
         string organizerName, 
         CancellationToken cancellationToken = default)
     {
-        var baseUrl = _configuration["BaseUrl"] ?? "https://localhost:7198";
+        var baseUrl = _configuration["BaseUrl"] ?? "https://eventifypro.runasp.net";
         var subject = "Your Scanner Credentials for EventifyPro 📱";
         var body = $@"
             <h2>Scanner Access Credentials</h2>
@@ -729,6 +755,60 @@ public class EmailService : IEmailService
                 </p>
             </div>
         ";
+        await SendEmailAsync(recipientEmail, subject, body, null, null, cancellationToken);
+    }
+    #endregion
+
+    #region Payout Status Email
+    public async Task SendPayoutStatusEmailAsync(
+        string recipientEmail, 
+        string recipientName, 
+        decimal amount, 
+        string status, 
+        string? referenceNumber, 
+        string? notes, 
+        CancellationToken cancellationToken = default)
+    {
+        var subject = $"Payout Request Update: {status} 💰";
+        var isApproved = string.Equals(status, "Completed", StringComparison.OrdinalIgnoreCase);
+        
+        var body = $@"
+            <h2>Payout Request status: {status}</h2>
+            <p>Hi {recipientName},</p>
+            <p>Your request to withdraw <strong>${amount:N2}</strong> has been processed.</p>
+            <div class=""details-card"">
+                <div class=""details-row"">
+                    <span class=""details-label"">Amount:</span>
+                    <span class=""details-value""><strong>${amount:N2}</strong></span>
+                </div>
+                <div class=""details-row"">
+                    <span class=""details-label"">Status:</span>
+                    <span class=""details-value""><strong style=""color: {(isApproved ? "#22c55e" : "#ef4444")};"">{status}</strong></span>
+                </div>";
+
+        if (isApproved && !string.IsNullOrEmpty(referenceNumber))
+        {
+            body += $@"
+                <div class=""details-row"">
+                    <span class=""details-label"">Reference Number:</span>
+                    <span class=""details-value"">{referenceNumber}</span>
+                </div>";
+        }
+
+        if (!string.IsNullOrEmpty(notes))
+        {
+            body += $@"
+                <div class=""details-row"">
+                    <span class=""details-label"">Notes / Feedback:</span>
+                    <span class=""details-value"">{notes}</span>
+                </div>";
+        }
+
+        body += @"
+            </div>
+            <p>If you have any questions, please contact our support team.</p>
+        ";
+
         await SendEmailAsync(recipientEmail, subject, body, null, null, cancellationToken);
     }
     #endregion

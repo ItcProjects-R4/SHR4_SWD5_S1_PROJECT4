@@ -1,11 +1,3 @@
-using Eventify.Domain.Entities;
-using EventifyPro.BLL.DTOs.User;
-using EventifyPro.BLL.Services.Interfaces;
-using EventifyPro.DAL.Repositories.Interfaces;
-using Mapster;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-
 namespace EventifyPro.BLL.Services.Implementations;
 
 public class UserService : IUserService
@@ -15,19 +7,22 @@ public class UserService : IUserService
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly IUploadHelper _uploadHelper;
+    private readonly IValidator<UserUpdateProfileDto> _profileValidator;
 
     public UserService(
         IUnitOfWork unitOfWork,
         IMapper mapper,
         UserManager<ApplicationUser> userManager,
         RoleManager<IdentityRole> roleManager,
-        IUploadHelper uploadHelper)
+        IUploadHelper uploadHelper,
+        IValidator<UserUpdateProfileDto> profileValidator)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _userManager = userManager;
         _roleManager = roleManager;
         _uploadHelper = uploadHelper;
+        _profileValidator = profileValidator;
     }
 
     public async Task<Result<UserProfileDto>> GetProfileAsync(string userId, CancellationToken cancellationToken = default)
@@ -44,6 +39,12 @@ public class UserService : IUserService
 
     public async Task<Result<UserProfileDto>> UpdateProfileAsync(string userId, UserUpdateProfileDto dto, CancellationToken cancellationToken = default)
     {
+        var validationError = await _profileValidator.GetValidationErrorAsync(dto, cancellationToken);
+        if (validationError is not null)
+        {
+            return Result<UserProfileDto>.Failure(validationError);
+        }
+
         var user = await _userManager.FindByIdAsync(userId);
         if (user == null)
         {
@@ -134,6 +135,23 @@ public class UserService : IUserService
         {
             var errors = string.Join(" ", addResult.Errors.Select(e => e.Description));
             return Result.Failure($"Failed to assign role '{roleName}': {errors}");
+        }
+
+        if (roleName == RoleNames.Organizer)
+        {
+            var existingProfile = await _unitOfWork.OrganizerProfiles
+                .FirstOrDefaultAsync(p => p.UserId == id, cancellationToken);
+            if (existingProfile == null)
+            {
+                var profile = new OrganizerProfile
+                {
+                    UserId = id,
+                    OrganizationName = user.FullName ?? "Unnamed Organizer",
+                    CreatedAt = DateTime.UtcNow
+                };
+                await _unitOfWork.OrganizerProfiles.AddAsync(profile, cancellationToken);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+            }
         }
 
         user.UpdatedAt = DateTime.UtcNow;

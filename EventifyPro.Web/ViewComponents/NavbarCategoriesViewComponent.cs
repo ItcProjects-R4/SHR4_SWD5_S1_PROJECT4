@@ -1,8 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using EventifyPro.BLL.Services.Interfaces;
-using System.Threading.Tasks;
-using System.Linq;
-
 namespace EventifyPro.Web.ViewComponents
 {
     public class NavbarCategoriesViewComponent : ViewComponent

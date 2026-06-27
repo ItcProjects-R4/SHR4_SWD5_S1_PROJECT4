@@ -1,4 +1,4 @@
-﻿namespace Eventify.Domain.Entities;
+namespace Eventify.Domain.Entities;
 
 /// <summary>
 /// Represents a user's request to be notified when tickets become available for an event.
@@ -9,7 +9,7 @@
 /// automatically notified when tickets become available, and entries expire after a configurable period
 /// to prevent stale waiting list entries.
 /// </remarks>
-public class WaitingList
+public class WaitingList : IAuditable
 {
     /// <summary>
     /// Gets or sets the unique identifier for the waiting list entry.

@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace EventifyPro.Web.ViewModels.Booking;
 
 public class BookingCreateViewModel
@@ -9,4 +7,6 @@ public class BookingCreateViewModel
 
     [Required, MinLength(1)]
     public List<BookingItemViewModel> Items { get; set; } = [];
+
+    public int? WaitingListId { get; set; }
 }

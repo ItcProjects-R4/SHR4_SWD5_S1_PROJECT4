@@ -15,5 +15,5 @@ public interface IOutboxMessageRepository : IGenericRepository<OutboxMessage>
     Task<IReadOnlyList<OutboxMessage>> GetMessagesByTypeAsync(string eventType, CancellationToken cancellationToken = default);
 
   
-    Task<IReadOnlyList<OutboxMessage>> GetMessagesForRetryAsync(int maxRetries = 3, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<OutboxMessage>> GetMessagesForRetryAsync(int maxRetries = 3, int batchSize = 10, CancellationToken cancellationToken = default);
 }

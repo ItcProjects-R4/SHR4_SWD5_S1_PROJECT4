@@ -44,13 +44,13 @@ public interface IEmailService
     Task SendPasswordResetAsync(
         string recipientEmail, 
         string recipientName, 
-        string resetLink, 
+        string otpCode, 
         CancellationToken cancellationToken = default);
 
     Task SendEmailVerificationAsync(
         string recipientEmail, 
         string recipientName, 
-        string verificationLink, 
+        string otpCode, 
         CancellationToken cancellationToken = default);
 
     Task SendSecurityNotificationAsync(
@@ -61,10 +61,19 @@ public interface IEmailService
         CancellationToken cancellationToken = default);
 
     // Organizer Emails
+    Task SendOrganizerAccountActivatedAsync(string recipientEmail, string recipientName, CancellationToken cancellationToken = default);
     Task SendOrganizerEventApprovedAsync(string recipientEmail, string recipientName, string eventTitle, CancellationToken cancellationToken = default);
     Task SendOrganizerEventRejectedAsync(string recipientEmail, string recipientName, string eventTitle, string reason, CancellationToken cancellationToken = default);
     Task SendOrganizerEventPublishedAsync(string recipientEmail, string recipientName, string eventTitle, CancellationToken cancellationToken = default);
     Task SendOrganizerEventSoldOutAsync(string recipientEmail, string recipientName, string eventTitle, int totalTickets, CancellationToken cancellationToken = default);
+    Task SendPayoutStatusEmailAsync(
+        string recipientEmail, 
+        string recipientName, 
+        decimal amount, 
+        string status, 
+        string? referenceNumber, 
+        string? notes, 
+        CancellationToken cancellationToken = default);
 
     // Scanner Credentials
     Task SendScannerCredentialsEmailAsync(

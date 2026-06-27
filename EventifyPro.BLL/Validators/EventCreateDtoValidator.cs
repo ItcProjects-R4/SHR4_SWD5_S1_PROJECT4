@@ -20,7 +20,7 @@ public class EventCreateDtoValidator : AbstractValidator<EventCreateDto>
 
         RuleFor(e => e.StartDate)
             .NotEmpty().WithMessage("Event start date is required")
-            .GreaterThan(DateTime.UtcNow).WithMessage("Event start date must be in the future");
+            .Must(d => d.UserInputToUtc() > DateTime.UtcNow).WithMessage("Event start date must be in the future");
 
         RuleFor(e => e.EndDate)
             .NotEmpty().WithMessage("Event end date is required")

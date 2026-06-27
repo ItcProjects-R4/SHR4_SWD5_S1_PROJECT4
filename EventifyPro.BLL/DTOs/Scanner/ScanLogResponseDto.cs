@@ -49,4 +49,7 @@ public record ScanLogResponseDto
     /// Gets or sets the raw QR code data that was scanned.
     /// </summary>
     public string? RawQRData { get; init; }
+    public string? EventTitle { get; init; }
+    public string? AttendeeName { get; init; }
+    public string? Notes { get; init; }
 }

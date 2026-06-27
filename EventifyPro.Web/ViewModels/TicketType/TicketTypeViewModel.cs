@@ -26,5 +26,7 @@ public class TicketTypeViewModel
 
     public DateTime? UpdatedAt { get; set; }
 
-    public bool IsAvailable => AvailableQuantity > 0;
+    public bool IsAvailable => AvailableQuantity > 0 
+        && (!SaleStartDate.HasValue || DateTime.UtcNow >= SaleStartDate.Value)
+        && (!SaleEndDate.HasValue || DateTime.UtcNow <= SaleEndDate.Value);
 }

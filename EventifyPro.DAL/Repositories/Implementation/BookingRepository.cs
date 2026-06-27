@@ -6,6 +6,8 @@ public class BookingRepository : GenericRepository<Booking>, IBookingRepository
 
     public async Task<Booking?> GetByIdWithDetailsAsync(int id, CancellationToken cancellationToken = default)
         => await _dbSet
+            .AsSplitQuery()
+            .Include(b => b.Event)
             .Include(b => b.Items)
                 .ThenInclude(i => i.TicketType)
             .Include(b => b.Tickets)

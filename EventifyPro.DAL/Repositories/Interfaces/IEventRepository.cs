@@ -31,9 +31,9 @@ public interface IEventRepository : IGenericRepository<Event>
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Events waiting for admin review.
+    /// Paginated events waiting for admin review.
     /// </summary>
-    Task<IReadOnlyList<Event>> GetPendingReviewAsync(CancellationToken cancellationToken = default);
+    Task<PagedResult<Event>> GetPendingReviewAsync(int pageNumber = 1, int pageSize = 10, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// All events for an organizer ordered by StartDate descending — for Organizer Dashboard.

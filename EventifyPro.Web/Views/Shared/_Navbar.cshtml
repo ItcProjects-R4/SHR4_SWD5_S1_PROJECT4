@@ -1,3 +1,9 @@
+@using Eventify.Domain.Constants
+@inject Microsoft.AspNetCore.Identity.UserManager<Eventify.Domain.Entities.ApplicationUser> UserManager
+@inject EventifyPro.BLL.Services.Interfaces.ISystemSettingService SystemSettingService
+@{
+    var platformName = await SystemSettingService.GetSettingValueAsync("PlatformName", "Eventify Pro");
+}
 <div class="bg-animation">
     <div class="bg-blob blob-1"></div>
     <div class="bg-blob blob-2"></div>
@@ -7,8 +13,10 @@
 <nav class="navbar" aria-label="Primary navigation">
     <div class="nav-container">
         <a asp-controller="Home" asp-action="Index" class="logo">
-            <div class="logo-icon"><i class="fas fa-ticket-alt"></i></div>
-            <span>Eventify <b>Pro</b></span>
+            <div class="logo-icon">
+                <img src="/Images/Logo.png" alt="Logo" class="logo-img" />
+            </div>
+            <span>@platformName</span>
         </a>
         <ul class="nav-links" id="primaryNav">
             <li><a asp-controller="Home" asp-action="Index" asp-fragment="home">Home</a></li>
@@ -36,12 +44,33 @@
             <li><a asp-controller="Home" asp-action="Index" asp-fragment="contact">Contact</a></li>
         </ul>
         <div class="nav-buttons">
-            <a asp-controller="Account" asp-action="Login" class="btn-outline nav-secondary-cta">
-                 Sign In
-            </a>
-            <a asp-controller="Account" asp-action="Register" class="btn-primary">
-                Get Started <i class="fas fa-arrow-right"></i>
-            </a>
+            @if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                string dashboardUrl = "/";
+                if (User.IsInRole(RoleNames.Admin)) dashboardUrl = "/Admin/Index";
+                else if (User.IsInRole(RoleNames.Organizer)) dashboardUrl = "/Dashboard/Organizer";
+                else if (User.IsInRole(RoleNames.Scanner)) dashboardUrl = "/Scanner/Index";
+                else if (User.IsInRole(RoleNames.Attendee)) dashboardUrl = "/Attendee/Index";
+
+                <a href="@dashboardUrl" class="btn-outline nav-secondary-cta">
+                     Dashboard
+                </a>
+                <form asp-controller="Account" asp-action="Logout" method="post" style="display: inline-block;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn-primary" style="border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 20px; font-family: inherit;">
+                        Sign Out <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </form>
+            }
+            else
+            {
+                <a asp-controller="Account" asp-action="Login" class="btn-outline nav-secondary-cta">
+                     Sign In
+                </a>
+                <a asp-controller="Account" asp-action="Register" class="btn-primary">
+                    Get Started <i class="fas fa-arrow-right"></i>
+                </a>
+            }
         </div>
         <button class="menu-toggle" id="menuToggle" type="button" aria-label="Toggle navigation menu" aria-controls="primaryNav" aria-expanded="false">
             <span></span><span></span><span></span>
@@ -69,30 +98,45 @@
             const path = window.location.pathname.toLowerCase();
             const hash = window.location.hash.toLowerCase();
             
-            document.querySelectorAll(".nav-links a, .nav-dropdown-toggle").forEach(link => {
+            document.querySelectorAll(".nav-links a, .nav-dropdown-toggle, .nav-dropdown-menu a").forEach(link => {
                 link.classList.remove("active");
             });
 
-            if (path.includes("/events")) {
-                const eventsLink = document.querySelector('.nav-links a[href*="/Events"]');
-                if (eventsLink) eventsLink.classList.add("active");
-            } else if (path.includes("/feedback") || path.includes("/faqs") || path.includes("/helpcenter")) {
-                const toggle = document.querySelector(".nav-dropdown-toggle");
-                if (toggle) toggle.classList.add("active");
-                
-                let subLink = null;
-                if (path.includes("/feedback")) subLink = document.querySelector('.nav-dropdown-menu a[href*="Feedback"]');
-                if (path.includes("/faqs")) subLink = document.querySelector('.nav-dropdown-menu a[href*="FAQs"]');
-                if (path.includes("/helpcenter")) subLink = document.querySelector('.nav-dropdown-menu a[href*="HelpCenter"]');
-                if (subLink) subLink.classList.add("active");
-            } else if (path === "/" || path === "" || path.includes("/home")) {
-                if (hash === "#contact") {
-                    const contactLink = document.querySelector('.nav-links a[href*="contact"]');
-                    if (contactLink) contactLink.classList.add("active");
-                } else {
-                    const homeLink = document.querySelector('.nav-links a[href*="home"]');
-                    if (homeLink) homeLink.classList.add("active");
+            let matched = false;
+            
+            // Check dropdown links
+            document.querySelectorAll(".nav-dropdown-menu a").forEach(link => {
+                const href = link.getAttribute("href")?.toLowerCase() || "";
+                if (href && path.includes(href)) {
+                    link.classList.add("active");
+                    const toggle = link.closest(".nav-dropdown")?.querySelector(".nav-dropdown-toggle");
+                    if (toggle) toggle.classList.add("active");
+                    matched = true;
                 }
+            });
+
+            if (!matched) {
+                // Check normal links
+                document.querySelectorAll(".nav-links > li > a").forEach(link => {
+                    const href = link.getAttribute("href")?.toLowerCase() || "";
+                    if (href) {
+                        if (href.includes("#") && (path === "/" || path === "" || path.includes("/home"))) {
+                            const linkHash = href.substring(href.indexOf("#"));
+                            if (linkHash === hash) {
+                                link.classList.add("active");
+                                matched = true;
+                            }
+                        } else if (!href.includes("#") && path.includes(href) && href !== "/" && href !== "/home") {
+                            link.classList.add("active");
+                            matched = true;
+                        }
+                    }
+                });
+            }
+
+            if (!matched && (path === "/" || path === "" || path.includes("/home"))) {
+                const homeLink = document.querySelector('.nav-links a[href*="home"]');
+                if (homeLink) homeLink.classList.add("active");
             }
         };
 

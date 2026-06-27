@@ -1,0 +1,643 @@
+@model EventifyPro.Web.ViewModels.Attendee.AttendeeDashboardViewModel
+@{
+    Layout = "_AttendeeLayout";
+    ViewData["Title"] = "Attendee Dashboard";
+    var firstName = string.IsNullOrWhiteSpace(Model.FullName) ? "there" : Model.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? Model.FullName;
+}
+
+<div class="attendee-dashboard-shell">
+    <section class="attendee-hero-panel">
+        <div class="hero-copy">
+            <span class="hero-eyebrow">Attendee Portal</span>
+            <h1>Welcome back, @firstName</h1>
+            <p>Track your next event, keep tickets ready for the gate, and review experiences after they end.</p>
+            <div class="hero-actions">
+                <a href="/Events" class="btn-primary">
+                    <i class="fa-solid fa-magnifying-glass"></i> Explore Events
+                </a>
+                <a href="/Ticket/MyTickets" class="btn-outline">
+                    <i class="fa-solid fa-ticket"></i> My Tickets
+                </a>
+            </div>
+        </div>
+
+        <div class="hero-status-card">
+            <span class="hero-status-label">Profile readiness</span>
+            <div class="profile-ring" style="--progress: @(Model.ProfileCompletionPercentage)%;">
+                <strong>@Model.ProfileCompletionPercentage%</strong>
+            </div>
+            <div class="profile-checks">
+                @if (!string.IsNullOrWhiteSpace(Model.FullName))
+                {
+                    <span class="done"><i class="fa-solid fa-circle-check"></i> Full name</span>
+                }
+                else
+                {
+                    <a href="/Attendee/Profile?focus=FullName" class="wizard-link" title="Click to add Full Name"><i class="fa-regular fa-circle"></i> Add Full Name <i class="fa-solid fa-arrow-right-long" style="font-size: 10px; margin-left: auto;"></i></a>
+                }
+
+                @if (Model.IsEmailConfirmed)
+                {
+                    <span class="done"><i class="fa-solid fa-envelope-circle-check"></i> Email verified</span>
+                }
+                else
+                {
+                    <a href="/Account/ConfirmEmail?email=@Model.Email" class="wizard-link" title="Click to verify Email"><i class="fa-regular fa-circle"></i> Verify Email <i class="fa-solid fa-arrow-right-long" style="font-size: 10px; margin-left: auto;"></i></a>
+                }
+
+                @if (Model.HasPhoneNumber)
+                {
+                    <span class="done"><i class="fa-solid fa-phone"></i> Phone number</span>
+                }
+                else
+                {
+                    <a href="/Attendee/Profile?focus=PhoneNumber" class="wizard-link" title="Click to add Phone Number"><i class="fa-regular fa-circle"></i> Add Phone <i class="fa-solid fa-arrow-right-long" style="font-size: 10px; margin-left: auto;"></i></a>
+                }
+
+                @if (Model.HasProfileImage)
+                {
+                    <span class="done"><i class="fa-solid fa-image-portrait"></i> Profile photo</span>
+                }
+                else
+                {
+                    <a href="/Attendee/Profile?focus=profilePicture" class="wizard-link" title="Click to add Profile Photo"><i class="fa-regular fa-circle"></i> Add Photo <i class="fa-solid fa-arrow-right-long" style="font-size: 10px; margin-left: auto;"></i></a>
+                }
+            </div>
+        </div>
+    </section>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="toast-success-banner">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>@TempData["SuccessMessage"]</span>
+        </div>
+    }
+
+    <section class="attendee-summary-grid">
+        <a href="/Booking" class="summary-tile">
+            <span class="summary-icon blue"><i class="fa-solid fa-calendar-check"></i></span>
+            <span class="summary-label">Bookings</span>
+            <strong>@Model.TotalBookings</strong>
+            <small>@Model.ConfirmedBookings confirmed, @Model.PendingBookings pending</small>
+        </a>
+
+        <a href="/Ticket/MyTickets" class="summary-tile">
+            <span class="summary-icon purple"><i class="fa-solid fa-ticket-simple"></i></span>
+            <span class="summary-label">Active tickets</span>
+            <strong>@Model.ActiveTickets</strong>
+            <small>@Model.UsedTickets used, @Model.ExpiredTickets expired</small>
+        </a>
+
+        <div class="summary-tile">
+            <span class="summary-icon green"><i class="fa-solid fa-door-open"></i></span>
+            <span class="summary-label">Gate passes</span>
+            <strong>@Model.TotalTickets</strong>
+            <small>Ready in your ticket wallet</small>
+        </div>
+
+        <div class="summary-tile">
+            <span class="summary-icon amber"><i class="fa-solid fa-star"></i></span>
+            <span class="summary-label">Reviews</span>
+            <strong>@Model.TotalReviews</strong>
+            <small>Shared after attended events</small>
+        </div>
+    </section>
+
+    <section class="dashboard-feature-grid">
+        <div class="next-event-panel">
+            <div class="panel-heading-row">
+                <div>
+                    <span class="section-kicker">Next up</span>
+                    <h2>Your upcoming event</h2>
+                </div>
+                <a href="/Ticket/MyTickets" class="panel-link">Open wallet <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+
+            @if (Model.UpcomingEvent == null)
+            {
+                <div class="next-event-empty">
+                    <i class="fa-solid fa-calendar-plus"></i>
+                    <h3>No upcoming events yet</h3>
+                    <p>Book your next experience and it will appear here with ticket access and countdown details.</p>
+                    <a href="/Events" class="btn-primary btn-small">Browse Events</a>
+                </div>
+            }
+            else
+            {
+                <div class="next-event-card">
+                    <div class="next-event-media">
+                        @if (!string.IsNullOrWhiteSpace(Model.UpcomingEvent.ImageUrl))
+                        {
+                            <img src="@Model.UpcomingEvent.ImageUrl" alt="@Model.UpcomingEvent.Title" />
+                        }
+                        else
+                        {
+                            <div class="next-event-fallback"><i class="fa-solid fa-calendar-day"></i></div>
+                        }
+                    </div>
+                    <div class="next-event-details">
+                        <span class="countdown-pill">
+                            @if (Model.UpcomingEvent.DaysRemaining == 0 && Model.UpcomingEvent.HoursRemaining == 0)
+                            {
+                                <span><i class="fa-solid fa-bolt"></i> Happening Now</span>
+                            }
+                            else if (Model.UpcomingEvent.DaysRemaining == 0)
+                            {
+                                <span><i class="fa-solid fa-hourglass-half"></i> @Model.UpcomingEvent.HoursRemaining hrs left</span>
+                            }
+                            else
+                            {
+                                <span><i class="fa-solid fa-clock"></i> @Model.UpcomingEvent.DaysRemaining days, @Model.UpcomingEvent.HoursRemaining hrs left</span>
+                            }
+                        </span>
+                        <h3>@Model.UpcomingEvent.Title</h3>
+                        @if (!string.IsNullOrWhiteSpace(Model.UpcomingEvent.Description))
+                        {
+                            <p class="event-description-text">@Model.UpcomingEvent.Description</p>
+                        }
+                        <p>
+                            <i class="fa-solid fa-location-dot"></i> 
+                            <a href="https://www.google.com/maps/search/?api=1&query=@Uri.EscapeDataString(Model.UpcomingEvent.Location + (string.IsNullOrEmpty(Model.UpcomingEvent.City) ? "" : ", " + Model.UpcomingEvent.City))" target="_blank" class="maps-link" title="Open in Google Maps">
+                                @Model.UpcomingEvent.Location @(string.IsNullOrEmpty(Model.UpcomingEvent.City) ? "" : $"({Model.UpcomingEvent.City})")
+                            </a>
+                        </p>
+                        <p><i class="fa-solid fa-calendar-day"></i> @Model.UpcomingEvent.StartDate.ToEgyptTime().ToString("dddd, MMM dd - hh:mm tt")</p>
+                        <div class="next-event-meta">
+                            <span><i class="fa-solid fa-ticket-simple"></i> @Model.UpcomingEvent.TicketCount ticket(s)</span>
+                            <span>Ref: <strong>@Model.UpcomingEvent.BookingReference</strong></span>
+                        </div>
+                        <div class="next-event-actions">
+                            <a href="/Events/Details/@Model.UpcomingEvent.EventId" class="btn-outline btn-small">Event Details</a>
+                            
+                            @{
+                                var calendarTitle = Uri.EscapeDataString(Model.UpcomingEvent.Title);
+                                var calendarDetails = Uri.EscapeDataString(Model.UpcomingEvent.Description);
+                                var calendarLoc = Uri.EscapeDataString(Model.UpcomingEvent.Location + (string.IsNullOrEmpty(Model.UpcomingEvent.City) ? "" : ", " + Model.UpcomingEvent.City));
+                                var startUtc = Model.UpcomingEvent.StartDate.ToUniversalTime().ToString("yyyyMMddTHHmmssZ");
+                                var endUtc = Model.UpcomingEvent.StartDate.AddHours(2).ToUniversalTime().ToString("yyyyMMddTHHmmssZ");
+                                var calendarUrl = $"https://calendar.google.com/calendar/render?action=TEMPLATE&text={calendarTitle}&dates={startUtc}/{endUtc}&details={calendarDetails}&location={calendarLoc}";
+                            }
+                            <a href="@calendarUrl" target="_blank" class="btn-outline btn-small" title="Add to Google Calendar">
+                                <i class="fa-regular fa-calendar-plus"></i> Calendar
+                            </a>
+                            
+                            @if (Model.UpcomingEvent.TicketId.HasValue)
+                            {
+                                <button type="button" class="btn-primary btn-small" onclick="openQRModal('@Model.UpcomingEvent.TicketId.Value', '@Model.UpcomingEvent.Title.Replace("'", "\\'")', '@Model.UpcomingEvent.BookingReference')">
+                                    <i class="fa-solid fa-qrcode"></i> View QR
+                                </button>
+                                
+                                <a href="/Ticket/Download/@Model.UpcomingEvent.TicketId.Value" class="btn-outline btn-small" title="Download Ticket PDF">
+                                    <i class="fa-solid fa-file-pdf"></i> PDF
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="side-stack">
+            @if (Model.ReviewPrompt != null)
+            {
+                <div class="review-callout">
+                    <span><i class="fa-solid fa-star-half-stroke"></i></span>
+                    <div>
+                        <h3>How was @Model.ReviewPrompt.EventTitle?</h3>
+                        <p>Your feedback helps organizers improve future events.</p>
+                        <a href="/Review/Create?eventId=@Model.ReviewPrompt.EventId">Write review</a>
+                    </div>
+                </div>
+            }
+
+            <div class="quick-actions-panel">
+                <h3 class="panel-title"><i class="fa-solid fa-bolt"></i> Quick actions</h3>
+                <div class="portal-links-stack">
+                    <a href="/Events" class="portal-action-link">
+                        <div class="portal-link-label">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <span>Find New Events</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-right portal-link-arrow"></i>
+                    </a>
+
+                    <a href="/Ticket/MyTickets" class="portal-action-link">
+                        <div class="portal-link-label">
+                            <i class="fa-solid fa-qrcode"></i>
+                            <span>Open Ticket Wallet</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-right portal-link-arrow"></i>
+                    </a>
+
+                    <a href="/Attendee/Profile" class="portal-action-link">
+                        <div class="portal-link-label">
+                            <i class="fa-solid fa-user-pen"></i>
+                            <span>Complete Profile</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-right portal-link-arrow"></i>
+                    </a>
+
+                    <a href="/Home/FAQs" class="portal-action-link">
+                        <div class="portal-link-label">
+                            <i class="fa-solid fa-circle-question"></i>
+                            <span>Help Center</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-right portal-link-arrow"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="dashboard-lower-grid">
+        <div class="white-panel">
+            <div class="panel-heading-row compact">
+                <h3 class="panel-title"><i class="fa-solid fa-clock-rotate-left"></i> Recent reservations</h3>
+                <a href="/Booking" class="panel-link">View all</a>
+            </div>
+
+            @if (!Model.RecentBookings.Any())
+            {
+                <div class="dashboard-empty-state">
+                    <i class="fa-solid fa-calendar-xmark dashboard-empty-icon"></i>
+                    <h4>No bookings found</h4>
+                    <p>Your reservations will show up here once you book a ticket.</p>
+                </div>
+            }
+            else
+            {
+                <div class="bookings-list">
+                    @foreach (var booking in Model.RecentBookings)
+                    {
+                        var statusClass = booking.Status.ToLower() switch
+                        {
+                            "confirmed" => "confirmed",
+                            "pending" => "pending",
+                            _ => "cancelled"
+                        };
+
+                        <div class="booking-item-card">
+                            <div class="booking-details-block">
+                                <div class="booking-event-img-fallback">
+                                    <i class="fa-solid fa-calendar-day"></i>
+                                </div>
+                                <div class="booking-info-meta">
+                                    <a href="/Booking/Details/@booking.Id" class="booking-event-title">@booking.EventTitle</a>
+                                    <p class="booking-meta-text">
+                                        Ref: <strong>@booking.BookingReference</strong> - @booking.BookingDate.ToEgyptTime().ToString("yyyy-MM-dd")
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="booking-right-block">
+                                <span class="status-pill @statusClass">@booking.Status</span>
+                                <strong class="booking-price">@booking.TotalAmount.ToString("C")</strong>
+                                <a href="/Booking/Details/@booking.Id" class="booking-action-link">
+                                    Details <i class="fa-solid fa-chevron-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="white-panel">
+            <h3 class="panel-title"><i class="fa-solid fa-wave-square"></i> Activity</h3>
+
+            @if (!Model.RecentActivity.Any())
+            {
+                <div class="dashboard-empty-state compact-empty">
+                    <i class="fa-solid fa-chart-line dashboard-empty-icon"></i>
+                    <h4>No activity yet</h4>
+                    <p>Bookings, scans, and ticket updates will appear here.</p>
+                </div>
+            }
+            else
+            {
+                <div class="activity-timeline">
+                    @foreach (var item in Model.RecentActivity)
+                    {
+                        <div class="activity-item">
+                            <span class="activity-icon @item.Tone"><i class="fa-solid @item.Icon"></i></span>
+                            <div>
+                                <strong>@item.Title</strong>
+                                <p>@item.Description</p>
+                                <small>@item.Date.ToEgyptTime().ToString("MMM dd, yyyy - hh:mm tt")</small>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </section>
+
+    <!-- Personalized Recommendations -->
+    <section class="recommendations-section" style="margin-top: 40px; margin-bottom: 40px;">
+        <div class="panel-heading-row" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+                <span class="section-kicker" style="font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--primary); font-weight: 700;">For you</span>
+                <h2 style="font-size: 24px; font-weight: 800; color: var(--text); margin-top: 4px;">Events you may like</h2>
+            </div>
+            <a href="/Events" class="panel-link" style="color: var(--primary); font-weight: 600; text-decoration: none; font-size: 14px; transition: var(--transition);">Explore all <i class="fa-solid fa-arrow-right" style="margin-left: 4px;"></i></a>
+        </div>
+
+        <div class="recommendations-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
+            @foreach (var ev in Model.RecommendedEvents)
+            {
+                <div class="recommended-card">
+                    <div style="height: 160px; position: relative; background: #f3f4f6;">
+                        @if (!string.IsNullOrWhiteSpace(ev.ImageUrl))
+                        {
+                            <img src="@ev.ImageUrl" alt="@ev.Title" style="width: 100%; height: 100%; object-fit: cover;" />
+                        }
+                        else
+                        {
+                            <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--text-light); font-size: 32px;">
+                                <i class="fa-solid fa-calendar-day"></i>
+                            </div>
+                        }
+                        <span style="position: absolute; top: 12px; left: 12px; background: rgba(124, 58, 237, 0.9); color: var(--white); padding: 4px 10px; border-radius: 50px; font-size: 11px; font-weight: 600; text-transform: uppercase;">@ev.CategoryName</span>
+                    </div>
+                    <div style="padding: 20px; flex-grow: 1; display: flex; flex-direction: column;">
+                        <h3 style="font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 44px;">@ev.Title</h3>
+                        
+                        <div style="font-size: 13px; color: var(--text-light); margin-bottom: 16px; display: flex; flex-direction: column; gap: 6px;">
+                            <span><i class="fa-solid fa-location-dot" style="width: 16px; color: var(--primary);"></i> @ev.City</span>
+                            <span><i class="fa-solid fa-calendar-days" style="width: 16px; color: var(--primary);"></i> @ev.StartDate.ToEgyptTime().ToString("MMM dd, yyyy - hh:mm tt")</span>
+                        </div>
+
+                        <div style="margin-top: auto; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 14px;">
+                            <div>
+                                <span style="font-size: 11px; color: var(--text-light); display: block;">Starting from</span>
+                                <strong style="font-size: 16px; color: var(--primary); font-weight: 800;">@ev.MinPrice.ToString("C")</strong>
+                            </div>
+                            <a href="/Events/Details/@ev.Id" class="btn-primary btn-small" style="padding: 8px 16px; border-radius: 8px; font-size: 12.5px; text-decoration: none;">Book Now</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+</div>
+
+<!-- QR Modal -->
+<div id="qrModal" class="qr-modal-overlay" onclick="handleOverlayClick(event)">
+    <div class="qr-modal-card">
+        <button type="button" class="qr-modal-close" onclick="closeQRModal()">&times;</button>
+        <div class="qr-modal-header">
+            <h3>Gate Pass QR Code</h3>
+            <p id="modalEventTitle">Event Title</p>
+        </div>
+        <div class="qr-modal-body">
+            <div class="qr-image-container">
+                <img id="modalQRImage" src="" alt="Ticket QR Code" />
+            </div>
+            <div class="qr-instructions">
+                <p>Present this QR code at the entrance gate for scanning.</p>
+                <div class="ref-badge">Booking Ref: <strong id="modalRefCode"></strong></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .event-description-text {
+        font-size: 13px;
+        color: var(--text-light);
+        margin-bottom: 12px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        line-height: 1.5;
+    }
+
+    .maps-link {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s ease;
+    }
+
+    .maps-link:hover {
+        text-decoration: underline;
+        color: var(--primary-dark, #581c87);
+    }
+
+    /* Recommended Event Card styles */
+    .recommended-card {
+        background: var(--white);
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .recommended-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-md);
+    }
+
+    /* QR Modal Overlay styles */
+    .qr-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+
+    .qr-modal-overlay.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .qr-modal-card {
+        background: var(--white);
+        border-radius: 20px;
+        width: 90%;
+        max-width: 400px;
+        padding: 24px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        position: relative;
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+        text-align: center;
+    }
+
+    .qr-modal-overlay.active .qr-modal-card {
+        transform: scale(1);
+    }
+
+    .qr-modal-close {
+        position: absolute;
+        top: 16px;
+        right: 20px;
+        background: none;
+        border: none;
+        font-size: 28px;
+        cursor: pointer;
+        color: var(--text-light);
+        transition: color 0.2s ease;
+        padding: 0;
+        line-height: 1;
+    }
+
+    .qr-modal-close:hover {
+        color: var(--error);
+    }
+
+    .qr-modal-header {
+        margin-bottom: 20px;
+    }
+
+    .qr-modal-header h3 {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 6px;
+    }
+
+    .qr-modal-header p {
+        font-size: 14px;
+        color: var(--text-light);
+        margin: 0;
+        font-weight: 500;
+    }
+
+    .qr-image-container {
+        background: #f9fafb;
+        border: 2px dashed var(--border);
+        border-radius: 16px;
+        padding: 20px;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .qr-image-container img {
+        width: 200px;
+        height: 200px;
+        display: block;
+    }
+
+    .qr-instructions p {
+        font-size: 13px;
+        color: var(--text-light);
+        margin-bottom: 16px;
+        line-height: 1.4;
+    }
+
+    .ref-badge {
+        background: var(--soft-purple);
+        color: var(--primary);
+        padding: 8px 16px;
+        border-radius: 50px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+        word-break: break-all;
+        max-width: 100%;
+    }
+
+    /* Stepper/Wizard links */
+    .profile-checks a.wizard-link {
+        color: var(--text-light);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12.5px;
+        font-weight: 600;
+        transition: var(--transition);
+        padding: 6px 12px;
+        border-radius: 8px;
+        background: rgba(124, 58, 237, 0.04);
+        border: 1px dashed rgba(124, 58, 237, 0.2);
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .profile-checks a.wizard-link:hover {
+        color: var(--primary);
+        background: var(--soft-purple);
+        border-color: var(--primary);
+        transform: translateX(4px);
+    }
+    .profile-checks a.wizard-link i.fa-regular {
+        color: var(--text-light);
+        opacity: 0.6;
+    }
+    .profile-checks a.wizard-link:hover i.fa-regular {
+        color: var(--primary);
+        opacity: 1;
+    }
+    .profile-checks {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+    }
+</style>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <script>
+        function openQRModal(ticketId, eventTitle, refCode) {
+            document.getElementById('modalQRImage').src = '/Ticket/QRCode/' + ticketId;
+            document.getElementById('modalEventTitle').innerText = eventTitle;
+            document.getElementById('modalRefCode').innerText = refCode;
+            document.getElementById('qrModal').classList.add('active');
+        }
+
+        function closeQRModal() {
+            document.getElementById('qrModal').classList.remove('active');
+            setTimeout(() => {
+                document.getElementById('modalQRImage').src = '';
+            }, 300);
+        }
+
+        function handleOverlayClick(event) {
+            if (event.target === document.getElementById('qrModal')) {
+                closeQRModal();
+            }
+        }
+
+        // Close on escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeQRModal();
+            }
+        });
+
+        // Confetti explosion if profile is 100% complete
+        (function() {
+            const completion = @Model.ProfileCompletionPercentage;
+            if (completion === 100) {
+                if (!localStorage.getItem('profileConfettiPlayed')) {
+                    // Fire premium confetti explosion
+                    confetti({
+                        particleCount: 150,
+                        spread: 80,
+                        origin: { y: 0.6 }
+                    });
+                    localStorage.setItem('profileConfettiPlayed', 'true');
+                }
+            } else {
+                localStorage.removeItem('profileConfettiPlayed');
+            }
+        })();
+    </script>
+}

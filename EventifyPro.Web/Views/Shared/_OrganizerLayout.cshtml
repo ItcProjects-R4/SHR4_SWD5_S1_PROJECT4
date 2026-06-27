@@ -1,0 +1,233 @@
+@{
+    var fullName = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "Organizer User";
+    var avatarUrl = User.FindFirst("ProfileImageUrl")?.Value;
+
+    var currentController = ViewContext.RouteData.Values["Controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["Action"]?.ToString();
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Eventify Pro Organizer</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="~/favicon.png?v=2" />
+    <link rel="icon" type="image/png" sizes="192x192" href="~/favicon.png?v=2" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <link rel="stylesheet" href="~/css/organizer-layout-custom.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/ux-improvements.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <a href="#main-content" class="skip-link" style="position: absolute; top: -100px; left: 20px; background: var(--primary); color: white; padding: 10px 20px; z-index: 100000; transition: top 0.2s ease-in-out; font-weight: 700; border-radius: 0 0 10px 10px; text-decoration: none; box-shadow: var(--shadow-md);" onfocus="this.style.top='0'" onblur="this.style.top='-100px'">Skip to main content</a>
+
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar admin-sidebar">
+            <div class="sidebar-header" style="display: flex; justify-content: space-between; align-items: center; position: relative;">
+                <a href="/Dashboard/Organizer" class="logo">
+                    <div class="logo-icon"><i class="fas fa-magic"></i></div>
+                    <span class="logo-text">Eventify <b>Pro</b></span>
+                </a>
+                <button id="sidebarCollapse" aria-label="Collapse Sidebar" style="background: none; border: none; color: var(--text-light); cursor: pointer; font-size: 16px; padding: 4px; display: flex; align-items: center; justify-content: center; transition: var(--transition);"><i class="fas fa-chevron-left"></i></button>
+                <button class="mobile-toggle" id="sidebarClose" aria-label="Close Sidebar"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-label">Core Management</div>
+                <a href="/Dashboard/Organizer" class="nav-item @(currentController == "Dashboard" && currentAction == "Organizer" ? "active" : "")">
+                    <i class="fas fa-chart-line"></i> <span>Dashboard</span>
+                </a>
+                <a href="/Events/OrganizerIndex" class="nav-item @(currentController == "Events" ? "active" : "")">
+                    <i class="fas fa-calendar-alt"></i> <span>My Events</span>
+                </a>
+                <a href="/OrganizerTickets" class="nav-item @(currentController == "TicketTypes" ? "active" : "")">
+                    <i class="fas fa-ticket-alt"></i> <span>Tickets</span>
+                </a>
+                <a href="/OrganizerAttendees" class="nav-item @(currentController == "OrganizerAttendees" ? "active" : "")">
+                    <i class="fas fa-users"></i> <span>Attendees</span>
+                </a>
+                <a href="/OrganizerWaitingList" class="nav-item @(currentController == "OrganizerWaitingList" ? "active" : "")">
+                    <i class="fas fa-hourglass-half"></i> <span>Waiting List</span>
+                </a>
+                <a href="/OrganizerReviews" class="nav-item @(currentController == "OrganizerReviews" ? "active" : "")">
+                    <i class="fas fa-star"></i> <span>Reviews</span>
+                </a>
+                
+                <div class="nav-label">Staff & Scanners</div>
+                <a href="/OrganizerScanners" class="nav-item @(currentController == "OrganizerScanners" ? "active" : "")">
+                    <i class="fas fa-qrcode"></i> <span>Scanners</span>
+                </a>
+ 
+                <div class="nav-label">Personal & Finance</div>
+                <a href="/OrganizerProfile/Index" class="nav-item @(currentController == "OrganizerProfile" ? "active" : "")">
+                    <i class="fas fa-user-circle"></i> <span>Profile</span>
+                </a>
+                <a href="/OrganizerPayouts" class="nav-item @(currentController == "OrganizerPayouts" ? "active" : "")">
+                    <i class="fas fa-money-bill-wave"></i> <span>Payouts</span>
+                </a>
+                
+                <form asp-controller="Account" asp-action="Logout" method="post" onsubmit="return confirm('Are you sure you want to log out?');" style="margin-top: 40px; padding: 0 12px;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="nav-item" style="width: 100%; border: none; background: transparent; cursor: pointer; color: var(--error); text-align: left; font-family: inherit;">
+                        <i class="fas fa-sign-out-alt"></i> <span>Sign Out</span>
+                    </button>
+                </form>
+            </nav>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="dashboard-main" id="main-content">
+            <!-- Header -->
+            <header class="dashboard-header">
+                <div class="header-left" style="display: flex; align-items: center; gap: 15px;">
+                    <button class="mobile-toggle" id="sidebarToggle" aria-label="Toggle Navigation"><i class="fas fa-bars"></i></button>
+                    <div>
+                        <!-- Dynamic Breadcrumbs -->
+                        <nav class="breadcrumbs" style="margin-bottom: 8px; font-size: 13px; color: var(--text-light); display: flex; align-items: center; gap: 8px;">
+                            <a href="/Dashboard/Organizer" style="color: var(--primary); text-decoration: none; font-weight: 500;"><i class="fas fa-home"></i> Organizer</a>
+                            <i class="fas fa-chevron-right" style="font-size: 9px;"></i>
+                            @if (currentController == "Dashboard" && currentAction == "Organizer")
+                            {
+                                <span style="font-weight: 600; color: var(--text);">Dashboard</span>
+                            }
+                            else if (currentController == "Events")
+                            {
+                                <span style="font-weight: 600; color: var(--text);">My Events</span>
+                            }
+                            else if (currentController == "TicketTypes")
+                            {
+                                <span style="font-weight: 600; color: var(--text);">Tickets</span>
+                            }
+                            else if (currentController == "OrganizerAttendees")
+                            {
+                                <span style="font-weight: 600; color: var(--text);">Attendees</span>
+                            }
+                            else if (currentController == "OrganizerScanners")
+                            {
+                                <span style="font-weight: 600; color: var(--text);">Scanners</span>
+                            }
+                            else if (currentController == "OrganizerProfile")
+                            {
+                                <span style="font-weight: 600; color: var(--text);">Profile</span>
+                            }
+                            else if (currentController == "OrganizerPayouts")
+                            {
+                                <span style="font-weight: 600; color: var(--text);">Payouts</span>
+                            }
+                            else if (currentController == "OrganizerWaitingList")
+                            {
+                                <span style="font-weight: 600; color: var(--text);">Waiting List</span>
+                            }
+                            else if (currentController == "OrganizerReviews")
+                            {
+                                <span style="font-weight: 600; color: var(--text);">Reviews</span>
+                            }
+                            else
+                            {
+                                <span style="font-weight: 600; color: var(--text);">@(currentController?.Replace("Organizer", ""))</span>
+                            }
+                        </nav>
+                        
+                        <h2>@ViewData["HeaderTitle"]</h2>
+                        <p>@ViewData["HeaderSubtitle"]</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <!-- Notification Center Component -->
+                    @await Component.InvokeAsync("NotificationCenter")
+                    
+                    <a href="/OrganizerProfile/Index" class="user-menu">
+                        @if (!string.IsNullOrEmpty(avatarUrl))
+                        {
+                            <img src="@avatarUrl" alt="Avatar" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent);" />
+                        }
+                        else
+                        {
+                            <div style="width: 36px; height: 36px; border-radius: 50%; font-size: 14px; font-weight: 700; background: var(--primary-light); color: var(--white); display: flex; align-items: center; justify-content: center;">
+                                @(string.IsNullOrEmpty(fullName) ? "OR" : string.Concat(fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(s => s[0]).Take(2)).ToUpper())
+                            </div>
+                        }
+                        <div>
+                            <h4>@fullName</h4>
+                            <p>Organizer</p>
+                        </div>
+                    </a>
+                </div>
+            </header>
+
+            <!-- Alerts -->
+            @if (TempData["OrganizerSuccess"] is string successMsg)
+            {
+                <div class="alert-banner" role="alert">
+                    <span><i class="fas fa-check-circle" style="margin-right: 8px;"></i> @successMsg</span>
+                    <button type="button" onclick="this.parentElement.remove()" style="background: none; border: none; color: inherit; cursor: pointer; font-size: 18px;">&times;</button>
+                </div>
+            }
+            @if (TempData["OrganizerError"] is string errorMsg)
+            {
+                <div class="alert-banner error" role="alert">
+                    <span><i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i> @errorMsg</span>
+                    <button type="button" onclick="this.parentElement.remove()" style="background: none; border: none; color: inherit; cursor: pointer; font-size: 18px;">&times;</button>
+                </div>
+            }
+            @if (TempData["Success"] is string globalSuccessMsg)
+            {
+                <div class="alert-banner" role="alert">
+                    <span><i class="fas fa-check-circle" style="margin-right: 8px;"></i> @globalSuccessMsg</span>
+                    <button type="button" onclick="this.parentElement.remove()" style="background: none; border: none; color: inherit; cursor: pointer; font-size: 18px;">&times;</button>
+                </div>
+            }
+            @if (TempData["Error"] is string globalErrorMsg)
+            {
+                <div class="alert-banner error" role="alert">
+                    <span><i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i> @globalErrorMsg</span>
+                    <button type="button" onclick="this.parentElement.remove()" style="background: none; border: none; color: inherit; cursor: pointer; font-size: 18px;">&times;</button>
+                </div>
+            }
+            @if (TempData["SuccessMessage"] is string successMsg2)
+            {
+                <div class="alert-banner" role="alert">
+                    <span><i class="fas fa-check-circle" style="margin-right: 8px;"></i> @successMsg2</span>
+                    <button type="button" onclick="this.parentElement.remove()" style="background: none; border: none; color: inherit; cursor: pointer; font-size: 18px;">&times;</button>
+                </div>
+            }
+            @if (TempData["ErrorMessage"] is string errorMsg2)
+            {
+                <div class="alert-banner error" role="alert">
+                    <span><i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i> @errorMsg2</span>
+                    <button type="button" onclick="this.parentElement.remove()" style="background: none; border: none; color: inherit; cursor: pointer; font-size: 18px;">&times;</button>
+                </div>
+            }
+
+            <!-- Body Body content -->
+            @RenderBody()
+        </main>
+    </div>
+
+    <!-- Beautiful Custom Confirmation Modal -->
+    <div id="customConfirmModal" class="confirm-modal-overlay">
+        <div class="confirm-modal-card">
+            <div class="confirm-modal-icon">
+                <i class="fas fa-question"></i>
+            </div>
+            <h3 class="confirm-modal-title">Confirm Action</h3>
+            <p id="customConfirmMessage" class="confirm-modal-message">Are you sure you want to perform this action?</p>
+            <div class="confirm-modal-actions">
+                <button type="button" id="btnConfirmCancel" class="btn-confirm-cancel">Cancel</button>
+                <button type="button" id="btnConfirmYes" class="btn-confirm-yes">Yes, Proceed</button>
+            </div>
+        </div>
+    </div>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Script for Custom Confirm Modal -->
+    <script src="~/js/organizer-layout-custom.js" asp-append-version="true"></script>
+    <script src="~/js/ux-improvements.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+

@@ -1,4 +1,4 @@
-﻿namespace Eventify.Domain.Entities;
+namespace Eventify.Domain.Entities;
 
 /// <summary>
 /// Represents a refund transaction initiated against a payment.
@@ -9,7 +9,7 @@
 /// Each refund tracks its processing status, reason for refund, and includes denormalized booking
 /// ID for efficient querying of refund history by booking.
 /// </remarks>
-public class Refund
+public class Refund : AuditableEntity
 {
     /// <summary>
     /// Gets or sets the unique identifier for the refund.
@@ -55,7 +55,6 @@ public class Refund
     /// <value>The initiator's user ID.</value>
     public string InitiatedById { get; set; } = string.Empty;
 
-    public DateTime CreatedAt { get; set; }
     public DateTime? ProcessedAt { get; set; }
 
     // Navigation

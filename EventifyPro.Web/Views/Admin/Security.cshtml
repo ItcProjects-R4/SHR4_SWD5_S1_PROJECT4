@@ -1,0 +1,222 @@
+@model EventifyPro.Web.ViewModels.Admin.AdminSecurityViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "System Security";
+    ViewData["HeaderTitle"] = "System Security 🛡️";
+    ViewData["HeaderSubtitle"] = "Configure password rules, session timeouts, and audit policies.";
+}
+
+@section Styles {
+    <style>
+        /* ===== SECURITY GRID ===== */
+        .security-grid {
+            display: block;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .form-card {
+            background: white;
+            padding: 32px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+        }
+
+        .form-card h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary-dark);
+            border-bottom: 1px dashed var(--border);
+            padding-bottom: 12px;
+        }
+
+        /* Inputs */
+        .input-group {
+            margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .input-group label {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .input-group input,
+        .input-group textarea,
+        .input-group select {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 15px;
+            color: var(--text);
+            background: white;
+            outline: none;
+            transition: var(--transition);
+        }
+        .input-group input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
+        }
+
+        /* Toggle Options */
+        .toggle-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background: var(--soft-purple);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        .toggle-item:hover {
+            background: var(--light-purple);
+        }
+        .toggle-item > div > span {
+            font-weight: 700;
+            color: var(--text);
+            font-size: 14.5px;
+            display: block;
+        }
+        .toggle-item > div > p {
+            color: var(--text-light);
+            font-size: 12px;
+            margin-top: 2px;
+        }
+        .toggle-item input[type="checkbox"] {
+            display: none;
+        }
+        .toggle-slider {
+            width: 46px;
+            height: 26px;
+            background: var(--border);
+            border-radius: 50px;
+            position: relative;
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+        .toggle-slider::after {
+            content: "";
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: var(--transition);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .toggle-item input:checked ~ .toggle-slider {
+            background: var(--gradient);
+        }
+        .toggle-item input:checked ~ .toggle-slider::after {
+            transform: translateX(20px);
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 32px;
+            border-radius: 50px;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+            background: var(--gradient);
+            color: white;
+            box-shadow: 0 8px 25px rgba(124, 58, 237, 0.35);
+            text-decoration: none;
+            justify-content: center;
+            width: 100%;
+        }
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(124, 58, 237, 0.5);
+        }
+    </style>
+}
+
+<div class="security-grid">
+    <!-- Security Settings Form -->
+    <div class="form-card">
+        <h3><i class="fas fa-user-shield"></i> Password & Session Policy</h3>
+        
+        <form asp-controller="AdminSettings" asp-action="Security" method="post">
+            @Html.AntiForgeryToken()
+
+            <div class="row-group">
+                <div class="input-group">
+                    <label>Minimum Password Length</label>
+                    <input type="number" min="6" max="32" asp-for="PasswordMinLength" required />
+                </div>
+                <div class="input-group">
+                    <label>Session Timeout (Minutes)</label>
+                    <input type="number" min="5" max="1440" asp-for="SessionTimeoutMinutes" required />
+                </div>
+            </div>
+
+            <div class="row-group">
+                <div class="input-group">
+                    <label>Lockout after (Failed attempts)</label>
+                    <input type="number" min="3" max="20" asp-for="MaxFailedLoginsBeforeLockout" required />
+                </div>
+                <div class="input-group">
+                    <label>Administrator IP Range Whitelist</label>
+                    <input type="text" asp-for="AdminIpWhitelist" required />
+                </div>
+            </div>
+
+            <!-- 2FA Requirements -->
+            <label class="toggle-item">
+                <div>
+                    <span>Require Two-Factor (2FA) for Admins</span>
+                    <p>Mandatory 2FA setup and sign-in verification for superuser roles.</p>
+                </div>
+                <input type="checkbox" asp-for="RequireTwoFactorForAdmins" value="true" />
+                <div class="toggle-slider"></div>
+            </label>
+
+            <!-- Password Uppercase Requirement -->
+            <label class="toggle-item">
+                <div>
+                    <span>Require Uppercase Letter</span>
+                    <p>Ensure password inputs contain at least one uppercase letter (A-Z).</p>
+                </div>
+                <input type="checkbox" asp-for="RequirePasswordUppercase" value="true" />
+                <div class="toggle-slider"></div>
+            </label>
+
+            <!-- Password Digits Requirement -->
+            <label class="toggle-item">
+                <div>
+                    <span>Require Digits / Numbers</span>
+                    <p>Ensure password inputs contain at least one numeric digit (0-9).</p>
+                </div>
+                <input type="checkbox" asp-for="RequirePasswordDigits" value="true" />
+                <div class="toggle-slider"></div>
+            </label>
+
+            <div style="margin-top: 28px;">
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-shield-alt" style="margin-right: 8px;"></i> Apply Security Policies
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

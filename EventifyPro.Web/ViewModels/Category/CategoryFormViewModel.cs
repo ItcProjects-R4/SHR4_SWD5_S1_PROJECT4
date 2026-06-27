@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace EventifyPro.Web.ViewModels.Category;
 
 public class CategoryFormViewModel

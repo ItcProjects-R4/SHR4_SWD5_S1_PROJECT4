@@ -33,6 +33,9 @@ public class TicketTypeService : ITicketTypeService
         if (eventEntity.OrganizerId != organizerId)
             return Result<TicketTypeResponseDto>.Failure("You are not authorized to add ticket types to this event.");
 
+        if (eventEntity.Status is Eventify.Domain.Enums.EventStatus.Cancelled or Eventify.Domain.Enums.EventStatus.Completed)
+            return Result<TicketTypeResponseDto>.Failure("Cannot modify ticket types for a cancelled or completed event.");
+
         // Check for duplicate ticket type name within the event
         var existingTicketTypes = await _unitOfWork.TicketTypes.GetTicketTypesByEventAsync(eventId, cancellationToken);
         if (existingTicketTypes.Any(tt => tt.Name.Equals(dto.Name, StringComparison.OrdinalIgnoreCase)))
@@ -80,6 +83,9 @@ public class TicketTypeService : ITicketTypeService
         if (eventEntity.OrganizerId != organizerId)
             return Result<TicketTypeResponseDto>.Failure("You are not authorized to update this ticket type.");
 
+        if (eventEntity.Status is Eventify.Domain.Enums.EventStatus.Cancelled or Eventify.Domain.Enums.EventStatus.Completed)
+            return Result<TicketTypeResponseDto>.Failure("Cannot modify ticket types for a cancelled or completed event.");
+
         // Check for duplicate name (excluding current ticket type)
         var existingTicketTypes = await _unitOfWork.TicketTypes.GetTicketTypesByEventAsync(ticketType.EventId, cancellationToken);
         if (existingTicketTypes.Any(tt => tt.Id != id && tt.Name.Equals(dto.Name, StringComparison.OrdinalIgnoreCase)))
@@ -88,6 +94,10 @@ public class TicketTypeService : ITicketTypeService
         // Cannot reduce total quantity below what's already sold
         if (dto.TotalQuantity < ticketType.SoldQuantity)
             return Result<TicketTypeResponseDto>.Failure($"Cannot reduce total quantity below {ticketType.SoldQuantity} sold tickets.");
+
+        // Cannot change price after tickets are sold
+        if (ticketType.SoldQuantity > 0 && dto.Price != ticketType.Price)
+            return Result<TicketTypeResponseDto>.Failure("Cannot change ticket price after tickets have been sold.");
 
         // Update the ticket type
         ticketType.Name = dto.Name.Trim();
@@ -119,4 +129,67 @@ public class TicketTypeService : ITicketTypeService
         var dtos = _mapper.Map<IReadOnlyList<TicketTypeResponseDto>>(ticketTypes);
         return Result<IReadOnlyList<TicketTypeResponseDto>>.Success(dtos);
     }
+
+    public async Task<Result> DeleteAsync(int id, string organizerId, CancellationToken cancellationToken = default)
+    {
+        var ticketType = await _unitOfWork.TicketTypes.GetByIdAsync(id, cancellationToken);
+        if (ticketType == null)
+            return Result.Failure("Ticket type not found.");
+
+        var eventEntity = await _unitOfWork.Events.GetByIdAsync(ticketType.EventId, cancellationToken);
+        if (eventEntity == null)
+            return Result.Failure("Associated event not found.");
+
+        if (eventEntity.OrganizerId != organizerId)
+            return Result.Failure("You are not authorized to delete this ticket type.");
+
+        if (eventEntity.Status is Eventify.Domain.Enums.EventStatus.Cancelled or Eventify.Domain.Enums.EventStatus.Completed)
+            return Result.Failure("Cannot modify ticket types for a cancelled or completed event.");
+
+        if (ticketType.SoldQuantity > 0)
+            return Result.Failure("Cannot delete this ticket type because tickets have already been purchased.");
+
+        _unitOfWork.TicketTypes.Delete(ticketType);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        return Result.Success();
+    }
+
+    public async Task<Result<TicketTypeResponseDto>> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var ticketType = await _unitOfWork.TicketTypes.GetByIdAsync(id, cancellationToken);
+        if (ticketType == null)
+            return Result<TicketTypeResponseDto>.Failure("Ticket type not found.");
+
+        return Result<TicketTypeResponseDto>.Success(_mapper.Map<TicketTypeResponseDto>(ticketType));
+    }
+
+    public async Task<bool> ExistsByNameAsync(string name, int eventId, int? excludeId = null, CancellationToken cancellationToken = default)
+    {
+        var query = _unitOfWork.TicketTypes.GetQuery()
+            .AsNoTracking()
+            .Where(tt => tt.EventId == eventId);
+
+        if (excludeId.HasValue)
+        {
+            query = query.Where(tt => tt.Id != excludeId.Value);
+        }
+
+        var trimmedName = name.Trim();
+        return await query.AnyAsync(tt => tt.Name.ToLower() == trimmedName.ToLower(), cancellationToken);
+    }
+
+    public async Task<int> GetSumOfTotalQuantityByEventAsync(int eventId, int? excludeTicketTypeId = null, CancellationToken cancellationToken = default)
+    {
+        var query = _unitOfWork.TicketTypes.GetQuery()
+            .AsNoTracking()
+            .Where(tt => tt.EventId == eventId);
+
+        if (excludeTicketTypeId.HasValue)
+        {
+            query = query.Where(tt => tt.Id != excludeTicketTypeId.Value);
+        }
+
+        return await query.SumAsync(tt => tt.TotalQuantity, cancellationToken);
+    }
 }
+

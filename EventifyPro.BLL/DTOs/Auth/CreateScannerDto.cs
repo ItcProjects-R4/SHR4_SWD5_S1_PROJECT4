@@ -20,6 +20,6 @@ public class CreateScannerDto
     /// <summary>
     /// Gets or sets the scanner user's password.
     /// </summary>
-    [Required, MinLength(8), DataType(DataType.Password)]
-    public string Password { get; set; } = string.Empty;
+    [MinLength(8), DataType(DataType.Password)]
+    public string? Password { get; set; }
 }

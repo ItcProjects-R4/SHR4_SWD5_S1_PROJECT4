@@ -9,7 +9,7 @@ namespace Eventify.Domain.Entities;
 /// It tracks the overall booking status, total amount, and maintains relationships to individual
 /// ticket items, payment records, and any refunds initiated against the booking.
 /// </remarks>
-public class Booking
+public class Booking : IAuditable
 {
     /// <summary>
     /// Gets or sets the unique identifier for the booking.

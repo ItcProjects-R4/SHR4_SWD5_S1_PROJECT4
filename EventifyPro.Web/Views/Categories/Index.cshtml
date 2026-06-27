@@ -1,0 +1,233 @@
+@model IEnumerable<CategoryViewModel>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Event Categories - Eventify Pro";
+}
+
+<style>
+    /* Category Index Premium Layout */
+    .categories-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 30px;
+        margin-top: 40px;
+    }
+
+    .category-card {
+        background: var(--white);
+        border: 1px solid rgba(124, 58, 237, 0.08);
+        border-radius: 20px;
+        padding: 28px 24px;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.15), box-shadow 0.4s ease, border-color 0.4s ease;
+        box-shadow: var(--shadow-sm);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 220px;
+    }
+
+    .category-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        background: var(--gradient);
+        opacity: 0;
+        transition: var(--transition);
+    }
+
+    .category-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 15px 30px rgba(91, 33, 182, 0.1);
+        border-color: rgba(124, 58, 237, 0.2);
+    }
+
+    .category-card:hover::before {
+        opacity: 1;
+    }
+
+    .category-icon-wrapper {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        background: var(--soft-purple);
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin-bottom: 20px;
+        transition: var(--transition);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .category-card:hover .category-icon-wrapper {
+        background: var(--gradient);
+        color: var(--white);
+        transform: scale(1.06) rotate(3deg);
+    }
+
+    .category-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 8px;
+        transition: var(--transition);
+    }
+
+    .category-card:hover .category-title {
+        color: var(--primary);
+    }
+
+    .category-description {
+        font-size: 13.5px;
+        color: var(--text-light);
+        line-height: 1.6;
+        margin-bottom: 16px;
+        flex-grow: 1;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        height: 44px;
+    }
+
+    .category-footer {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: auto;
+        width: 100%;
+    }
+
+    .category-link {
+        background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%) !important;
+        color: var(--white) !important;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 50px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        text-decoration: none;
+        outline: none;
+        width: 100%;
+        box-shadow: 0 4px 10px rgba(124, 58, 237, 0.12);
+    }
+
+    .category-card:hover .category-link {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(91, 33, 182, 0.25);
+    }
+
+    .category-link i {
+        font-size: 10px;
+        transition: transform 0.3s ease;
+    }
+
+    .category-card:hover .category-link i {
+        transform: translateX(3px);
+    }
+
+    .category-badge {
+        position: absolute;
+        top: 28px;
+        right: 24px;
+        font-size: 10.5px;
+        font-weight: 700;
+        background: rgba(124, 58, 237, 0.08);
+        color: var(--primary);
+        padding: 4px 12px;
+        border-radius: 30px;
+        transition: var(--transition);
+        z-index: 2;
+    }
+
+    .category-card:hover .category-badge {
+        background: var(--primary);
+        color: var(--white);
+        box-shadow: 0 4px 8px rgba(124, 58, 237, 0.2);
+    }
+
+    .events-browse-header {
+        padding: 130px 0 30px;
+        background: linear-gradient(180deg, var(--soft-purple) 0%, rgba(255, 255, 255, 0.9) 100%);
+        border-bottom: 1px solid var(--border);
+    }
+</style>
+
+<section class="events-browse-header">
+    <div class="container">
+        <span class="section-tag-enhanced" style="display: inline-flex; align-items: center; gap: 8px; margin-bottom: 8px; background: rgba(124, 58, 237, 0.08); color: var(--primary); padding: 6px 14px; border-radius: 30px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; width: fit-content;"><i class="fas fa-tags"></i> Taxonomy</span>
+        <p style="color: var(--text-light); margin: 0; font-size: 14px;">Discover events tailored to your interests. Select a category below to browse scheduled events.</p>
+    </div>
+</section>
+
+<section class="content-page section enhanced-bg-glow" style="padding-top: 40px;">
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h2 style="font-size: 22px; font-weight: 800;">Available Categories (@Model.Count())</h2>
+        </div>
+        @if (Model != null && Model.Any())
+        {
+            <div class="categories-grid">
+                @foreach (var category in Model)
+                {
+                    // Map name to FontAwesome icon dynamically
+                    string nameLower = category.Name.ToLower();
+                    string iconClass = "fa-calendar-alt";
+
+                    if (nameLower.Contains("sport") || nameLower.Contains("fit") || nameLower.Contains("run"))
+                        iconClass = "fa-running";
+                    else if (nameLower.Contains("music") || nameLower.Contains("concert") || nameLower.Contains("song"))
+                        iconClass = "fa-music";
+                    else if (nameLower.Contains("tech") || nameLower.Contains("code") || nameLower.Contains("soft"))
+                        iconClass = "fa-laptop-code";
+                    else if (nameLower.Contains("business") || nameLower.Contains("startup") || nameLower.Contains("conf"))
+                        iconClass = "fa-briefcase";
+                    else if (nameLower.Contains("art") || nameLower.Contains("paint") || nameLower.Contains("design"))
+                        iconClass = "fa-palette";
+                    else if (nameLower.Contains("food") || nameLower.Contains("drink") || nameLower.Contains("cook"))
+                        iconClass = "fa-utensils";
+                    else if (nameLower.Contains("education") || nameLower.Contains("learn") || nameLower.Contains("course"))
+                        iconClass = "fa-graduation-cap";
+
+                    <div class="category-card">
+                        <span class="category-badge">@category.EventCount @(category.EventCount == 1 ? "Event" : "Events")</span>
+                        <div>
+                            <div class="category-icon-wrapper">
+                                <i class="fas @iconClass"></i>
+                            </div>
+                            <h3 class="category-title">@category.Name</h3>
+                            <p class="category-description">@(string.IsNullOrWhiteSpace(category.Description) ? "Browse scheduled events in this category." : category.Description)</p>
+                        </div>
+                        <div class="category-footer">
+                            <a asp-controller="Categories" asp-action="Details" asp-route-id="@category.Id" class="category-link">
+                                View Events <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="text-center" style="padding: 80px 0; text-align: center;">
+                <div style="font-size: 60px; color: var(--text-light); margin-bottom: 20px;"><i class="fas fa-folder-open"></i></div>
+                <h2>No Categories Found</h2>
+                <p style="color: var(--text-light); margin-bottom: 24px;">There are no event categories registered in the system yet.</p>
+                <a asp-controller="Home" asp-action="Index" class="btn-primary">Return Home</a>
+            </div>
+        }
+    </div>
+</section>

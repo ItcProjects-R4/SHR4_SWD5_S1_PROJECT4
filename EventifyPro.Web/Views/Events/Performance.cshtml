@@ -1,0 +1,457 @@
+@model EventifyPro.Web.ViewModels.Event.EventPerformanceViewModel
+@{
+    Layout = "_OrganizerLayout";
+    ViewData["Title"] = "Event Performance Analytics";
+    ViewData["HeaderTitle"] = $"Performance: {Model.Title} 📈";
+    ViewData["HeaderSubtitle"] = "Analyze your sales revenue, ticket tier capacities, and registration conversions.";
+
+    int totalBookingsCount = Model.ConfirmedBookings + Model.PendingBookings + Model.CancelledBookings;
+    int divisor = totalBookingsCount == 0 ? 1 : totalBookingsCount;
+
+    double confirmedPercent = Math.Round((double)Model.ConfirmedBookings / divisor * 100);
+    double pendingPercent = Math.Round((double)Model.PendingBookings / divisor * 100);
+    double cancelledPercent = totalBookingsCount == 0 ? 0 : (100 - confirmedPercent - pendingPercent);
+
+    double confirmedDeg = (confirmedPercent / 100) * 360;
+    double pendingDeg = (pendingPercent / 100) * 360;
+}
+
+@section Styles {
+    <style>
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 24px;
+            border-radius: 20px;
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: var(--soft-purple);
+            border-radius: 50%;
+            transform: translate(40px, -40px);
+            opacity: 0.5;
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 22px;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 1;
+            transition: var(--transition);
+        }
+
+        .icon-purple { background: linear-gradient(135deg, #5b21b6, #7c3aed); }
+        .icon-pink { background: linear-gradient(135deg, #ec4899, #f472b6); }
+        .icon-blue { background: linear-gradient(135deg, #3b82f6, #60a5fa); }
+        .icon-green { background: linear-gradient(135deg, #10b981, #34d399); }
+        .icon-orange { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+
+        .stat-info {
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-info p {
+            font-size: 13px;
+            color: var(--text-light);
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+
+        .stat-info h3 {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 6px;
+            color: var(--text);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            margin-bottom: 28px;
+        }
+
+        @@media (max-width: 1200px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .analytics-card {
+            background: white;
+            padding: 28px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .analytics-card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .card-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .card-header-flex h3 {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        /* Progress bars */
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: var(--soft-purple);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--gradient);
+            border-radius: 10px;
+            transition: width 1s ease-in-out;
+        }
+
+        .progress-bar-fill.success {
+            background: linear-gradient(135deg, #10b981, #34d399);
+        }
+
+        .progress-bar-fill.warning {
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+        }
+
+        .ticket-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .ticket-row {
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .ticket-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .ticket-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .ticket-qty-label {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 4px;
+            display: block;
+        }
+
+        /* Donut Chart styles */
+        .donut-chart-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .donut {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .donut::before {
+            content: "";
+            width: 110px;
+            height: 110px;
+            background: white;
+            border-radius: 50%;
+            z-index: 2;
+        }
+
+        .donut-center {
+            position: absolute;
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text);
+            z-index: 3;
+            text-align: center;
+        }
+
+        .donut-center span {
+            display: block;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-light);
+            text-transform: uppercase;
+        }
+
+        .donut-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        .donut-legend > div {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13.5px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot.completed { background: var(--success); }
+        .dot.pending { background: var(--warning); }
+        .dot.cancelled { background: var(--error); }
+
+        /* Print Media Override */
+        @@media print {
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            .sidebar, .dashboard-header, .header-actions, .alert-banner, button {
+                display: none !important;
+            }
+            .dashboard-layout {
+                display: block !important;
+            }
+            .dashboard-main {
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .analytics-card {
+                box-shadow: none !important;
+                border: none !important;
+            }
+        }
+    </style>
+}
+
+<div class="header-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <a href="/Events/OrganizerIndex" class="btn-secondary" style="display: inline-flex; align-items: center; gap: 8px;">
+        <i class="fas fa-arrow-left"></i> Back to My Events
+    </a>
+    <div style="display: flex; gap: 12px; align-items: center;">
+        <button type="button" class="btn-secondary" onclick="window.print()" style="display: inline-flex; align-items: center; gap: 8px;">
+            <i class="fas fa-print"></i> Print Analytics
+        </button>
+        <button type="button" onclick="exportChartAsImage('performanceDashboard')" class="btn-secondary" style="display: inline-flex; align-items: center; gap: 8px;">
+            <i class="fas fa-camera"></i> Snapshot Page
+        </button>
+        <div class="dropdown" style="position: relative; display: inline-block;">
+            <button type="button" class="btn-primary" onclick="toggleExportDropdown()" style="display: inline-flex; align-items: center; gap: 8px;">
+                <i class="fas fa-download"></i> Export <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
+            </button>
+            <div id="exportDropdownMenu" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 8px; background: white; border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-md); z-index: 100; min-width: 140px; overflow: hidden;">
+                <a href="/Events/ExportPerformance?id=@Model.EventId&format=csv" style="display: block; padding: 12px 16px; font-size: 13.5px; color: var(--text); text-decoration: none; transition: var(--transition);" onmouseover="this.style.background='var(--soft-purple)'" onmouseout="this.style.background='transparent'"><i class="fas fa-file-csv" style="color: #10b981; margin-right: 8px;"></i> CSV</a>
+                <a href="/Events/ExportPerformance?id=@Model.EventId&format=excel" style="display: block; padding: 12px 16px; font-size: 13.5px; color: var(--text); text-decoration: none; transition: var(--transition);" onmouseover="this.style.background='var(--soft-purple)'" onmouseout="this.style.background='transparent'"><i class="fas fa-file-excel" style="color: #3b82f6; margin-right: 8px;"></i> Excel</a>
+                <a href="/Events/ExportPerformance?id=@Model.EventId&format=pdf" style="display: block; padding: 12px 16px; font-size: 13.5px; color: var(--text); text-decoration: none; transition: var(--transition);" onmouseover="this.style.background='var(--soft-purple)'" onmouseout="this.style.background='transparent'"><i class="fas fa-file-pdf" style="color: #ef4444; margin-right: 8px;"></i> PDF</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="performanceDashboard">
+    <!-- KPI Metrics Grid -->
+    <div class="stats-grid" id="performanceMetrics">
+        <div class="stat-card">
+            <div class="stat-icon icon-green">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <div class="stat-info">
+                <p>Total Revenue</p>
+                <h3>@string.Format("{0:N2}", Model.TotalRevenue) EGP</h3>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-purple">
+                <i class="fas fa-ticket-alt"></i>
+            </div>
+            <div class="stat-info">
+                <p>Tickets Sold</p>
+                <h3>@Model.TotalTicketsSold / @Model.TotalCapacity</h3>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-blue">
+                <i class="fas fa-percent"></i>
+            </div>
+            <div class="stat-info">
+                <p>Sold Out rate</p>
+                <h3>@Model.SoldPercentage.ToString("F1")%</h3>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-pink">
+                <i class="fas fa-users-slash"></i>
+            </div>
+            <div class="stat-info">
+                <p>Waiting List Size</p>
+                <h3>@Model.WaitingListCount</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <!-- Ticket Sales Breakdown -->
+        <div class="analytics-card" id="ticketBreakdownCard">
+            <div class="card-header-flex">
+                <h3>Ticket Tiers Sales Progress</h3>
+            </div>
+            <div class="ticket-list">
+                @if (Model.TicketTypes.Any())
+                {
+                    foreach (var ticket in Model.TicketTypes)
+                    {
+                        var barClass = ticket.SoldPercentage > 80 ? "success" : (ticket.SoldPercentage < 30 ? "warning" : "");
+                        <div class="ticket-row">
+                            <div class="ticket-meta">
+                                <span style="font-weight: 700;">@ticket.Name (@ticket.Price.ToString("F2") EGP)</span>
+                                <span style="font-weight: 700;">@ticket.SoldPercentage.ToString("F1")%</span>
+                            </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill @barClass" style="width: @(ticket.SoldPercentage)%"></div>
+                        </div>
+                        <span class="ticket-qty-label">@ticket.SoldQuantity sold out of @ticket.TotalQuantity tickets capacity</span>
+                    </div>
+                }
+            }
+            else
+            {
+                <div style="text-align: center; color: var(--text-light); padding: 40px 0;">
+                    <i class="fas fa-ticket-alt" style="font-size: 32px; margin-bottom: 8px;"></i>
+                    <p>No ticket types configured for this event.</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Booking Status Conversions -->
+    <div class="analytics-card" id="bookingConversionsCard">
+        <div class="card-header-flex">
+            <h3>Registrations Conversion</h3>
+        </div>
+        <div class="donut-chart-wrapper">
+            @if (totalBookingsCount > 0)
+            {
+                <div class="donut" style="background: conic-gradient(var(--success) 0deg @(confirmedDeg)deg, var(--warning) @(confirmedDeg)deg @(confirmedDeg + pendingDeg)deg, var(--error) @(confirmedDeg + pendingDeg)deg 360deg);">
+                    <div class="donut-center">
+                        @totalBookingsCount
+                        <span>Bookings</span>
+                    </div>
+                </div>
+                <div class="donut-legend">
+                    <div><span class="dot completed"></span> Confirmed (@confirmedPercent%)</div>
+                    <div><span class="dot pending"></span> Pending (@pendingPercent%)</div>
+                    <div><span class="dot cancelled"></span> Cancelled (@cancelledPercent%)</div>
+                </div>
+            }
+            else
+            {
+                <div style="text-align: center; color: var(--text-light); padding: 40px 0;">
+                    <i class="fas fa-chart-pie" style="font-size: 32px; margin-bottom: 8px;"></i>
+                    <p>No bookings registered yet.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYjYiPSqHHDb58B0yaPfYLjYEXyyp8AM5tcJHURGmsUt28OhiGyVqYh5tzyIno5w98xCgQdfye50+5rUA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        function exportChartAsImage(elementId) {
+            // Target the whole main area or specific card
+            const element = document.querySelector('.dashboard-main') || document.getElementById(elementId);
+            if (!element) return;
+            
+            html2canvas(element, {
+                backgroundColor: "#fafaff",
+                scale: 2,
+                logging: false,
+                useCORS: true
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'Event_Performance_' + @Model.EventId + '_' + new Date().toISOString().slice(0, 10) + '.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+
+        function toggleExportDropdown() {
+            const menu = document.getElementById('exportDropdownMenu');
+            if (menu) {
+                menu.style.display = (menu.style.display === 'none' || !menu.style.display) ? 'block' : 'none';
+            }
+        }
+
+        window.addEventListener('click', function(e) {
+            const dropdown = document.querySelector('.dropdown');
+            if (dropdown && !dropdown.contains(e.target)) {
+                const menu = document.getElementById('exportDropdownMenu');
+                if (menu) menu.style.display = 'none';
+            }
+        });
+    </script>
+}

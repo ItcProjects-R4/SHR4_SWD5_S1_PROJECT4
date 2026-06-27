@@ -65,7 +65,7 @@ public class WeeklyDigestProcessor : BackgroundService
             .Where(u => u.IsActive && u.Email != null)
             .ToListAsync(cancellationToken);
 
-        var baseUrl = _configuration["BaseUrl"] ?? "https://localhost:7198";
+        var baseUrl = _configuration["BaseUrl"] ?? "https://eventifypro.runasp.net";
 
         foreach (var user in users)
         {
@@ -86,7 +86,7 @@ public class WeeklyDigestProcessor : BackgroundService
                     Category = e.Category?.Name ?? "General",
                     StartDate = e.StartDate,
                     Location = e.Location,
-                    Url = $"{baseUrl}/Home/Details/{e.Id}" // Dynamic event detail link
+                    Url = $"{baseUrl}/Events/Details/{e.Id}" // Dynamic event detail link
                 }).ToList();
 
                 var payload = new OutboxService.WeeklyDigestPayload

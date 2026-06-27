@@ -1,20 +1,41 @@
-﻿<footer class="footer" id="contact">
+@inject EventifyPro.BLL.Services.Interfaces.ISystemSettingService SystemSettingService
+@{
+    var platformName = await SystemSettingService.GetSettingValueAsync("PlatformName", "Eventify Pro");
+    var supportEmail = await SystemSettingService.GetSettingValueAsync("SupportEmail", "eventifypro.eg@gmail.com");
+    var supportWhatsApp = await SystemSettingService.GetSettingValueAsync("SupportWhatsApp", "01064665247");
+
+    var whatsappLink = "#";
+    if (!string.IsNullOrEmpty(supportWhatsApp))
+    {
+        var cleanNumber = new string(supportWhatsApp.Where(char.IsDigit).ToArray());
+        if (cleanNumber.StartsWith("01"))
+        {
+            cleanNumber = "2" + cleanNumber;
+        }
+        else if (cleanNumber.StartsWith("1"))
+        {
+            cleanNumber = "20" + cleanNumber;
+        }
+        whatsappLink = $"https://wa.me/{cleanNumber}";
+    }
+}
+<footer class="footer" id="contact">
     <div class="container">
         <div class="footer-grid">
             <div class="footer-col">
                 <a asp-controller="Home" asp-action="Index" class="logo">
-                    <div class="logo-icon"><i class="fas fa-ticket-alt"></i></div>
-                    <span>Eventify <b>Pro</b></span>
+                    <div class="logo-icon">
+                        <img src="/Images/Logo-1.png" alt="Logo" class="logo-img" />
+                    </div>
+                    <span>@platformName</span>
                 </a>
                 <p>
                     The complete platform for managing events and selling tickets with
                     the latest technology.
                 </p>
                 <div class="social-links">
-                    <a href="#"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#"><i class="fab fa-twitter"></i></a>
-                    <a href="#"><i class="fab fa-instagram"></i></a>
-                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="mailto:@supportEmail" title="Gmail"><i class="fas fa-envelope"></i></a>
+                    <a href="@whatsappLink" target="_blank" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
                 </div>
             </div>
             <div class="footer-col">
@@ -45,8 +66,7 @@
         </div>
         <div class="footer-bottom">
             <p>
-                &copy; 2026 Eventify Pro. All rights reserved. Made with
-                <i class="fas fa-heart"></i>
+                &copy; 2026 Eventify Pro. All rights reserved.
             </p>
         </div>
     </div>

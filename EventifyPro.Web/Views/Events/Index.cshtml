@@ -1,0 +1,670 @@
+@model EventListViewModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Browse Events - Eventify Pro";
+    var categories = ViewBag.Categories as IEnumerable<EventifyPro.BLL.DTOs.Category.CategoryDto> ?? new List<EventifyPro.BLL.DTOs.Category.CategoryDto>();
+    var cities = ViewBag.Cities as IEnumerable<string> ?? new List<string>();
+}
+
+<style>
+    /* Calm & Premium Browse Page Styles */
+    .events-browse-header {
+        padding: 130px 0 30px;
+        background: linear-gradient(180deg, var(--soft-purple) 0%, rgba(255, 255, 255, 0.9) 100%);
+        border-bottom: 1px solid var(--border);
+    }
+
+    .filter-card {
+        background: var(--white);
+        border: 1px solid rgba(124, 58, 237, 0.12);
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: var(--shadow-sm);
+        margin-top: 10px;
+    }
+
+    .filter-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr auto;
+        gap: 16px;
+        align-items: end;
+    }
+
+    @@media (max-width: 992px) {
+        .filter-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .filter-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .form-group label {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text-light);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .form-input {
+        background: var(--soft-purple);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-family: inherit;
+        font-size: 14px;
+        color: var(--text);
+        outline: none;
+        transition: var(--transition);
+        width: 100%;
+        height: 48px;
+    }
+
+    .form-input:focus {
+        border-color: var(--primary);
+        background: var(--white);
+        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+    }
+
+    .filter-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    /* Category Filter Chips */
+    .category-chips {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 30px;
+        margin-bottom: 40px;
+        justify-content: center;
+    }
+
+    .chip {
+        padding: 10px 20px;
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-light);
+        cursor: pointer;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: var(--shadow-xs);
+    }
+
+    .chip:hover {
+        border-color: var(--primary-light);
+        color: var(--primary);
+        background: var(--soft-purple);
+    }
+
+    .chip.active {
+        background: var(--primary);
+        color: var(--white);
+        border-color: var(--primary);
+        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
+    }
+
+    /* Event Cards Grid */
+    .events-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 30px;
+        margin-bottom: 50px;
+    }
+
+    .event-card {
+        background: var(--white);
+        border: 1px solid rgba(124, 58, 237, 0.08);
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.15), box-shadow 0.4s ease, border-color 0.4s ease;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        position: relative;
+    }
+
+    .event-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 15px 30px rgba(91, 33, 182, 0.1);
+        border-color: rgba(124, 58, 237, 0.2);
+    }
+
+    .event-card-image-wrapper {
+        position: relative;
+        height: 160px;
+        overflow: hidden;
+        background: var(--soft-purple);
+    }
+
+    .event-card-image {
+        height: 100%;
+        width: 100%;
+        background-size: cover;
+        background-position: center;
+        transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+    }
+
+    .event-card-fallback-bg {
+        height: 100%;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--soft-purple) 0%, rgba(124, 58, 237, 0.1) 100%);
+    }
+
+    .fallback-icon {
+        color: var(--primary);
+        font-size: 45px;
+    }
+
+    .event-card:hover .event-card-image {
+        transform: scale(1.06);
+    }
+
+    .event-badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: rgba(91, 33, 182, 0.95);
+        backdrop-filter: blur(8px);
+        color: var(--white);
+        padding: 4px 10px;
+        border-radius: 30px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+        z-index: 2;
+        text-transform: uppercase;
+    }
+
+    .event-card-body {
+        padding: 20px 24px;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+    }
+
+    .event-category-label {
+        font-size: 10.5px;
+        font-weight: 700;
+        color: var(--primary-light);
+        text-transform: uppercase;
+        margin-bottom: 6px;
+        letter-spacing: 0.8px;
+    }
+
+    .event-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 12px;
+        line-height: 1.4;
+        transition: var(--transition);
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        height: 50px;
+    }
+
+    .event-card:hover .event-title {
+        color: var(--primary);
+    }
+
+    .event-info-list {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px 16px;
+        margin-bottom: 20px;
+        font-size: 13px;
+        color: var(--text-light);
+    }
+
+    .event-info-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .event-info-item i {
+        color: var(--primary-light);
+        width: 14px;
+        font-size: 13px;
+    }
+
+    .event-card-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px solid var(--border);
+        padding-top: 16px;
+        margin-top: auto;
+    }
+
+    .event-price-box {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .price-label {
+        font-size: 9.5px;
+        color: var(--text-light);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+    }
+
+    .event-price {
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--text);
+        display: flex;
+        align-items: baseline;
+    }
+
+    .price-currency {
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--text-light);
+        margin-right: 3px;
+    }
+
+    .price-amount {
+        font-size: 17px;
+        font-weight: 800;
+        color: var(--primary);
+        line-height: 1;
+    }
+
+    .price-free {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--success);
+    }
+
+    .btn-card-action {
+        background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%) !important;
+        color: var(--white) !important;
+        border: none;
+        padding: 9px 18px;
+        border-radius: 50px;
+        font-size: 12.5px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        text-decoration: none;
+        outline: none;
+        box-shadow: 0 4px 10px rgba(124, 58, 237, 0.12);
+    }
+
+    .btn-card-action:hover {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
+        color: var(--white) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(91, 33, 182, 0.25);
+    }
+
+    .btn-card-action i {
+        font-size: 10px;
+        transition: transform 0.3s ease;
+    }
+
+    .btn-card-action:hover i {
+        transform: translateX(3px);
+    }
+
+    /* Premium Pagination */
+    .pagination-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        margin-top: 50px;
+        margin-bottom: 30px;
+    }
+
+    .page-btn {
+        width: auto !important;
+        min-width: 44px;
+        height: 44px;
+        padding: 0 16px;
+        border-radius: 12px;
+        border: 1px solid var(--border) !important;
+        background: var(--white) !important;
+        color: var(--text) !important;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        box-sizing: border-box;
+        outline: none;
+        text-decoration: none;
+    }
+
+    .page-btn:hover:not(.disabled):not(.active) {
+        border-color: var(--primary) !important;
+        color: var(--primary) !important;
+        background: var(--soft-purple) !important;
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .page-btn.active {
+        background: var(--primary) !important;
+        color: var(--white) !important;
+        border-color: var(--primary) !important;
+        box-shadow: 0 4px 10px rgba(124, 58, 237, 0.25) !important;
+        font-weight: 700;
+    }
+
+    .page-btn.disabled {
+        opacity: 0.4 !important;
+        cursor: not-allowed !important;
+        pointer-events: none !important;
+        background: rgba(0, 0, 0, 0.02) !important;
+        border-color: var(--border) !important;
+        color: var(--text-light) !important;
+    }
+
+    @@keyframes cardFadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .card-fade-in {
+        animation: cardFadeIn 0.4s ease forwards;
+    }
+</style>
+
+<!-- Top Search Banner -->
+<section class="events-browse-header">
+    <div class="container">
+        <div class="filter-card">
+            <form method="get" asp-controller="Events" asp-action="Index">
+                <input type="hidden" name="CategoryId" id="selectedCategoryId" value="@Model.Filter.CategoryId" />
+                <input type="hidden" name="PageNumber" id="pageNumberInput" value="1" />
+
+                <div class="filter-grid">
+                    <div class="form-group">
+                        <label for="Title">Search Events</label>
+                        <input type="text" id="Title" name="Title" class="form-input" placeholder="Type event name..." value="@Model.Filter.Title" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="City">City</label>
+                        <select id="City" name="City" class="form-input">
+                            <option value="">All Cities</option>
+                            @foreach (var city in cities)
+                            {
+                                <option value="@city" selected="@(Model.Filter.City == city ? "selected" : null)">@city</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="StartDateFrom">Date From</label>
+                        <input type="date" id="StartDateFrom" name="StartDateFrom" class="form-input" value="@(Model.Filter.StartDateFrom?.ToString("yyyy-MM-dd"))" />
+                    </div>
+
+                    <div class="filter-actions">
+                        <button type="submit" class="btn-primary" style="height: 48px; border-radius: 12px; font-weight: 700; border: none; padding: 0 24px; display: inline-flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                        <a href="@Url.Action("Index", "Events")" class="btn-outline" style="height: 48px; width: 48px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 12px;" title="Reset filters">
+                            <i class="fas fa-undo"></i>
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+<!-- Content Body -->
+<section class="content-page section enhanced-bg-glow" style="padding-top: 10px;">
+    <div class="container">
+
+
+        <!-- Category Chips -->
+        <div class="category-chips">
+            <button class="chip @(Model.Filter.CategoryId == null ? "active" : "")" onclick="filterByCategory(null)">
+                All Categories (@categories.Sum(c => c.EventCount))
+            </button>
+            @foreach (var cat in categories)
+            {
+                <button class="chip @(Model.Filter.CategoryId == cat.Id ? "active" : "")" onclick="filterByCategory(@cat.Id)">
+                    @cat.Name (@cat.EventCount)
+                </button>
+            }
+            <a asp-controller="Categories" asp-action="Index" class="chip" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="fas fa-th-large" style="font-size: 12px; color: var(--primary-light);"></i> View All
+            </a>
+        </div>
+
+        @if (TempData["BookingError"] != null)
+        {
+            <div class="alert alert-danger" style="background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 16px; border-radius: 12px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 20px;"></i>
+                <div>@TempData["BookingError"]</div>
+            </div>
+        }
+
+        <!-- Events List -->
+        @if (Model.Events != null && Model.Events.Any())
+        {
+            <div class="events-grid">
+                @foreach (var ev in Model.Events)
+                {
+                    <div class="event-card" data-city="@ev.City.ToLower()" data-date="@ev.StartDate.ToEgyptTime().ToString("yyyy-MM-dd")">
+                        <div class="event-card-image-wrapper">
+                            @if (!string.IsNullOrEmpty(ev.ImageUrl))
+                            {
+                                <div class="event-card-image" style="background-image: url('@ev.ImageUrl')"></div>
+                            }
+                            else
+                            {
+                                <div class="event-card-fallback-bg">
+                                    <i class="fas fa-calendar-alt fallback-icon"></i>
+                                </div>
+                            }
+                            <span class="event-badge">@ev.Status</span>
+                        </div>
+
+                        <div class="event-card-body">
+                            <span class="event-category-label">@ev.CategoryName</span>
+                            <h3 class="event-title" title="@ev.Title">@ev.Title</h3>
+                            
+                            <div class="event-info-list">
+                                <div class="event-info-item">
+                                    <i class="far fa-calendar-alt"></i>
+                                    <span>@ev.StartDate.ToEgyptTime().ToString("MMM dd, yyyy")</span>
+                                </div>
+                                <div class="event-info-item">
+                                    <i class="far fa-clock"></i>
+                                    <span>@ev.StartDate.ToEgyptTime().ToString("hh:mm tt")</span>
+                                </div>
+                                <div class="event-info-item">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span>@ev.City</span>
+                                </div>
+                                <div class="event-info-item">
+                                    <i class="far fa-user"></i>
+                                    <span>Organizer: @ev.OrganizerName</span>
+                                </div>
+                            </div>
+
+                            <div class="event-card-footer">
+                                <div class="event-price-box">
+                                    <span class="price-label">Prices Start From</span>
+                                    <span class="event-price">
+                                        @if (ev.MinPrice > 0)
+                                        {
+                                            <span class="price-currency">EGP</span><span class="price-amount">@ev.MinPrice.ToString("N0")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="price-free">Free Admission</span>
+                                        }
+                                    </span>
+                                </div>
+                                <a asp-controller="Events" asp-action="Details" asp-route-id="@ev.Id" class="btn-card-action">
+                                    Book Now <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Adjusted Pagination -->
+            var totalPages = (int)Math.Ceiling((double)Model.TotalCount / Model.PageSize);
+            if (totalPages > 1)
+            {
+                <div class="pagination-wrapper">
+                    <button class="page-btn @(Model.PageNumber == 1 ? "disabled" : "")" onclick="goToPage(@(Model.PageNumber - 1))" @(Model.PageNumber == 1 ? "disabled" : "")>
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </button>
+                    
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        <button class="page-btn @(Model.PageNumber == i ? "active" : "")" onclick="goToPage(@i)">
+                            @i
+                        </button>
+                    }
+
+                    <button class="page-btn @(Model.PageNumber == totalPages ? "disabled" : "")" onclick="goToPage(@(Model.PageNumber + 1))" @(Model.PageNumber == totalPages ? "disabled" : "")>
+                        Next <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="text-center" style="padding: 80px 0; text-align: center; background: var(--white); border-radius: 24px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); max-width: 600px; margin: 0 auto;">
+                <div style="font-size: 60px; color: var(--text-light); margin-bottom: 20px;"><i class="fas fa-search-minus"></i></div>
+                <h2>No Events Found</h2>
+                <p style="color: var(--text-light); margin-bottom: 24px;">No upcoming events matched your search query. Try broadening your criteria or resetting the filters.</p>
+                <a href="@Url.Action("Index", "Events")" class="btn-primary">Clear Filters</a>
+            </div>
+        }
+
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        function filterByCategory(categoryId) {
+            document.getElementById('selectedCategoryId').value = categoryId || '';
+            document.getElementById('pageNumberInput').value = '1';
+            document.querySelector('.filter-card form').submit();
+        }
+
+        function goToPage(pageNumber) {
+            document.getElementById('pageNumberInput').value = pageNumber;
+            document.querySelector('.filter-card form').submit();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('Title');
+            const citySelect = document.getElementById('City');
+            const dateInput = document.getElementById('StartDateFrom');
+            
+            const runFilter = () => {
+                const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+                const selectedCity = citySelect ? citySelect.value.toLowerCase().trim() : '';
+                const selectedDateStr = dateInput ? dateInput.value : '';
+                
+                const cards = document.querySelectorAll('.event-card');
+                const grid = document.querySelector('.events-grid');
+                if (!grid) return;
+                
+                let matchCount = 0;
+                
+                cards.forEach(card => {
+                    // 1. Text Query Match
+                    const title = card.querySelector('.event-title')?.textContent.toLowerCase() || '';
+                    const category = card.querySelector('.event-category-label')?.textContent.toLowerCase() || '';
+                    const infoText = card.querySelector('.event-info-list')?.textContent.toLowerCase() || '';
+                    const matchesQuery = query === '' || title.includes(query) || category.includes(query) || infoText.includes(query);
+                    
+                    // 2. City Match
+                    const cardCity = card.getAttribute('data-city') || '';
+                    const matchesCity = selectedCity === '' || cardCity === selectedCity;
+                    
+                    // 3. Date Match
+                    const cardDateStr = card.getAttribute('data-date') || '';
+                    let matchesDate = true;
+                    if (selectedDateStr) {
+                        matchesDate = cardDateStr >= selectedDateStr;
+                    }
+                    
+                    if (matchesQuery && matchesCity && matchesDate) {
+                        if (card.style.display !== 'flex') {
+                            card.style.display = 'flex';
+                            card.classList.remove('card-fade-in');
+                            void card.offsetWidth; // Trigger reflow
+                            card.classList.add('card-fade-in');
+                        }
+                        matchCount++;
+                    } else {
+                        card.style.display = 'none';
+                        card.classList.remove('card-fade-in');
+                    }
+                });
+                
+                let noResultsDiv = document.getElementById('liveSearchNoResults');
+                if (matchCount === 0 && (query !== '' || selectedCity !== '' || selectedDateStr !== '')) {
+                    if (!noResultsDiv) {
+                        noResultsDiv = document.createElement('div');
+                        noResultsDiv.id = 'liveSearchNoResults';
+                        noResultsDiv.style.cssText = 'padding: 60px 0; text-align: center; width: 100%; grid-column: 1 / -1; background: var(--white); border-radius: 24px; border: 1px solid var(--border); box-shadow: var(--shadow-sm);';
+                        noResultsDiv.innerHTML = `
+                            <div style="font-size: 50px; color: var(--text-light); margin-bottom: 16px;"><i class="fas fa-search-minus"></i></div>
+                            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">No matching events found on this page</h3>
+                            <p style="color: var(--text-light); font-size: 13.5px; margin-bottom: 16px;">Try modifying your search or filters, or hit the Search button to check all pages.</p>
+                        `;
+                        grid.appendChild(noResultsDiv);
+                    }
+                } else {
+                    if (noResultsDiv) {
+                        noResultsDiv.remove();
+                    }
+                }
+            };
+            
+            if (searchInput) searchInput.addEventListener('input', runFilter);
+            if (citySelect) citySelect.addEventListener('change', runFilter);
+            if (dateInput) dateInput.addEventListener('change', runFilter);
+            
+            // Run on load to align state
+            runFilter();
+        });
+    </script>
+}

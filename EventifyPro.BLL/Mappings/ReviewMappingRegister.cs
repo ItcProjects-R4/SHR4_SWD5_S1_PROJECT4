@@ -16,8 +16,9 @@ public sealed class ReviewMappingRegister : IRegister
             .Map(dest => dest.CreatedAt, _ => DateTime.UtcNow);
 
         config.NewConfig<Review, ReviewResponseDto>()
-            .Map(dest => dest.UserName, src => src.User.FullName)
-            .Map(dest => dest.EventTitle, src => src.Event.Title);
+            .Map(dest => dest.UserName, src => src.User != null ? src.User.FullName : string.Empty)
+            .Map(dest => dest.EventTitle, src => src.Event != null ? src.Event.Title : string.Empty)
+            .Map(dest => dest.OrganizerId, src => src.Event != null ? src.Event.OrganizerId : string.Empty);
     }
 }
 

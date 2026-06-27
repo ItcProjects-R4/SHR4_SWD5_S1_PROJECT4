@@ -1,14 +1,3 @@
-using Eventify.Domain.Entities;
-using Eventify.Domain.Enums;
-using Eventify.Shared.Helpers;
-using EventifyPro.BLL.DTOs.Booking;
-using EventifyPro.BLL.Services.Interfaces;
-using EventifyPro.DAL.Repositories.Interfaces;
-using Mapster;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Configuration;
-
 namespace EventifyPro.BLL.Services.Implementations;
 
 public class BookingService : IBookingService
@@ -21,7 +10,12 @@ public class BookingService : IBookingService
     private readonly IRefundService _refundService;
     private readonly IWaitingListService _waitingListService;
     private readonly IConfiguration _configuration;
+    private readonly ISystemSettingService _systemSettingService;
     private readonly ILogger<BookingService> _logger;
+    private readonly ICacheInvalidationService _cacheInvalidationService;
+    private readonly IValidator<BookingCreateDto> _createValidator;
+    private readonly Microsoft.AspNetCore.SignalR.IHubContext<EventifyPro.BLL.Hubs.NotificationHub> _hubContext;
+    private readonly IMemoryCache _cache;
 
     public BookingService(
         IUnitOfWork unitOfWork,
@@ -32,7 +26,12 @@ public class BookingService : IBookingService
         IRefundService refundService,
         IWaitingListService waitingListService,
         IConfiguration configuration,
-        ILogger<BookingService> _logger)
+        ISystemSettingService systemSettingService,
+        ICacheInvalidationService cacheInvalidationService,
+        IValidator<BookingCreateDto> createValidator,
+        Microsoft.AspNetCore.SignalR.IHubContext<EventifyPro.BLL.Hubs.NotificationHub> hubContext,
+        ILogger<BookingService> logger,
+        IMemoryCache cache)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
@@ -42,137 +41,221 @@ public class BookingService : IBookingService
         _refundService = refundService;
         _waitingListService = waitingListService;
         _configuration = configuration;
-        this._logger = _logger;
+        _systemSettingService = systemSettingService;
+        _cacheInvalidationService = cacheInvalidationService;
+        _createValidator = createValidator;
+        _hubContext = hubContext;
+        _logger = logger;
+        _cache = cache;
     }
 
     public async Task<Result<BookingDetailDto>> CreatePendingAsync(BookingCreateDto dto, string userId, CancellationToken cancellationToken = default)
     {
-        await using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
-        try
+        var validationError = await _createValidator.GetValidationErrorAsync(dto, cancellationToken);
+        if (validationError is not null)
         {
-            // 1. Validate Event exists and is Published
-            var eventEntity = await _unitOfWork.Events.GetByIdWithTicketTypesAsync(dto.EventId, cancellationToken);
-            if (eventEntity == null || eventEntity.IsDeleted)
-            {
-                return Result<BookingDetailDto>.Failure("Event not found.");
-            }
-
-            if (eventEntity.Status != EventStatus.Published)
-            {
-                return Result<BookingDetailDto>.Failure("Cannot book tickets for an unpublished event.");
-            }
-
-            if (eventEntity.StartDate <= DateTime.UtcNow)
-            {
-                return Result<BookingDetailDto>.Failure("Cannot book tickets for an event that has already started.");
-            }
-
-            // 1.5 Validate MaxTicketsPerUser limit
-            if (eventEntity.MaxTicketsPerUser.HasValue)
-            {
-                var existingBookedCount = await _unitOfWork.Bookings.GetQuery()
-                    .AsNoTracking()
-                    .Where(b => b.UserId == userId 
-                             && b.EventId == dto.EventId 
-                             && (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Pending))
-                    .SelectMany(b => b.Items)
-                    .SumAsync(i => (int?)i.Quantity, cancellationToken) ?? 0;
-
-                var newlyRequested = dto.Items.Sum(i => i.Quantity);
-                if (existingBookedCount + newlyRequested > eventEntity.MaxTicketsPerUser.Value)
-                {
-                    return Result<BookingDetailDto>.Failure($"Booking exceeds the maximum ticket limit per user for this event. You can purchase at most {eventEntity.MaxTicketsPerUser.Value - existingBookedCount} more ticket(s).");
-                }
-            }
-
-            decimal totalAmount = 0;
-            var bookingItems = new List<BookingItem>();
-
-            // 2. Validate, reserve and prepare BookingItems
-            foreach (var item in dto.Items)
-            {
-                var ticketType = eventEntity.TicketTypes.FirstOrDefault(tt => tt.Id == item.TicketTypeId);
-                if (ticketType == null)
-                {
-                    return Result<BookingDetailDto>.Failure($"Ticket type ID {item.TicketTypeId} not found for this event.");
-                }
-
-                // Validate Sale window if configured
-                if (ticketType.SaleStartDate.HasValue && ticketType.SaleStartDate.Value > DateTime.UtcNow)
-                {
-                    return Result<BookingDetailDto>.Failure($"Ticket sale for '{ticketType.Name}' has not started yet.");
-                }
-
-                if (ticketType.SaleEndDate.HasValue && ticketType.SaleEndDate.Value < DateTime.UtcNow)
-                {
-                    return Result<BookingDetailDto>.Failure($"Ticket sale for '{ticketType.Name}' has ended.");
-                }
-
-                // Check capacity
-                if (ticketType.SoldQuantity + item.Quantity > ticketType.TotalQuantity)
-                {
-                    return Result<BookingDetailDto>.Failure($"Not enough tickets available for '{ticketType.Name}'. Remaining: {ticketType.TotalQuantity - ticketType.SoldQuantity}");
-                }
-
-                // Reserve the tickets immediately
-                ticketType.SoldQuantity += item.Quantity;
-                _unitOfWork.TicketTypes.Update(ticketType);
-
-                totalAmount += item.Quantity * ticketType.Price;
-
-                bookingItems.Add(new BookingItem
-                {
-                    TicketTypeId = item.TicketTypeId,
-                    Quantity = item.Quantity,
-                    UnitPrice = ticketType.Price // Historical snapshot
-                });
-            }
-
-            // Check overall event capacity limit
-            if (eventEntity.MaxCapacity.HasValue)
-            {
-                var currentSold = eventEntity.TicketTypes.Sum(tt => tt.SoldQuantity);
-                // Note: currentSold already includes newlyReserved from the loop above, so no need to add newlyRequested again!
-                if (currentSold > eventEntity.MaxCapacity.Value)
-                {
-                    return Result<BookingDetailDto>.Failure($"Booking exceeds maximum event capacity. Max allowed: {eventEntity.MaxCapacity.Value - (currentSold - dto.Items.Sum(i => i.Quantity))}");
-                }
-            }
-
-            // 3. Create Pending Booking (including Flat Service Fee from settings)
-            decimal serviceFee = _configuration.GetValue<decimal?>("BookingSettings:FlatServiceFee") ?? 50.00m;
-            decimal finalTotalAmount = totalAmount + serviceFee;
-
-            var booking = new Booking
-            {
-                UserId = userId,
-                EventId = dto.EventId,
-                TotalAmount = finalTotalAmount,
-                ServiceFee = serviceFee,
-                Status = BookingStatus.Pending,
-                BookingDate = DateTime.UtcNow,
-                BookingReference = string.Empty, // Will update next
-                Items = bookingItems
-            };
-
-            await _unitOfWork.Bookings.AddAsync(booking, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            // 4. Generate Unique Booking Reference
-            booking.BookingReference = BookingReferenceHelper.Generate(booking.Id, booking.BookingDate);
-            _unitOfWork.Bookings.Update(booking);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            await transaction.CommitAsync(cancellationToken);
-
-            var resultDto = _mapper.Map<BookingDetailDto>(booking);
-            return Result<BookingDetailDto>.Success(resultDto);
+            return Result<BookingDetailDto>.Failure(validationError);
         }
-        catch (Exception)
+
+        int retries = 3;
+        while (retries > 0)
         {
-            await transaction.RollbackAsync(cancellationToken);
-            throw;
+            await using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
+            try
+            {
+                var result = await CreatePendingInternalAsync(dto, userId, transaction, cancellationToken);
+                return result;
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                _unitOfWork.DbContext.ChangeTracker.Clear();
+                retries--;
+                if (retries == 0)
+                {
+                    return Result<BookingDetailDto>.Failure("This booking could not be completed due to high demand. Please try again.");
+                }
+                int attempt = 3 - retries; // 1, 2
+                int delayMs = (int)Math.Pow(2, attempt) * 100; // 200ms, 400ms
+                await Task.Delay(delayMs, cancellationToken);
+            }
+            catch (Exception)
+            {
+                try
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                }
+                catch
+                {
+                    // Ignore exception if the transaction is already completed (e.g. if the exception occurred after commit)
+                }
+                throw;
+            }
         }
+        return Result<BookingDetailDto>.Failure("Failed to create booking due to concurrent updates.");
+    }
+
+    private async Task<Result<BookingDetailDto>> CreatePendingInternalAsync(BookingCreateDto dto, string userId, IDbContextTransaction transaction, CancellationToken cancellationToken)
+    {
+        var eventEntity = await _unitOfWork.Events.GetByIdWithTicketTypesAsync(dto.EventId, cancellationToken);
+        if (eventEntity == null || eventEntity.IsDeleted)
+        {
+            return Result<BookingDetailDto>.Failure("Event not found.");
+        }
+
+        if (eventEntity.Status != EventStatus.Published)
+        {
+            return Result<BookingDetailDto>.Failure("Cannot book tickets for an unpublished event.");
+        }
+
+        if (eventEntity.StartDate <= DateTime.UtcNow)
+        {
+            return Result<BookingDetailDto>.Failure("Cannot book tickets for an event that has already started.");
+        }
+
+        // Check for existing confirmed booking for this user and event
+        var hasConfirmedBooking = await _unitOfWork.Bookings.HasConfirmedBookingAsync(userId, dto.EventId, cancellationToken);
+        if (hasConfirmedBooking)
+        {
+            return Result<BookingDetailDto>.Failure(Eventify.Shared.Constants.ErrorMessages.Booking.DuplicateBooking);
+        }
+
+        var maxTicketsPerBooking = await _systemSettingService.GetSettingValueAsync<int>("MaxTicketsPerBooking", 10, cancellationToken);
+        var newlyRequestedTotal = dto.Items.Sum(i => i.Quantity);
+        if (newlyRequestedTotal > maxTicketsPerBooking)
+        {
+            return Result<BookingDetailDto>.Failure($"Booking exceeds the maximum ticket limit per transaction. You can purchase at most {maxTicketsPerBooking} ticket(s) at a time.");
+        }
+
+        if (eventEntity.MaxTicketsPerUser.HasValue)
+        {
+            var existingBookedCount = await _unitOfWork.Bookings.GetQuery()
+                .AsNoTracking()
+                .Where(b => b.UserId == userId
+                         && b.EventId == dto.EventId
+                         && (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Pending))
+                .SelectMany(b => b.Items)
+                .SumAsync(i => (int?)i.Quantity, cancellationToken) ?? 0;
+
+            var newlyRequested = dto.Items.Sum(i => i.Quantity);
+            if (existingBookedCount + newlyRequested > eventEntity.MaxTicketsPerUser.Value)
+            {
+                return Result<BookingDetailDto>.Failure($"Booking exceeds the maximum ticket limit per user for this event. You can purchase at most {eventEntity.MaxTicketsPerUser.Value - existingBookedCount} more ticket(s).");
+            }
+        }
+
+        decimal totalAmount = 0;
+        var bookingItems = new List<BookingItem>();
+
+        foreach (var item in dto.Items)
+        {
+            var ticketType = eventEntity.TicketTypes.FirstOrDefault(tt => tt.Id == item.TicketTypeId);
+            if (ticketType == null)
+            {
+                return Result<BookingDetailDto>.Failure($"Ticket type ID {item.TicketTypeId} not found for this event.");
+            }
+
+            if (ticketType.SaleStartDate.HasValue && ticketType.SaleStartDate.Value > DateTime.UtcNow)
+            {
+                return Result<BookingDetailDto>.Failure($"Ticket sale for '{ticketType.Name}' has not started yet.");
+            }
+
+            if (ticketType.SaleEndDate.HasValue && ticketType.SaleEndDate.Value < DateTime.UtcNow)
+            {
+                return Result<BookingDetailDto>.Failure($"Ticket sale for '{ticketType.Name}' has ended.");
+            }
+
+            // Check waitlist reservations
+            var activeNotifications = await _unitOfWork.WaitingLists.GetQuery()
+                .AsNoTracking()
+                .Where(w => w.TicketTypeId == item.TicketTypeId && w.Status == WaitingListStatus.Notified && w.ExpiresAt > DateTime.UtcNow)
+                .ToListAsync(cancellationToken);
+
+            var totalNotifiedReserved = activeNotifications.Sum(w => w.QuantityWanted);
+
+            int userClaimedQuantity = 0;
+            WaitingList? userWaitlistEntry = null;
+            if (dto.WaitingListId.HasValue)
+            {
+                userWaitlistEntry = await _unitOfWork.WaitingLists.GetByIdAsync(dto.WaitingListId.Value, cancellationToken);
+                if (userWaitlistEntry != null && userWaitlistEntry.UserId == userId && userWaitlistEntry.TicketTypeId == item.TicketTypeId && userWaitlistEntry.Status == WaitingListStatus.Notified && userWaitlistEntry.ExpiresAt > DateTime.UtcNow)
+                {
+                    userClaimedQuantity = userWaitlistEntry.QuantityWanted;
+                }
+                else
+                {
+                    userWaitlistEntry = null;
+                }
+            }
+
+            var netReservedForOthers = Math.Max(0, totalNotifiedReserved - userClaimedQuantity);
+
+            if (ticketType.SoldQuantity + item.Quantity > ticketType.TotalQuantity - netReservedForOthers)
+            {
+                return Result<BookingDetailDto>.Failure($"Not enough tickets available for '{ticketType.Name}'. Some tickets are reserved for waitlisted users.");
+            }
+
+            if (userWaitlistEntry != null)
+            {
+                userWaitlistEntry.Status = WaitingListStatus.Converted;
+                _unitOfWork.WaitingLists.Update(userWaitlistEntry);
+            }
+
+            ticketType.SoldQuantity += item.Quantity;
+            _unitOfWork.TicketTypes.Update(ticketType);
+
+            totalAmount += item.Quantity * ticketType.Price;
+
+            bookingItems.Add(new BookingItem
+            {
+                TicketTypeId = item.TicketTypeId,
+                Quantity = item.Quantity,
+                UnitPrice = ticketType.Price
+            });
+        }
+
+        if (eventEntity.MaxCapacity.HasValue)
+        {
+            var currentSold = eventEntity.TicketTypes.Sum(tt => tt.SoldQuantity);
+            if (currentSold > eventEntity.MaxCapacity.Value)
+            {
+                return Result<BookingDetailDto>.Failure($"Booking exceeds maximum event capacity. Max allowed: {eventEntity.MaxCapacity.Value - (currentSold - dto.Items.Sum(i => i.Quantity))}");
+            }
+        }
+
+        decimal commissionRate = await _systemSettingService.GetSettingValueAsync<decimal>("TicketCommissionRate", 5.0m, cancellationToken);
+        decimal serviceFee = Math.Round(totalAmount * (commissionRate / 100m), 2);
+        decimal finalTotalAmount = totalAmount + serviceFee;
+
+        var booking = new Booking
+        {
+            UserId = userId,
+            EventId = dto.EventId,
+            TotalAmount = finalTotalAmount,
+            ServiceFee = serviceFee,
+            Status = BookingStatus.Pending,
+            BookingDate = DateTime.UtcNow,
+            BookingReference = string.Empty,
+            Items = bookingItems
+        };
+
+        await _unitOfWork.Bookings.AddAsync(booking, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        booking.BookingReference = BookingReferenceHelper.Generate(booking.Id, booking.BookingDate);
+        _unitOfWork.Bookings.Update(booking);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
+
+        await _cacheInvalidationService.InvalidateEventCacheAsync(cancellationToken);
+
+        // Clear dashboard caches for instant updates
+        _cache.Remove($"AttendeeDashboard_{userId}");
+        _cache.Remove($"OrganizerDashboard_{eventEntity.OrganizerId}");
+
+        var resultDto = _mapper.Map<BookingDetailDto>(booking);
+        return Result<BookingDetailDto>.Success(resultDto);
     }
 
     public async Task<Result> ConfirmAsync(int bookingId, string transactionId, CancellationToken cancellationToken = default)
@@ -234,6 +317,7 @@ public class BookingService : IBookingService
                         Method = PaymentMethod.CreditCard,
                         Status = PaymentStatus.Completed,
                         TransactionId = transactionId,
+                        Currency = "EGP",
                         PaymentDate = DateTime.UtcNow
                     };
                     await _unitOfWork.Payments.AddAsync(payment, cancellationToken);
@@ -260,45 +344,87 @@ public class BookingService : IBookingService
                 var user = await _unitOfWork.Users.GetByIdAsync(booking.UserId, cancellationToken);
                 if (user != null)
                 {
-                    // Generate PDF ticket for the booking (taking the first generated ticket or combined details)
-                    byte[] pdfBytes = [];
                     var generatedTickets = ticketResult.Data!;
-                    if (generatedTickets.Count > 0)
+                    foreach (var ticket in generatedTickets)
                     {
-                        // Generate PDF for the first ticket in booking, or if PdfService gets extended we can generate combined.
-                        // Here we generate PDF for the first ticket as the main attachment or placeholder.
-                        pdfBytes = await _pdfService.GenerateTicketPdfAsync(generatedTickets[0].Id, cancellationToken);
-                    }
-
-                    // Enqueue Booking Confirmation Email to transactional outbox
-                    await _outboxService.EnqueueAsync(
-                        "Email.TicketConfirmation",
-                        new OutboxService.TicketConfirmationPayload
+                        byte[] pdfBytes = [];
+                        try
                         {
-                            RecipientEmail = user.Email ?? string.Empty,
-                            RecipientName = user.FullName,
-                            BookingRef = booking.BookingReference,
-                            PdfAttachmentBase64 = Convert.ToBase64String(pdfBytes)
-                        },
-                        cancellationToken
-                    );
+                            pdfBytes = await _pdfService.GenerateTicketPdfAsync(ticket.Id, cancellationToken);
+                        }
+                        catch (Exception pdfEx)
+                        {
+                            _logger.LogError(pdfEx, "Failed to generate PDF for ticket {TicketId}. Proceeding without PDF attachment.", ticket.Id);
+                        }
+
+                        // Enqueue Booking Confirmation Email to transactional outbox for each ticket
+                        await _outboxService.EnqueueAsync(
+                            "Email.TicketConfirmation",
+                            new OutboxService.TicketConfirmationPayload
+                            {
+                                RecipientEmail = user.Email ?? string.Empty,
+                                RecipientName = user.FullName,
+                                BookingRef = $"{booking.BookingReference}-{ticket.Id}",
+                                PdfAttachmentBase64 = pdfBytes.Length > 0 ? Convert.ToBase64String(pdfBytes) : string.Empty
+                            },
+                            cancellationToken
+                        );
+                    }
                 }
+
+                // Add Booking Confirmed Notification
+                var bookingNotification = new Notification
+                {
+                    UserId = booking.UserId,
+                    Title = "Booking Confirmed",
+                    Message = $"Your booking for '{eventEntity.Title}' has been successfully confirmed! Ticket QR code is ready.",
+                    Type = NotificationType.BookingConfirmed,
+                    IsRead = false,
+                    RedirectUrl = "/Attendee/Dashboard",
+                    CreatedAt = DateTime.UtcNow
+                };
+                await _unitOfWork.Notifications.AddAsync(bookingNotification, cancellationToken);
 
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
+
+                try
+                {
+                    await _hubContext.Clients.Group($"organizer_{eventEntity.OrganizerId.ToLowerInvariant()}")
+                        .SendAsync("ReceiveTicketBooked", new
+                        {
+                            EventId = eventEntity.Id,
+                            EventTitle = eventEntity.Title,
+                            BookingId = booking.Id,
+                            Quantity = booking.Items.Sum(i => i.Quantity),
+                            TotalAmount = booking.TotalAmount,
+                            AttendeeName = user?.FullName ?? "Someone"
+                        }, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to send SignalR notification for booking confirmation");
+                }
+
+                // Clear dashboard caches for instant updates
+                _cache.Remove($"AttendeeDashboard_{booking.UserId}");
+                _cache.Remove($"OrganizerDashboard_{eventEntity.OrganizerId}");
 
                 return Result.Success();
             }
             catch (DbUpdateConcurrencyException)
             {
                 await transaction.RollbackAsync(cancellationToken);
+                _unitOfWork.DbContext.ChangeTracker.Clear();
                 retries--;
                 if (retries == 0)
                 {
                     return Result.Failure("Overselling concurrency conflict occurred. Please try booking again.");
                 }
-                // Back-off briefly before retry
-                await Task.Delay(100, cancellationToken);
+                // Back-off briefly before retry with exponential delay
+                int attempt = 3 - retries; // 1, 2
+                int delayMs = (int)Math.Pow(2, attempt) * 100; // 200ms, 400ms
+                await Task.Delay(delayMs, cancellationToken);
             }
             catch (Exception)
             {
@@ -352,50 +478,23 @@ public class BookingService : IBookingService
 
             var previousStatus = booking.Status;
 
-            // Release ticket capacity if it was a Confirmed or Pending booking
             if (previousStatus == BookingStatus.Confirmed || previousStatus == BookingStatus.Pending)
             {
-                var eventWithTicketTypes = await _unitOfWork.Events.GetByIdWithTicketTypesAsync(booking.EventId, cancellationToken);
-                if (eventWithTicketTypes != null)
+                if (previousStatus == BookingStatus.Pending)
                 {
-                    foreach (var item in booking.Items)
-                    {
-                        var ticketType = eventWithTicketTypes.TicketTypes.FirstOrDefault(tt => tt.Id == item.TicketTypeId);
-                        if (ticketType != null)
-                        {
-                            ticketType.SoldQuantity = Math.Max(0, ticketType.SoldQuantity - item.Quantity);
-                            _unitOfWork.TicketTypes.Update(ticketType);
-                        }
-                    }
+                    await ReleaseTicketCapacityAsync(booking, cancellationToken);
                 }
-
-                // If payment exists (Confirmed booking), initiate a full refund
-                if (previousStatus == BookingStatus.Confirmed)
+                else if (previousStatus == BookingStatus.Confirmed)
                 {
-                    var payment = await _unitOfWork.Payments.GetPaymentByBookingAsync(bookingId, cancellationToken);
-                    if (payment != null && payment.Status == PaymentStatus.Completed)
+                    var refundResult = await RefundBookingPaymentAsync(booking, reason, userId, cancellationToken);
+                    if (refundResult.IsFailure)
                     {
-                        var refundResult = await _refundService.InitiateAsync(
-                            new RefundCreateDto
-                            {
-                                PaymentId = payment.Id,
-                                Amount = payment.Amount,
-                                Reason = $"User cancelled booking. Reason: {reason}"
-                            },
-                            userId,
-                            cancellationToken
-                        );
-
-                        if (refundResult.IsFailure)
-                        {
-                            await transaction.RollbackAsync(cancellationToken);
-                            return Result.Failure($"Cancellation failed due to refund error: {refundResult.Error}");
-                        }
+                        await transaction.RollbackAsync(cancellationToken);
+                        return Result.Failure($"Cancellation failed due to refund error: {refundResult.Error}");
                     }
                 }
             }
 
-            // Update Booking Status to Cancelled
             booking.Status = BookingStatus.Cancelled;
             booking.CancellationReason = reason;
             booking.UpdatedAt = DateTime.UtcNow;
@@ -404,7 +503,8 @@ public class BookingService : IBookingService
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
-            // Trigger waiting list queue check for released ticket types
+            await _cacheInvalidationService.InvalidateEventCacheAsync(cancellationToken);
+
             if (previousStatus == BookingStatus.Confirmed || previousStatus == BookingStatus.Pending)
             {
                 foreach (var item in booking.Items)
@@ -412,6 +512,10 @@ public class BookingService : IBookingService
                     await _waitingListService.NotifyNextAsync(item.TicketTypeId, cancellationToken);
                 }
             }
+
+            // Clear dashboard caches for instant updates
+            _cache.Remove($"AttendeeDashboard_{booking.UserId}");
+            _cache.Remove($"OrganizerDashboard_{booking.Event.OrganizerId}");
 
             return Result.Success();
         }
@@ -472,26 +576,12 @@ public class BookingService : IBookingService
                 booking.UpdatedAt = DateTime.UtcNow;
                 _unitOfWork.Bookings.Update(booking);
 
-                // Release capacity
-                var eventWithTicketTypes = await _unitOfWork.Events.GetByIdWithTicketTypesAsync(booking.EventId, cancellationToken);
-                if (eventWithTicketTypes != null)
-                {
-                    foreach (var item in booking.Items)
-                    {
-                        var ticketType = eventWithTicketTypes.TicketTypes.FirstOrDefault(tt => tt.Id == item.TicketTypeId);
-                        if (ticketType != null)
-                        {
-                            ticketType.SoldQuantity = Math.Max(0, ticketType.SoldQuantity - item.Quantity);
-                            _unitOfWork.TicketTypes.Update(ticketType);
-                        }
-                    }
-                }
+                await ReleaseTicketCapacityAsync(booking, cancellationToken);
 
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
                 count++;
 
-                // Notify waitlist if capacity is released
                 foreach (var item in booking.Items)
                 {
                     await _waitingListService.NotifyNextAsync(item.TicketTypeId, cancellationToken);
@@ -503,6 +593,53 @@ public class BookingService : IBookingService
                 _logger.LogError(ex, "Failed to expire booking {BookingId}", booking.Id);
             }
         }
+        if (count > 0)
+        {
+            await _cacheInvalidationService.InvalidateEventCacheAsync(cancellationToken);
+        }
         return count;
+    }
+
+    private async Task ReleaseTicketCapacityAsync(Booking booking, CancellationToken cancellationToken)
+    {
+        var eventWithTicketTypes = await _unitOfWork.Events.GetByIdWithTicketTypesAsync(booking.EventId, cancellationToken);
+        if (eventWithTicketTypes != null)
+        {
+            foreach (var item in booking.Items)
+            {
+                var ticketType = eventWithTicketTypes.TicketTypes.FirstOrDefault(tt => tt.Id == item.TicketTypeId);
+                if (ticketType != null)
+                {
+                    ticketType.SoldQuantity = Math.Max(0, ticketType.SoldQuantity - item.Quantity);
+                    _unitOfWork.TicketTypes.Update(ticketType);
+                }
+            }
+        }
+    }
+
+    private async Task<Result> RefundBookingPaymentAsync(Booking booking, string reason, string userId, CancellationToken cancellationToken)
+    {
+        if (booking.Status != BookingStatus.Confirmed)
+            return Result.Success();
+
+        var payment = await _unitOfWork.Payments.GetPaymentByBookingAsync(booking.Id, cancellationToken);
+        if (payment == null || payment.Status != PaymentStatus.Completed)
+            return Result.Success();
+
+        var refundResult = await _refundService.InitiateAsync(
+            new RefundCreateDto
+            {
+                PaymentId = payment.Id,
+                Amount = payment.Amount,
+                Reason = $"User cancelled booking. Reason: {reason}"
+            },
+            userId,
+            cancellationToken
+        );
+
+        if (refundResult.IsFailure)
+            return Result.Failure(refundResult.Error!);
+
+        return Result.Success();
     }
 }

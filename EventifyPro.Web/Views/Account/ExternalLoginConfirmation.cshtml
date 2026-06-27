@@ -1,0 +1,233 @@
+@model ExternalLoginConfirmationViewModel
+@{
+    Layout = "_AuthLayout";
+    ViewData["Title"] = "Associate Google Account - Eventify Pro";
+}
+
+<main class="auth-container">
+    <section class="auth-card" aria-labelledby="confirmTitle" style="max-width: 600px;">
+        <div class="auth-card-header">
+            <span class="auth-kicker">Almost there</span>
+            <h1 id="confirmTitle">Complete Registration</h1>
+            <p>You've successfully authenticated with Google. Please choose your account type to proceed.</p>
+        </div>
+
+        @if (TempData["ErrorMessage"] is string errorMsg)
+        {
+            <div class="alert-danger" style="color: #b91c1c; background-color: #fee2e2; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 14px;">
+                @errorMsg
+            </div>
+        }
+
+        <form asp-controller="Account" asp-action="ExternalLoginConfirmation" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post" class="auth-form" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+
+            <input type="hidden" asp-for="Email" />
+
+            <div class="step-heading" style="margin-bottom: 15px;">
+                <h2>Choose Account Type</h2>
+            </div>
+
+            <div class="role-options wizard-role-options" style="margin-bottom: 25px;">
+                <label class="role-option">
+                    <input asp-for="Role" type="radio" value="@RoleNames.Attendee" checked id="roleAttendee" />
+                    <span class="role-card-mini">
+                        <i class="fas fa-user"></i>
+                        <span>Attend Events</span>
+                    </span>
+                </label>
+                <label class="role-option">
+                    <input asp-for="Role" type="radio" value="@RoleNames.Organizer" id="roleOrganizer" />
+                    <span class="role-card-mini">
+                        <i class="fas fa-user-tie"></i>
+                        <span>Organize Events</span>
+                    </span>
+                </label>
+            </div>
+            <span asp-validation-for="Role" class="field-validation text-danger"></span>
+
+            <div class="step-heading" style="margin-bottom: 15px; margin-top: 10px;">
+                <h2>Your Details</h2>
+            </div>
+
+            <div class="input-group">
+                <input value="@Model.Email" disabled style="background-color: #f3f4f6; color: #6b7280; cursor: not-allowed;" />
+                <label>Email Address</label>
+            </div>
+
+            <div class="form-row">
+                <div class="input-group">
+                    <input asp-for="FirstName" id="firstName" placeholder=" " required />
+                    <label asp-for="FirstName">First name *</label>
+                    <span asp-validation-for="FirstName" class="field-validation text-danger"></span>
+                </div>
+                <div class="input-group">
+                    <input asp-for="LastName" id="lastName" placeholder=" " required />
+                    <label asp-for="LastName">Last name *</label>
+                    <span asp-validation-for="LastName" class="field-validation text-danger"></span>
+                </div>
+            </div>
+
+            <!-- Organizer Fields Group -->
+            <div id="organizerFields" style="display: none;">
+                <div class="step-heading" style="margin-bottom: 15px; margin-top: 25px; border-top: 1px solid #ede9fe; padding-top: 20px;">
+                    <h2>Organization Info</h2>
+                    <p>Tell us about your business identity.</p>
+                </div>
+
+                <div class="input-group">
+                    <input asp-for="OrganizationName" id="organizationName" placeholder=" " />
+                    <label asp-for="OrganizationName">Organization name *</label>
+                    <span asp-validation-for="OrganizationName" class="field-validation text-danger"></span>
+                </div>
+
+                <div class="form-row">
+                    <div class="input-group">
+                        <input asp-for="BusinessPhone" id="businessPhone" placeholder=" " type="tel" pattern="^(01[0125]\d{8}|0[2345689]\d{7,8}|\+[1-9]\d{1,14})$" title="Please enter a valid Egyptian mobile/landline number or international number starting with '+'" />
+                        <label asp-for="BusinessPhone">Business phone</label>
+                        <span asp-validation-for="BusinessPhone" class="field-validation text-danger"></span>
+                    </div>
+                    <div class="input-group">
+                        <input asp-for="WebsiteUrl" id="websiteUrl" placeholder=" " type="url" />
+                        <label asp-for="WebsiteUrl">Website URL</label>
+                        <span asp-validation-for="WebsiteUrl" class="field-validation text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="input-group">
+                        <input asp-for="CommercialRegister" id="commercialRegister" placeholder=" " />
+                        <label asp-for="CommercialRegister">Commercial register</label>
+                        <span asp-validation-for="CommercialRegister" class="field-validation text-danger"></span>
+                    </div>
+                    <div class="input-group">
+                        <input asp-for="TaxNumber" id="taxNumber" placeholder=" " />
+                        <label asp-for="TaxNumber">Tax number</label>
+                        <span asp-validation-for="TaxNumber" class="field-validation text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="step-heading" style="margin-bottom: 15px; margin-top: 20px;">
+                    <h2>Organization Logo</h2>
+                </div>
+
+                <div class="logo-upload-container" style="display: flex; gap: 20px; align-items: center; background: #f9f9fb; padding: 20px; border-radius: 12px; border: 1px dashed #ede9fe; margin-bottom: 25px;">
+                    <div class="logo-preview-wrapper" id="logoPreviewWrapper" style="width: 80px; height: 80px; border-radius: 12px; overflow: hidden; background: #eef2f6; display: flex; align-items: center; justify-content: center; border: 1px solid #e2e8f0;">
+                        <img id="logoPreview" src="#" alt="Logo Preview" style="display: none; width: 100%; height: 100%; object-fit: cover;" />
+                        <div class="preview-placeholder" id="previewPlaceholder" style="text-align: center; color: #a0aec0;">
+                            <i class="fas fa-image" style="font-size: 24px;"></i>
+                        </div>
+                    </div>
+                    <div class="file-input-wrapper" style="flex: 1;">
+                        <label class="btn-outline file-upload-label" for="logoFileInput" style="display: inline-block; cursor: pointer; padding: 10px 16px; border: 1px solid #7c3aed; color: #7c3aed; border-radius: 8px; font-weight: 600; font-size: 14px;">
+                            <i class="fas fa-cloud-upload-alt" style="margin-right: 8px;"></i> Select Logo Image
+                        </label>
+                        <input asp-for="LogoFile" id="logoFileInput" type="file" accept="image/*" style="display: none;" />
+                        <div class="selected-filename" id="selectedFilename" style="font-size: 12px; color: #718096; margin-top: 5px;">Supported formats: JPG, PNG, WEBP</div>
+                        <span asp-validation-for="LogoFile" class="field-validation text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="checkbox-group" style="margin-top: 20px;">
+                <label class="custom-checkbox">
+                    <input asp-for="AcceptTerms" id="AcceptTerms" />
+                    <span class="checkmark"></span>
+                    <span>I agree to the <a asp-controller="Home" asp-action="Terms" target="_blank">Terms & Conditions</a> and <a asp-controller="Home" asp-action="Privacy" target="_blank">Privacy Policy</a></span>
+                </label>
+                <span asp-validation-for="AcceptTerms" class="field-validation"></span>
+            </div>
+
+            <div class="auth-actions" style="margin-top: 25px;">
+                <a asp-controller="Account" asp-action="Login" class="link-btn">Cancel</a>
+                <button type="submit" class="primary-btn">Complete Registration</button>
+            </div>
+        </form>
+    </section>
+
+    <aside class="auth-illustration" aria-hidden="true">
+        <div class="illustration-content">
+            <div class="floating-icons">
+                <div class="floating-icon icon-1"><i class="fas fa-link"></i></div>
+                <div class="floating-icon icon-2"><i class="fas fa-shield-alt"></i></div>
+                <div class="floating-icon icon-3"><i class="fab fa-google"></i></div>
+                <div class="floating-icon icon-4"><i class="fas fa-user-check"></i></div>
+                <div class="floating-icon icon-5"><i class="fas fa-lock"></i></div>
+            </div>
+            <div class="illustration-card">
+                <div class="card-shine"></div>
+                <i class="fab fa-google main-icon" style="color: #ea4335;"></i>
+                <h2>Single Sign-On</h2>
+                <p>Linking your Google account makes accessing Eventify Pro simple and secure.</p>
+            </div>
+        </div>
+    </aside>
+</main>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const roleAttendee = document.getElementById("roleAttendee");
+            const roleOrganizer = document.getElementById("roleOrganizer");
+            const organizerFields = document.getElementById("organizerFields");
+            const orgNameInput = document.getElementById("organizationName");
+
+            function toggleFields() {
+                if (roleOrganizer && roleOrganizer.checked) {
+                    organizerFields.style.display = "block";
+                    if (orgNameInput) {
+                        orgNameInput.setAttribute("required", "required");
+                    }
+                } else {
+                    organizerFields.style.display = "none";
+                    if (orgNameInput) {
+                        orgNameInput.removeAttribute("required");
+                    }
+                }
+            }
+
+            if (roleAttendee && roleOrganizer) {
+                roleAttendee.addEventListener("change", toggleFields);
+                roleOrganizer.addEventListener("change", toggleFields);
+                toggleFields(); // Run on startup to match default state
+            }
+
+            // Logo preview script
+            const logoFileInput = document.getElementById("logoFileInput");
+            const logoPreview = document.getElementById("logoPreview");
+            const previewPlaceholder = document.getElementById("previewPlaceholder");
+            const selectedFilename = document.getElementById("selectedFilename");
+
+            if (logoFileInput) {
+                logoFileInput.addEventListener("change", function () {
+                    const file = this.files[0];
+                    if (file) {
+                        selectedFilename.textContent = file.name;
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            if (logoPreview) {
+                                logoPreview.src = e.target.result;
+                                logoPreview.style.display = "block";
+                            }
+                            if (previewPlaceholder) {
+                                previewPlaceholder.style.display = "none";
+                            }
+                        }
+                        reader.readAsDataURL(file);
+                    } else {
+                        selectedFilename.textContent = "Supported formats: JPG, PNG, WEBP";
+                        if (logoPreview) {
+                            logoPreview.style.display = "none";
+                            logoPreview.src = "#";
+                        }
+                        if (previewPlaceholder) {
+                            previewPlaceholder.style.display = "block";
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+    <partial name="_ValidationScriptsPartial" />
+}

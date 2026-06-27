@@ -1,0 +1,325 @@
+@model EventifyPro.Web.ViewModels.Attendee.AttendeeProfileViewModel
+@{
+    Layout = "_AttendeeLayout";
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="workspace-header">
+    <h1 class="workspace-title">Profile Settings</h1>
+    <p class="workspace-subtitle">Manage your personal information, contact details, and account avatar.</p>
+</div>
+
+<div class="white-panel profile-card-form">
+    <h3 class="panel-title">
+        <i class="fa-solid fa-user-gear"></i> General Information
+    </h3>
+    
+    <form asp-controller="Attendee" asp-action="UpdateProfile" method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        
+        <div asp-validation-summary="ModelOnly" class="validation-message" style="background-color: rgba(239, 68, 68, 0.05); border: 1px solid var(--error); border-radius: 12px; padding: 16px; margin-bottom: 24px; font-weight: 600; display: block;"></div>
+
+        <!-- Avatar Selection Section -->
+        <div class="avatar-upload-row">
+            <div class="avatar-preview-container">
+                @if (!string.IsNullOrEmpty(Model.ProfileImageUrl))
+                {
+                    <img id="avatarPreview" src="@Model.ProfileImageUrl" alt="Profile" class="avatar-preview-img" />
+                }
+                else
+                {
+                    <img id="avatarPreview" src="https://api.dicebear.com/7.x/initials/svg?seed=@Uri.EscapeDataString(Model.FullName)" alt="Profile" class="avatar-preview-img" />
+                }
+            </div>
+            
+            <div class="avatar-upload-actions">
+                <label for="profilePictureInput" class="avatar-upload-btn">
+                    <i class="fa-solid fa-camera"></i> Change Photo
+                </label>
+                <input type="file" name="profilePicture" id="profilePictureInput" accept="image/png, image/jpeg, image/jpg" style="display: none;" onchange="previewFile()" />
+                <span class="avatar-upload-hint">Upload JPG or PNG, maximum file size 2MB</span>
+            </div>
+        </div>
+
+        <!-- Structured Inputs Form Grid with floating labels from style.css -->
+        <div class="form-grid-layout">
+            <div class="input-group">
+                <input asp-for="FullName" placeholder=" " required />
+                <label asp-for="FullName">Full Name</label>
+                <span asp-validation-for="FullName" class="validation-message"></span>
+            </div>
+
+            <div class="input-group">
+                <input asp-for="Email" type="email" placeholder=" " required />
+                <label asp-for="Email">Email Address</label>
+                <span asp-validation-for="Email" class="validation-message"></span>
+            </div>
+
+            <div class="input-group">
+                <input asp-for="PhoneNumber" placeholder=" " />
+                <label asp-for="PhoneNumber">Phone Number</label>
+                <span asp-validation-for="PhoneNumber" class="validation-message"></span>
+            </div>
+        </div>
+
+        <!-- Actions using standard site buttons style -->
+        <div class="form-actions-row">
+            <a href="/Attendee/Index" class="btn-outline btn-small">Cancel</a>
+            <button type="submit" class="btn-primary btn-small" style="border: none;">Save Changes</button>
+        </div>
+    </form>
+
+    <!-- Collapsible Change Password button under Phone Number / Form -->
+    <div style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 24px;">
+        <button type="button" id="btnTogglePasswordPanel" onclick="togglePasswordPanel()" class="btn-outline btn-small" style="display: inline-flex; align-items: center; gap: 8px;">
+            @if (ViewData["ShowOtpForm"] != null || TempData["ChangePasswordError"] != null || TempData["OtpError"] != null)
+            {
+                <i class="fa-solid fa-chevron-up"></i> <span>Hide Password Settings</span>
+            }
+            else
+            {
+                <i class="fa-solid fa-key"></i> <span>Change Password</span>
+            }
+        </button>
+    </div>
+
+    <!-- Password collapsible panel -->
+    <div id="passwordSettingsPanel" style="display: @(ViewData["ShowOtpForm"] != null || TempData["ChangePasswordError"] != null || TempData["OtpError"] != null ? "block" : "none"); margin-top: 20px; background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-sm);">
+        
+        <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 16px; color: var(--text); display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-shield-halved" style="color: var(--primary);"></i> Update Password
+        </h4>
+
+        <!-- Error/Success notices for security actions -->
+        @if (TempData["ChangePasswordError"] != null)
+        {
+            <div class="validation-message" style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; color: #991b1b; display: block;">
+                @foreach (var errorLine in (TempData["ChangePasswordError"]?.ToString() ?? "").Split(new[] { "<br/>" }, StringSplitOptions.None))
+                {
+                    <div>@errorLine</div>
+                }
+            </div>
+        }
+        @if (TempData["OtpError"] != null)
+        {
+            <div class="validation-message" style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; color: #991b1b; display: block;">
+                @foreach (var errorLine in (TempData["OtpError"]?.ToString() ?? "").Split(new[] { "<br/>" }, StringSplitOptions.None))
+                {
+                    <div>@errorLine</div>
+                }
+            </div>
+        }
+        <div id="otpSuccessNotice" class="toast-success-banner" style="display: none; margin-bottom: 20px;">
+            <i class="fa-solid fa-circle-check"></i>
+            <span id="otpSuccessMessage"></span>
+        </div>
+        <div id="otpErrorNotice" class="validation-message" style="display: none; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; color: #991b1b; display: block;"></div>
+
+        <!-- Toggle between standard password update and OTP reset -->
+        <div id="standardPasswordFormBlock" style="display: @(ViewData["ShowOtpForm"] != null ? "none" : "block");">
+            <form asp-controller="Attendee" asp-action="ChangePassword" method="post">
+                @Html.AntiForgeryToken()
+                
+                <div class="form-grid-layout" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+                    <div class="input-group">
+                        <input name="CurrentPassword" type="password" placeholder=" " required autocomplete="new-password" />
+                        <label>Current Password</label>
+                    </div>
+                    <div class="input-group">
+                        <input name="NewPassword" type="password" placeholder=" " required minlength="6" autocomplete="new-password" />
+                        <label>New Password</label>
+                    </div>
+                    <div class="input-group">
+                        <input name="ConfirmPassword" type="password" placeholder=" " required autocomplete="new-password" />
+                        <label>Confirm New Password</label>
+                    </div>
+                </div>
+
+                <div class="form-actions-row" style="margin-top: 20px; justify-content: space-between; align-items: center;">
+                    <button type="button" onclick="showOtpForm()" class="btn-outline btn-small" style="border-color: transparent; padding: 8px 0; background: transparent; color: var(--primary);">
+                        Forgot Password? Reset via OTP Email
+                    </button>
+                    <button type="submit" class="btn-primary btn-small" style="border: none;">Update Password</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- OTP Reset Password Form -->
+        <div id="otpPasswordFormBlock" style="display: @(ViewData["ShowOtpForm"] != null ? "block" : "none");">
+            <div style="margin-bottom: 24px; padding: 16px; background-color: var(--soft-purple); border-radius: 12px;">
+                <p style="font-size: 13px; color: var(--text); margin: 0; font-weight: 500;">
+                    Click "Send OTP" to receive a 6-digit verification code on your email.
+                </p>
+                <button type="button" id="btnSendOtp" onclick="sendOtp()" class="btn-outline btn-small" style="margin-top: 10px; display: inline-flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-paper-plane"></i> Send OTP Code
+                </button>
+            </div>
+
+            <form asp-controller="Attendee" asp-action="ResetPasswordWithOtp" method="post">
+                @Html.AntiForgeryToken()
+                
+                <div class="form-grid-layout" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+                    <div class="input-group">
+                        <input name="OtpCode" type="text" placeholder=" " required maxlength="6" minlength="6" autocomplete="off" />
+                        <label>OTP Verification Code</label>
+                    </div>
+                    <div class="input-group">
+                        <input name="NewPassword" type="password" placeholder=" " required minlength="6" autocomplete="new-password" />
+                        <label>New Password</label>
+                    </div>
+                    <div class="input-group">
+                        <input name="ConfirmPassword" type="password" placeholder=" " required autocomplete="new-password" />
+                        <label>Confirm New Password</label>
+                    </div>
+                </div>
+
+                <div class="form-actions-row" style="margin-top: 20px; justify-content: space-between; align-items: center;">
+                    <button type="button" onclick="showStandardForm()" class="btn-outline btn-small" style="border-color: transparent; padding: 8px 0; background: transparent; color: var(--text-light);">
+                        Back to Standard Change
+                    </button>
+                    <button type="submit" class="btn-primary btn-small" style="border: none;">Reset Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // JS Preview file upload locally with constraints validation
+        function previewFile() {
+            const preview = document.getElementById('avatarPreview');
+            const fileInput = document.getElementById('profilePictureInput');
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            if (file) {
+                // Check extension
+                const allowed = ['image/png', 'image/jpg', 'image/jpeg'];
+                if (!allowed.includes(file.type)) {
+                    alert('Only image files (.jpg, .jpeg, .png) are allowed.');
+                    fileInput.value = '';
+                    return;
+                }
+
+                // Check size (2MB)
+                if (file.size > 2 * 1024 * 1024) {
+                    alert('Image size cannot exceed 2 MB.');
+                    fileInput.value = '';
+                    return;
+                }
+
+                reader.onloadend = function () {
+                    preview.src = reader.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Toggle password settings panel expansion
+        function togglePasswordPanel() {
+            const panel = document.getElementById('passwordSettingsPanel');
+            const btn = document.getElementById('btnTogglePasswordPanel');
+            if (panel.style.display === 'none') {
+                panel.style.display = 'block';
+                btn.innerHTML = '<i class="fa-solid fa-chevron-up"></i> <span>Hide Password Settings</span>';
+            } else {
+                panel.style.display = 'none';
+                btn.innerHTML = '<i class="fa-solid fa-key"></i> <span>Change Password</span>';
+            }
+        }
+
+        // Toggle UI Blocks
+        function showOtpForm() {
+            document.getElementById('standardPasswordFormBlock').style.display = 'none';
+            document.getElementById('otpPasswordFormBlock').style.display = 'block';
+        }
+
+        function showStandardForm() {
+            document.getElementById('standardPasswordFormBlock').style.display = 'block';
+            document.getElementById('otpPasswordFormBlock').style.display = 'none';
+        }
+
+        // Send OTP via Ajax
+        async function sendOtp() {
+            const btn = document.getElementById('btnSendOtp');
+            const successNotice = document.getElementById('otpSuccessNotice');
+            const errorNotice = document.getElementById('otpErrorNotice');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
+            successNotice.style.display = 'none';
+            errorNotice.style.display = 'none';
+
+            // Get AntiForgery token
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            try {
+                const response = await fetch('/Attendee/SendPasswordOtp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams({
+                        '__RequestVerificationToken': token
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    successNotice.style.display = 'flex';
+                    document.getElementById('otpSuccessMessage').innerText = result.message;
+                    btn.innerHTML = '<i class="fa-solid fa-rotate-right"></i> Resend OTP Code';
+                } else {
+                    errorNotice.style.display = 'block';
+                    errorNotice.innerText = result.message;
+                    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send OTP Code';
+                }
+            } catch (err) {
+                console.error(err);
+                errorNotice.style.display = 'block';
+                errorNotice.innerText = 'Failed to connect to server. Please try again.';
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send OTP Code';
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // Autofocus and highlight fields based on query param
+        document.addEventListener("DOMContentLoaded", function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const focusField = urlParams.get('focus');
+            if (focusField) {
+                if (focusField === 'profilePicture') {
+                    const uploadRow = document.querySelector('.avatar-upload-row');
+                    if (uploadRow) {
+                        uploadRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        // Flash highlight effect
+                        uploadRow.style.transition = 'outline 0.3s ease';
+                        uploadRow.style.outline = '4px solid var(--primary)';
+                        setTimeout(() => {
+                            uploadRow.style.outline = '4px solid transparent';
+                        }, 2500);
+                        
+                        // Trigger file upload prompt automatically
+                        const fileInput = document.getElementById('profilePictureInput');
+                        if (fileInput) fileInput.click();
+                    }
+                } else {
+                    const element = document.getElementById(focusField);
+                    if (element) {
+                        element.focus();
+                        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        
+                        // Flash highlight effect
+                        element.style.transition = 'outline 0.3s ease';
+                        element.style.outline = '3px solid var(--primary)';
+                        setTimeout(() => {
+                            element.style.outline = '';
+                        }, 2500);
+                    }
+                }
+            }
+        });
+    </script>
+}

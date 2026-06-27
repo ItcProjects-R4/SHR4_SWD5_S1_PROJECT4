@@ -1,92 +1,196 @@
 @model EventifyPro.Web.ViewModels.OrganizerScanners.CreateScannerViewModel
 @{
-    Layout = "_AuthLayout";
-    ViewData["Title"] = "Create Scanner Account - Eventify Pro";
+    Layout = "_OrganizerLayout";
+    ViewData["Title"] = "Create Scanner Account";
+    ViewData["HeaderTitle"] = "Create Scanner Account 📱";
+    ViewData["HeaderSubtitle"] = "Only organizers can create scanner accounts for event entry validation.";
 }
 
-<main class="auth-container">
-    <section class="auth-card" aria-labelledby="createScannerTitle">
-        <div class="auth-card-header">
-            <span class="auth-kicker">Organizer tools</span>
-            <h1 id="createScannerTitle">Create scanner account</h1>
-            <p>Only organizers can create scanner accounts for event entry validation.</p>
-        </div>
-
-        @if (TempData["SuccessMessage"] is string message)
-        {
-            <div class="alert-success">@message</div>
+@section Styles {
+    <style>
+        .form-card {
+            background: white;
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            max-width: 600px;
+            margin: 0 auto;
         }
 
-        <form asp-controller="OrganizerScanners" asp-action="Create" method="post" class="auth-form">
-            @Html.AntiForgeryToken()
-            <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+        .form-group {
+            margin-bottom: 24px;
+        }
 
-            <div class="input-group">
-                <input asp-for="FullName" placeholder=" " autocomplete="name" required />
-                <label asp-for="FullName">Scanner full name</label>
-                <span asp-validation-for="FullName" class="field-validation"></span>
-            </div>
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
 
-            <div class="input-group">
-                <input asp-for="Email" placeholder=" " autocomplete="email" required />
-                <label asp-for="Email">Scanner email</label>
-                <span asp-validation-for="Email" class="field-validation"></span>
-            </div>
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 14.5px;
+            color: var(--text);
+            background: var(--bg);
+            transition: var(--transition);
+        }
 
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+            background: white;
+        }
+
+        .text-danger {
+            color: var(--error);
+            font-size: 12.5px;
+            margin-top: 6px;
+            display: block;
+        }
+
+        label .text-danger {
+            display: inline;
+            margin-top: 0;
+        }
+
+        .info-text {
+            background: rgba(124, 58, 237, 0.1);
+            color: var(--primary);
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 13.5px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-top: 24px;
+            line-height: 1.5;
+        }
+
+        .form-actions {
+            margin-top: 32px;
+            display: flex;
+            gap: 16px;
+            justify-content: flex-end;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-group .form-control {
+            flex: 1;
+        }
+
+        .btn-generate {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--primary);
+            font-weight: 600;
+            padding: 0 16px;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-generate:hover {
+            background: rgba(124, 58, 237, 0.05);
+            border-color: var(--primary-light);
+        }
+    </style>
+}
+
+<div class="form-card">
+    <form asp-controller="OrganizerScanners" asp-action="Create" method="post">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-danger" style="margin-bottom: 20px;"></div>
+
+        <div class="form-group">
+            <label asp-for="FullName" class="form-label">Scanner Full Name <span class="text-danger">*</span></label>
+            <input asp-for="FullName" class="form-control" placeholder="e.g., John Gatekeeper" required />
+            <span asp-validation-for="FullName" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Email" class="form-label">Scanner Email <span class="text-danger">*</span></label>
+            <input asp-for="Email" type="email" class="form-control" placeholder="scanner1@yourdomain.com" required />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Password" class="form-label">Temporary Password <span style="font-weight: normal; color: var(--text-muted); font-size: 13px;">(Optional, auto-generated if left blank)</span></label>
             <div class="input-group">
-                <input asp-for="Password" id="scannerPassword" placeholder=" " autocomplete="new-password" required />
-                <label asp-for="Password">Temporary password</label>
-                <button type="button" class="show-password" data-toggle-password="scannerPassword" aria-label="Show password">
-                    <i class="fas fa-eye"></i>
+                <input asp-for="Password" type="password" id="scannerPassword" class="form-control" placeholder="Strong password or auto-generate" />
+                <button type="button" class="btn-generate" onclick="generatePassword()">
+                    <i class="fas fa-key"></i> Generate
                 </button>
-                <span asp-validation-for="Password" class="field-validation"></span>
             </div>
+            <span asp-validation-for="Password" class="text-danger"></span>
+        </div>
 
-            <p class="info-text">
-                Share these credentials only with the trusted scanner assigned to your event entrance.
-            </p>
-
-            <div class="auth-actions">
-                <a asp-controller="Home" asp-action="Index" class="link-btn">Back to home</a>
-                <button type="submit" class="primary-btn">Create Scanner</button>
-            </div>
-        </form>
-    </section>
-
-    <aside class="auth-illustration" aria-hidden="true">
-        <div class="illustration-content">
-            <div class="floating-icons">
-                <div class="floating-icon icon-1"><i class="fas fa-qrcode"></i></div>
-                <div class="floating-icon icon-2"><i class="fas fa-check-double"></i></div>
-                <div class="floating-icon icon-3"><i class="fas fa-ticket-alt"></i></div>
-                <div class="floating-icon icon-4"><i class="fas fa-shield-alt"></i></div>
-                <div class="floating-icon icon-5"><i class="fas fa-users"></i></div>
-            </div>
-            <div class="illustration-card">
-                <div class="card-shine"></div>
-                <i class="fas fa-qrcode main-icon"></i>
-                <h2>Gate Ready</h2>
-                <p>Create trusted scanner accounts without opening public scanner registration.</p>
+        <div class="info-text">
+            <i class="fas fa-info-circle" style="font-size: 20px; margin-top: 2px;"></i>
+            <div>
+                <strong>Secure Access:</strong> Share these credentials only with the trusted scanner assigned to your event entrance. They will use this email and password to log into the Eventify Pro Scanner App.
             </div>
         </div>
-    </aside>
-</main>
+
+        <div class="form-actions">
+            <a asp-controller="OrganizerScanners" asp-action="Index" class="btn-secondary">Cancel</a>
+            <button type="submit" class="btn-primary">
+                <i class="fas fa-user-plus"></i> Create Scanner
+            </button>
+        </div>
+    </form>
+</div>
 
 @section Scripts {
-    <script>
-        document.querySelectorAll("[data-toggle-password]").forEach((button) => {
-          button.addEventListener("click", () => {
-            const input = document.getElementById(button.dataset.togglePassword);
-            const icon = button.querySelector("i");
-
-            if (!input || !icon) return;
-
-            const showPassword = input.type === "password";
-            input.type = showPassword ? "text" : "password";
-            icon.className = showPassword ? "fas fa-eye-slash" : "fas fa-eye";
-            button.setAttribute("aria-label", showPassword ? "Hide password" : "Show password");
-          });
-        });
-    </script>
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        function generatePassword() {
+            const lower = "abcdefghijklmnopqrstuvwxyz";
+            const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            const digits = "0123456789";
+            const special = "!@@#$%^&*()_+-=[]{}|;:,.<>?";
+            const all = lower + upper + digits + special;
+            
+            let password = [
+                lower[Math.floor(Math.random() * lower.length)],
+                upper[Math.floor(Math.random() * upper.length)],
+                digits[Math.floor(Math.random() * digits.length)],
+                special[Math.floor(Math.random() * special.length)]
+            ];
+            
+            for (let i = password.length; i < 12; i++) {
+                password.push(all[Math.floor(Math.random() * all.length)]);
+            }
+            
+            // Fisher-Yates shuffle
+            for (let i = password.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                const temp = password[i];
+                password[i] = password[j];
+                password[j] = temp;
+            }
+            
+            const passwordString = password.join('');
+            const passwordInput = document.getElementById('scannerPassword');
+            passwordInput.value = passwordString;
+            passwordInput.type = 'text'; // Make it visible so organizer can view/copy it
+        }
+    </script>
 }

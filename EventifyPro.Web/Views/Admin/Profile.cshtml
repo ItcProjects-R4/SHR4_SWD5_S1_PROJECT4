@@ -1,0 +1,469 @@
+@model EventifyPro.Web.ViewModels.Admin.AdminProfileViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Admin Profile";
+    ViewData["HeaderTitle"] = "Admin Profile 👤";
+    ViewData["HeaderSubtitle"] = "Manage your account credentials and profile picture.";
+}
+
+@section Styles {
+    <style>
+        /* ===== FORM CARD ===== */
+        .form-card {
+            background: white;
+            padding: 32px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .form-card h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary-dark);
+            border-bottom: 1px dashed var(--border);
+            padding-bottom: 12px;
+        }
+
+        /* Avatar Section */
+        .avatar-section {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 32px;
+            padding: 20px;
+            background: var(--soft-purple);
+            border-radius: 16px;
+            border: 1px dashed var(--accent);
+        }
+        .avatar-preview-container {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid white;
+            box-shadow: var(--shadow-sm);
+            position: relative;
+            flex-shrink: 0;
+            background: var(--light-purple);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .avatar-preview-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .avatar-upload-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+            font-size: 13.5px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 12px rgba(91, 33, 182, 0.2);
+        }
+        .avatar-upload-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+        .avatar-hint {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 6px;
+            display: block;
+        }
+
+        /* Inputs */
+        .input-group {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .input-group label {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 15px;
+            color: var(--text);
+            background: white;
+            outline: none;
+            transition: var(--transition);
+        }
+        .input-group input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
+        }
+        .validation-message {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--error);
+            margin-top: 4px;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 32px;
+            border-radius: 50px;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+            background: var(--gradient);
+            color: white;
+            box-shadow: 0 8px 25px rgba(124, 58, 237, 0.35);
+            text-decoration: none;
+            justify-content: center;
+        }
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            box-shadow: 0 12px 30px rgba(124, 58, 237, 0.5);
+            transform: translateY(-2px);
+        }
+
+        /* Password section */
+        .password-toggle-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 30px 0 20px 0;
+            padding-top: 20px;
+            border-top: 1px dashed var(--border);
+        }
+        .password-toggle-header h4 {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .password-toggle-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 13.5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: var(--transition);
+        }
+        .password-toggle-btn:hover {
+            opacity: 0.8;
+            transform: translateX(-2px);
+        }
+
+        @@media (max-width: 540px) {
+            .avatar-section {
+                flex-direction: column !important;
+                text-align: center !important;
+                align-items: center !important;
+                gap: 16px !important;
+            }
+        }
+    </style>
+}
+
+<div class="form-card">
+    <h3><i class="fas fa-user-edit"></i> Edit Profile Information</h3>
+
+    <form asp-controller="Admin" asp-action="Profile" method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        
+        <div asp-validation-summary="ModelOnly" class="validation-message" style="margin-bottom: 20px;"></div>
+
+        <!-- Avatar Section -->
+        <div class="avatar-section">
+            <div class="avatar-preview-container">
+                @if (!string.IsNullOrEmpty(Model.ProfileImageUrl))
+                {
+                    <img id="avatarPreview" src="@Model.ProfileImageUrl" alt="Avatar Preview" />
+                }
+                else
+                {
+                    <img id="avatarPreview" src="https://api.dicebear.com/7.x/initials/svg?seed=@Uri.EscapeDataString(Model.FullName)" alt="Avatar Preview" />
+                }
+            </div>
+            <div>
+                <label for="profilePictureInput" class="avatar-upload-btn">
+                    <i class="fas fa-camera"></i> Upload Photo
+                </label>
+                <input type="file" asp-for="ProfilePicture" id="profilePictureInput" accept="image/png, image/jpeg, image/jpg, image/gif" style="display: none;" onchange="previewFile()" />
+                <span class="avatar-hint">Only JPG, JPEG, PNG, or GIF. Max 2MB.</span>
+                <span asp-validation-for="ProfilePicture" class="validation-message"></span>
+            </div>
+        </div>
+
+        <!-- Personal Details -->
+        <div class="row-group">
+            <div class="input-group">
+                <label asp-for="FullName">Full Name</label>
+                <input type="text" asp-for="FullName" required />
+                <span asp-validation-for="FullName" class="validation-message"></span>
+            </div>
+            <div class="input-group">
+                <label asp-for="Email">Email Address</label>
+                <input type="email" asp-for="Email" required />
+                <span asp-validation-for="Email" class="validation-message"></span>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label asp-for="PhoneNumber">Phone Number</label>
+            <input type="text" asp-for="PhoneNumber" placeholder="e.g. +201234567890" />
+            <span asp-validation-for="PhoneNumber" class="validation-message"></span>
+        </div>
+
+        <!-- Change Password Header & Toggle -->
+        <div class="password-toggle-header">
+            <h4>Security Credentials</h4>
+            <button type="button" class="password-toggle-btn" id="btnTogglePassword" onclick="togglePasswordSection()">
+                @if (ViewData["ShowOtpForm"] != null || TempData["OtpError"] != null)
+                {
+                    <i class="fas fa-times"></i><span> Cancel Change</span>
+                }
+                else
+                {
+                    <i class="fas fa-lock"></i><span> Change Password</span>
+                }
+            </button>
+        </div>
+
+        <!-- Password Fields Container -->
+        <div id="passwordSection" style="display: @(ViewData["ShowOtpForm"] != null || TempData["OtpError"] != null ? "block" : "none"); background: var(--bg); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-top: 20px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
+            @if (TempData["OtpError"] != null)
+            {
+                <div class="validation-message" style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; color: #991b1b; display: block;">
+                    @foreach (var errorLine in (TempData["OtpError"]?.ToString() ?? "").Split(new[] { "<br/>" }, StringSplitOptions.None))
+                    {
+                        <div>@errorLine</div>
+                    }
+                </div>
+            }
+            <div id="otpSuccessNotice" class="toast-success-banner" style="display: none; margin-bottom: 20px; background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 12px 16px; color: #047857; font-weight: 500; align-items: center; gap: 8px;">
+                <i class="fas fa-check-circle"></i>
+                <span id="otpSuccessMessage"></span>
+            </div>
+            <div id="otpErrorNotice" class="validation-message" style="display: none; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; color: #991b1b; display: block;"></div>
+
+            <!-- Standard Change Password Block -->
+            <div id="standardPasswordFormBlock" style="display: @(ViewData["ShowOtpForm"] != null ? "none" : "block");">
+                <div class="input-group">
+                    <label asp-for="CurrentPassword">Current Password</label>
+                    <input type="password" asp-for="CurrentPassword" id="txtCurrentPassword" autocomplete="new-password" />
+                    <span asp-validation-for="CurrentPassword" class="validation-message"></span>
+                </div>
+                <div class="row-group">
+                    <div class="input-group">
+                        <label asp-for="NewPassword">New Password</label>
+                        <input type="password" asp-for="NewPassword" id="txtNewPassword" autocomplete="new-password" />
+                        <span asp-validation-for="NewPassword" class="validation-message"></span>
+                    </div>
+                    <div class="input-group">
+                        <label asp-for="ConfirmPassword">Confirm New Password</label>
+                        <input type="password" asp-for="ConfirmPassword" id="txtConfirmPassword" autocomplete="new-password" />
+                        <span asp-validation-for="ConfirmPassword" class="validation-message"></span>
+                    </div>
+                </div>
+                <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+                    <button type="button" onclick="showOtpForm()" class="password-toggle-btn" style="color: var(--primary);">
+                        Forgot Password? Reset via OTP Email
+                    </button>
+                </div>
+            </div>
+
+            <!-- OTP Reset Password Form Block -->
+            <div id="otpPasswordFormBlock" style="display: @(ViewData["ShowOtpForm"] != null ? "block" : "none");">
+                <div style="margin-bottom: 20px; padding: 16px; background-color: var(--soft-purple); border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                    <p style="font-size: 13px; color: var(--text); margin: 0; font-weight: 500;">
+                        Click "Send OTP" to receive a 6-digit verification code on your email.
+                    </p>
+                    <button type="button" id="btnSendOtp" onclick="sendOtp()" class="btn-primary" style="padding: 8px 16px; font-size: 13px; box-shadow: none; border-radius: 8px;">
+                        <i class="fas fa-paper-plane"></i> Send OTP Code
+                    </button>
+                </div>
+
+                <form asp-controller="Admin" asp-action="ResetPasswordWithOtp" method="post" id="otpResetForm">
+                    @Html.AntiForgeryToken()
+                    
+                    <div class="row-group">
+                        <div class="input-group">
+                            <label>OTP Verification Code</label>
+                            <input name="OtpCode" type="text" id="otpCode" placeholder="Enter 6-char OTP" required maxlength="6" minlength="6" autocomplete="off" />
+                        </div>
+                    </div>
+                    <div class="row-group">
+                        <div class="input-group">
+                            <label>New Password</label>
+                            <input name="NewPassword" type="password" required minlength="6" autocomplete="new-password" />
+                        </div>
+                        <div class="input-group">
+                            <label>Confirm New Password</label>
+                            <input name="ConfirmPassword" type="password" required autocomplete="new-password" />
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+                        <button type="button" onclick="showStandardForm()" class="password-toggle-btn" style="color: var(--text-light);">
+                            Back to Standard Change
+                        </button>
+                        <button type="submit" class="btn-primary" style="padding: 10px 24px; font-size: 14px; box-shadow: none; border-radius: 8px;">
+                            Reset Password
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div style="margin-top: 32px; display: flex; justify-content: flex-end;">
+            <button type="submit" class="btn-primary">
+                <i class="fas fa-save"></i> Save Profile
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        function previewFile() {
+            const preview = document.getElementById('avatarPreview');
+            const fileInput = document.getElementById('profilePictureInput');
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            if (file) {
+                const allowed = ['image/png', 'image/jpg', 'image/jpeg', 'image/gif'];
+                if (!allowed.includes(file.type)) {
+                    alert('Only image files (.jpg, .jpeg, .png, .gif) are allowed.');
+                    fileInput.value = '';
+                    return;
+                }
+
+                if (file.size > 2 * 1024 * 1024) {
+                    alert('Image size cannot exceed 2 MB.');
+                    fileInput.value = '';
+                    return;
+                }
+
+                reader.onloadend = function () {
+                    preview.src = reader.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function togglePasswordSection() {
+            const section = document.getElementById('passwordSection');
+            const btn = document.getElementById('btnTogglePassword');
+            const currentPassInput = document.getElementById('txtCurrentPassword');
+            const newPassInput = document.getElementById('txtNewPassword');
+            const confirmPassInput = document.getElementById('txtConfirmPassword');
+            const standardBlock = document.getElementById('standardPasswordFormBlock');
+            const otpBlock = document.getElementById('otpPasswordFormBlock');
+
+            if (section.style.display === 'none') {
+                section.style.display = 'block';
+                btn.innerHTML = '<i class="fas fa-times"></i> Cancel Change';
+                btn.style.color = 'var(--error)';
+                showStandardForm();
+            } else {
+                section.style.display = 'none';
+                btn.innerHTML = '<i class="fas fa-lock"></i> Change Password';
+                btn.style.color = 'var(--primary)';
+                currentPassInput.value = '';
+                newPassInput.value = '';
+                confirmPassInput.value = '';
+                standardBlock.style.display = 'none';
+                otpBlock.style.display = 'none';
+            }
+        }
+
+        function showOtpForm() {
+            document.getElementById('standardPasswordFormBlock').style.display = 'none';
+            document.getElementById('otpPasswordFormBlock').style.display = 'block';
+        }
+
+        function showStandardForm() {
+            document.getElementById('standardPasswordFormBlock').style.display = 'block';
+            document.getElementById('otpPasswordFormBlock').style.display = 'none';
+        }
+
+        async function sendOtp() {
+            const btn = document.getElementById('btnSendOtp');
+            const successNotice = document.getElementById('otpSuccessNotice');
+            const errorNotice = document.getElementById('otpErrorNotice');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            successNotice.style.display = 'none';
+            errorNotice.style.display = 'none';
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            try {
+                const response = await fetch('/Admin/SendPasswordOtp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams({
+                        '__RequestVerificationToken': token
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    successNotice.style.display = 'flex';
+                    document.getElementById('otpSuccessMessage').innerText = result.message;
+                    btn.innerHTML = '<i class="fas fa-sync-alt"></i> Resend OTP';
+                } else {
+                    errorNotice.style.display = 'block';
+                    errorNotice.innerText = result.message;
+                    btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send OTP';
+                }
+            } catch (err) {
+                console.error(err);
+                errorNotice.style.display = 'block';
+                errorNotice.innerText = 'Failed to connect to server. Please try again.';
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send OTP';
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // Auto uppercase OTP
+        document.addEventListener("DOMContentLoaded", function() {
+            const otpCode = document.getElementById("otpCode");
+            if (otpCode) {
+                otpCode.addEventListener("input", function() {
+                    this.value = this.value.toUpperCase();
+                });
+            }
+        });
+    </script>
+}

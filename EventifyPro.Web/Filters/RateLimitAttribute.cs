@@ -1,10 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Security.Claims;
-
 namespace EventifyPro.Web.Filters
 {
     [AttributeUsage(AttributeTargets.Method)]

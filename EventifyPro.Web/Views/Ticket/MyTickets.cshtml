@@ -1,0 +1,311 @@
+@model EventifyPro.Web.ViewModels.Ticket.PaginatedTicketsViewModel
+@{
+    var isAttendee = User.IsInRole(Eventify.Domain.Constants.RoleNames.Attendee);
+    Layout = isAttendee ? "_AttendeeLayout" : "_Layout";
+    ViewData["Title"] = "My Tickets";
+}
+
+@if (!isAttendee)
+{
+    <div class="bg-animation">
+        <div class="bg-blob blob-1"></div>
+        <div class="bg-blob blob-2"></div>
+        <div class="bg-blob blob-3"></div>
+    </div>
+
+    <div class="page-header">
+        <div class="container">
+            <h1>My <span class="gradient-text">Tickets</span></h1>
+            <p>Access your digital passes, view QR codes for entry, and download PDFs.</p>
+        </div>
+    </div>
+}
+else
+{
+    <div class="workspace-header">
+        <h1 class="workspace-title">My Tickets</h1>
+        <p class="workspace-subtitle">Access your digital passes, view QR codes for entry, and download PDFs.</p>
+    </div>
+}
+
+<div class="@(isAttendee ? "" : "container") tickets-section">
+    @if (TempData["TicketError"] != null)
+    {
+        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--error); color: var(--error); padding: 16px 20px; border-radius: 12px; margin-bottom: 30px; font-weight: 600;">
+            <i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i> @TempData["TicketError"]
+        </div>
+    }
+
+    @if (Model.ActiveCount + Model.UsedCount + Model.ExpiredCount + Model.CancelledCount == 0 && string.IsNullOrWhiteSpace(Model.SearchQuery))
+    {
+        <div class="empty-state-container" style="text-align: center; padding: 60px 20px; max-width: 500px; margin: 40px auto; background: var(--bg-card); border-radius: 20px; border: 1px solid var(--border); box-shadow: var(--shadow-sm);">
+            <div style="background: var(--soft-purple); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; color: var(--primary);">
+                <i class="fas fa-ticket-alt" style="font-size: 36px;"></i>
+            </div>
+            <h3 style="font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 8px;">No Tickets Purchased</h3>
+            <p style="color: var(--text-light); font-size: 14.5px; line-height: 1.6; margin-bottom: 30px;">You haven't booked any tickets yet. Explore Egypt's best events and book your spot now!</p>
+            <a href="/Events" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px; justify-content: center; text-decoration: none;">
+                <i class="fas fa-calendar-alt"></i> Browse Events
+            </a>
+        </div>
+    }
+    else
+    {
+        <!-- Search/Filter Panel -->
+        <div class="wallet-filters" style="margin-bottom: 24px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+            <form method="get" action="/Ticket/MyTickets" style="flex: 1; display: flex; gap: 8px;">
+                <input type="hidden" name="status" value="@Model.CurrentStatus" />
+                <input type="hidden" name="page" value="1" />
+                <div style="flex: 1; position: relative;">
+                    <i class="fas fa-search" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-light); font-size: 14px;"></i>
+                    <input type="text" name="search" id="ticketSearch" value="@Model.SearchQuery" placeholder="Search by Event Title or Ticket ID..." 
+                           style="width: 100%; padding: 12px 16px 12px 48px; border-radius: 12px; border: 1px solid var(--border); background: var(--white); font-family: inherit; font-size: 14px; transition: var(--transition);" />
+                </div>
+                <button type="submit" class="btn-primary" style="padding: 12px 20px;">Search</button>
+            </form>
+        </div>
+
+        <!-- Tabs Header -->
+        <div class="tabs" style="margin-bottom: 24px; display: flex; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+            <button class="tab-btn @(Model.CurrentStatus == "active" ? "active" : "")" onclick="switchTab('active')" style="display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 8px; border: none; font-weight: 600; font-size: 14px; cursor: pointer; transition: var(--transition);">
+                <i class="fas fa-ticket-alt"></i> Active (<span id="count-active">@Model.ActiveCount</span>)
+            </button>
+            <button class="tab-btn @(Model.CurrentStatus == "used" ? "active" : "")" onclick="switchTab('used')" style="display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 8px; border: none; font-weight: 600; font-size: 14px; cursor: pointer; transition: var(--transition);">
+                <i class="fas fa-check-double"></i> Used (<span id="count-used">@Model.UsedCount</span>)
+            </button>
+            <button class="tab-btn @(Model.CurrentStatus == "expired" ? "active" : "")" onclick="switchTab('expired')" style="display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 8px; border: none; font-weight: 600; font-size: 14px; cursor: pointer; transition: var(--transition);">
+                <i class="fas fa-calendar-times"></i> Expired (<span id="count-expired">@Model.ExpiredCount</span>)
+            </button>
+            <button class="tab-btn @(Model.CurrentStatus == "cancelled" ? "active" : "")" onclick="switchTab('cancelled')" style="display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 8px; border: none; font-weight: 600; font-size: 14px; cursor: pointer; transition: var(--transition);">
+                <i class="fas fa-times-circle"></i> Cancelled (<span id="count-cancelled">@Model.CancelledCount</span>)
+            </button>
+        </div>
+
+        <!-- List Container -->
+        <div class="tickets-list">
+            @if (!Model.Tickets.Any())
+            {
+                <div class="empty-state" style="text-align: center; padding: 40px 20px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border);">
+                    <i class="fas fa-ticket-alt" style="font-size: 48px; color: var(--text-light); margin-bottom: 16px; display: block;"></i>
+                    <h3 style="font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 8px;">No Tickets Found</h3>
+                    <p style="color: var(--text-light); font-size: 14px; margin-bottom: 0;">We couldn't find any @Model.CurrentStatus tickets matching your search.</p>
+                </div>
+            }
+            else
+            {
+                @foreach (var ticket in Model.Tickets)
+                {
+                    var status = "active";
+                    var statusLabel = "Confirmed & Active";
+                    var statusClass = "confirmed";
+                    var statusIcon = "fa-check-circle";
+                    var gradientBg = ticket.TicketTypeName.ToLower().Contains("vip") 
+                        ? "background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);" 
+                        : "background: var(--gradient);";
+
+                    if (ticket.BookingStatus == "Cancelled" || ticket.BookingStatus == "Refunded")
+                    {
+                        status = "cancelled";
+                        statusLabel = "Cancelled";
+                        statusClass = "cancelled";
+                        statusIcon = "fa-times-circle";
+                        gradientBg = "background: #ef4444;";
+                    }
+                    else if (ticket.IsUsed)
+                    {
+                        status = "used";
+                        statusLabel = "Scanned & Used";
+                        statusClass = "used";
+                        statusIcon = "fa-check-double";
+                        gradientBg = "background: #6b7280;";
+                    }
+                    else if (ticket.EventEndDate < DateTime.UtcNow)
+                    {
+                        status = "expired";
+                        statusLabel = "Expired";
+                        statusClass = "expired";
+                        statusIcon = "fa-calendar-times";
+                        gradientBg = "background: #9ca3af;";
+                    }
+
+                    var qrImageUrl = Url.Action("QRCode", "Ticket", new { id = ticket.Id }) ?? $"/Ticket/QRCode/{ticket.Id}";
+
+                    <div class="ticket-card" data-title="@ticket.EventTitle.ToLower()" data-id="@ticket.Id" data-status="@status" style="margin-bottom: 20px;">
+                        <!-- Left Panel: Icon/Decor -->
+                        <div class="ticket-left" style="@gradientBg">
+                            <span class="ticket-type-badge">@ticket.TicketTypeName</span>
+                            <i class="fas fa-ticket-alt"></i>
+                        </div>
+
+                        <!-- Middle Panel: Event details -->
+                        <div class="ticket-middle">
+                            <span class="ticket-status @statusClass">
+                                <i class="fas @statusIcon"></i> @statusLabel
+                            </span>
+                            <h3>@ticket.EventTitle</h3>
+                            
+                            <div class="ticket-info-row">
+                                <span><i class="fas fa-calendar-alt"></i> @ticket.EventDate.ToEgyptTime().ToString("MMMM dd, yyyy")</span>
+                                <span><i class="fas fa-clock"></i> @ticket.EventDate.ToEgyptTime().ToString("hh:mm tt")</span>
+                            </div>
+
+                            @if (ticket.IsUsed && ticket.UsedAt.HasValue)
+                            {
+                                <div style="font-size: 12px; color: var(--text-light); margin-bottom: 8px;">
+                                    Scanned on: <strong>@ticket.UsedAt.Value.ToEgyptTime().ToString("g")</strong>
+                                </div>
+                            }
+
+                            <div class="ticket-meta">
+                                <span>Ticket ID: <strong>EVT-@ticket.Id</strong></span>
+                                <span>Purchased: @ticket.CreatedAt.ToEgyptTime().ToString("yyyy-MM-dd")</span>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: QR Code and Actions -->
+                        <div class="ticket-right">
+                            @if (status == "active")
+                            {
+                                <div class="qr-preview" style="cursor: pointer;" onclick="openQrModal('EVT-@ticket.Id', '@ticket.QRCode', '@qrImageUrl')">
+                                    <img src="@qrImageUrl" alt="QR Code" style="width: 80px; height: 80px; border-radius: 8px;" />
+                                    <p style="font-size: 8px; margin-top: 4px;">Click to enlarge</p>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="qr-preview" style="opacity: 0.5;">
+                                    <i class="fas fa-qrcode" style="font-size: 40px; color: var(--text-light);"></i>
+                                    <p>Inactive</p>
+                                </div>
+                            }
+                            
+                            <div class="ticket-actions" style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px; width: 100%;">
+                                @if (status == "active")
+                                {
+                                    <button type="button" class="btn-primary btn-small btn-full quick-qr-btn" onclick="openQrModal('EVT-@ticket.Id', '@ticket.QRCode', '@qrImageUrl')" style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                        <i class="fas fa-qrcode"></i> View QR
+                                    </button>
+                                    <a href="/Ticket/Download/@ticket.Id" class="btn-outline btn-small btn-full" style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                        <i class="fas fa-download"></i> PDF
+                                    </a>
+                                }
+                                else if (status == "expired" || status == "used")
+                                {
+                                    <a href="/Review/Create?eventId=@ticket.EventId" class="btn-outline btn-small btn-full" style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                        <i class="fas fa-star"></i> Review
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+
+        <!-- Pagination Controls -->
+        @if (Model.TotalPages > 1)
+        {
+            <div class="pagination-container" style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 40px; margin-bottom: 20px;">
+                @if (Model.CurrentPage > 1)
+                {
+                    <a href="/Ticket/MyTickets?status=@Model.CurrentStatus&search=@Model.SearchQuery&page=@(Model.CurrentPage - 1)" class="btn-outline" style="padding: 8px 16px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </a>
+                }
+                
+                <span style="font-size: 14px; color: var(--text-light); font-weight: 600;">
+                    Page @Model.CurrentPage of @Model.TotalPages
+                </span>
+
+                @if (Model.CurrentPage < Model.TotalPages)
+                {
+                    <a href="/Ticket/MyTickets?status=@Model.CurrentStatus&search=@Model.SearchQuery&page=@(Model.CurrentPage + 1)" class="btn-outline" style="padding: 8px 16px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </a>
+                }
+            </div>
+        }
+
+        <!-- Beautiful QR Code Modal -->
+        <div id="qrModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
+            <div class="checkout-card" style="max-width: 400px; width: 90%; text-align: center; padding: 40px; border-radius: 28px; position: relative; background: var(--white); box-shadow: var(--shadow-lg);">
+                <button onclick="closeQrModal()" style="position: absolute; top: 16px; right: 16px; border: none; background: transparent; font-size: 20px; cursor: pointer; color: var(--text-light);">
+                    <i class="fas fa-times"></i>
+                </button>
+                <h3 id="modalTicketTitle" style="font-size: 22px; font-weight: 800; margin-bottom: 12px; color: var(--primary-dark);">Ticket Code</h3>
+                <p style="font-size: 14px; color: var(--text-light); margin-bottom: 30px;">Show this QR code at the event gate for verification.</p>
+                
+                <div style="background: var(--soft-purple); padding: 24px; border-radius: 20px; display: inline-block; box-shadow: var(--shadow-sm); margin-bottom: 24px;">
+                    <img id="modalQrImg" src="" alt="Ticket QR" style="width: 200px; height: 200px; display: block;" />
+                </div>
+                
+                <div style="font-family: monospace; font-size: 15px; font-weight: 700; color: var(--text); background: var(--bg); padding: 12px; border-radius: 10px; border: 1px dashed var(--border); word-break: break-all;" id="modalCodeText">
+                    -
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .tab-btn {
+        background: transparent;
+        color: var(--text-light);
+        border: 1px solid transparent;
+    }
+    .tab-btn.active {
+        background: var(--soft-purple) !important;
+        color: var(--primary) !important;
+        border-color: var(--border) !important;
+    }
+    .ticket-status.cancelled {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+    .ticket-status.used {
+        background: rgba(107, 114, 128, 0.1);
+        color: #6b7280;
+    }
+    .ticket-status.expired {
+        background: rgba(156, 163, 175, 0.1);
+        color: #4b5563;
+    }
+    .ticket-card.cancelled {
+        border-color: rgba(239, 68, 68, 0.2);
+    }
+</style>
+
+@section Scripts {
+    <script>
+        function switchTab(tab) {
+            const searchQuery = document.getElementById('ticketSearch') ? document.getElementById('ticketSearch').value : '';
+            window.location.href = `/Ticket/MyTickets?status=${tab}&search=${searchQuery}&page=1`;
+        }
+
+        function openQrModal(ticketId, qrValue, qrImageUrl) {
+            document.getElementById('modalTicketTitle').innerText = ticketId;
+            document.getElementById('modalQrImg').src = qrImageUrl;
+            document.getElementById('modalCodeText').innerText = qrValue;
+            document.getElementById('qrModal').style.display = 'flex';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const closeBtn = document.querySelector('#qrModal button');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', closeQrModal);
+            }
+        });
+
+        function closeQrModal() {
+            document.getElementById('qrModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(e) {
+            const modal = document.getElementById('qrModal');
+            if (e.target === modal) {
+                closeQrModal();
+            }
+        });
+    </script>
+}

@@ -1,0 +1,541 @@
+@model EventifyPro.Web.ViewModels.Admin.AdminUserDetailsViewModel
+@using Eventify.Domain.Enums
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "User Details";
+    ViewData["HeaderTitle"] = "User Account Profile 👤";
+    ViewData["HeaderSubtitle"] = "Detailed overview of profile, bookings, payments, and system activity logs.";
+
+    var returnUrl = ViewBag.ReturnUrl as string ?? "/Admin/Users";
+}
+
+@section Styles {
+    <style>
+        .details-container {
+            display: grid;
+            grid-template-columns: 1fr 2.2fr;
+            gap: 32px;
+            align-items: start;
+        }
+        @@media (max-width: 992px) {
+            .details-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Profile Sidebar Card */
+        .profile-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px 24px;
+            box-shadow: var(--shadow-sm);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+        .profile-avatar {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid var(--soft-purple);
+            box-shadow: var(--shadow-sm);
+            background: var(--light-purple);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        .profile-name {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 2px;
+        }
+        .profile-email {
+            font-size: 13.5px;
+            color: var(--text-light);
+            word-break: break-all;
+        }
+
+        .meta-list {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 16px;
+            border-top: 1px dashed var(--border);
+            padding-top: 20px;
+            text-align: left;
+        }
+        .meta-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+        .meta-label {
+            color: var(--text-light);
+            font-weight: 500;
+        }
+        .meta-value {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        /* Tabs Panel */
+        .tabs-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+        .tab-nav {
+            display: flex;
+            background: var(--soft-purple);
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+        }
+        .tab-btn {
+            background: transparent;
+            color: var(--text-light);
+            border: none;
+            padding: 18px 24px;
+            font-weight: 700;
+            font-size: 13.5px;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 3px solid transparent;
+        }
+        .tab-btn:hover {
+            color: var(--primary);
+            background: rgba(91, 33, 182, 0.02);
+        }
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background: white;
+        }
+        .tab-content {
+            padding: 28px;
+        }
+        .tab-panel {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* Tables & Lists inside Tabs */
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .details-table th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 11.5px;
+            font-weight: 700;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--border);
+        }
+        .details-table td {
+            padding: 14px 16px;
+            font-size: 13.5px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+            vertical-align: middle;
+        }
+        .details-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .details-table tbody tr:hover {
+            background: rgba(91, 33, 182, 0.01);
+        }
+
+        /* Badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .status-badge.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+        .status-badge.warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+        .status-badge.danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+
+        .role-tag {
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .role-tag.admin { background: rgba(220, 38, 38, 0.1); color: #dc2626; }
+        .role-tag.organizer { background: rgba(124, 58, 237, 0.1); color: var(--primary); }
+        .role-tag.attendee { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+        .role-tag.scanner { background: rgba(236, 72, 153, 0.1); color: #ec4899; }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: var(--soft-purple);
+            color: var(--primary-dark);
+            font-weight: 600;
+            font-size: 13.5px;
+            border-radius: 10px;
+            text-decoration: none;
+            border: 1px solid var(--border);
+            transition: var(--transition);
+            margin-bottom: 24px;
+            align-self: flex-start;
+        }
+        .btn-back:hover {
+            background: var(--light-purple);
+            transform: translateX(-4px);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-light);
+        }
+        .empty-state i {
+            font-size: 36px;
+            margin-bottom: 12px;
+            color: var(--accent);
+            opacity: 0.5;
+        }
+    </style>
+}
+
+<!-- Back Button -->
+<a href="@returnUrl" class="btn-back">
+    <i class="fas fa-arrow-left"></i> Back to Users List
+</a>
+
+<div class="details-container">
+    <!-- Profile Card -->
+    <div class="profile-card">
+        @if (!string.IsNullOrEmpty(Model.User.ProfileImageUrl))
+        {
+            <img src="@Model.User.ProfileImageUrl" alt="Profile Image" class="profile-avatar" />
+        }
+        else
+        {
+            <div class="profile-avatar">
+                @Model.User.FullName.Substring(0, Math.Min(2, Model.User.FullName.Length)).ToUpper()
+            </div>
+        }
+
+        <div>
+            <h3 class="profile-name">@Model.User.FullName</h3>
+            <span class="role-tag @Model.PrimaryRole.ToLower()">@Model.PrimaryRole</span>
+        </div>
+
+        <p class="profile-email"><i class="fa-regular fa-envelope"></i> @Model.User.Email</p>
+
+        <div class="meta-list">
+            <div class="meta-item">
+                <span class="meta-label">User ID:</span>
+                <span class="meta-value" style="font-family: monospace; font-size: 11px;">@Model.User.Id</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Phone:</span>
+                <span class="meta-value">@(Model.User.PhoneNumber ?? "N/A")</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Registered:</span>
+                <span class="meta-value">@Model.User.CreatedAt.ToEgyptTime().ToString("MMM dd, yyyy")</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Status:</span>
+                <span class="meta-value">
+                    @if (Model.User.LockoutEnd.HasValue && Model.User.LockoutEnd > DateTimeOffset.UtcNow)
+                    {
+                        <span class="status-badge danger"><i class="fas fa-lock"></i> Locked</span>
+                    }
+                    else if (Model.User.IsActive)
+                    {
+                        <span class="status-badge success"><i class="fas fa-circle" style="font-size: 7px;"></i> Active</span>
+                    }
+                    else
+                    {
+                        <span class="status-badge danger"><i class="fas fa-circle" style="font-size: 7px;"></i> Inactive</span>
+                    }
+                </span>
+            </div>
+            @if (Model.User.LockoutEnd.HasValue && Model.User.LockoutEnd > DateTimeOffset.UtcNow)
+            {
+                <div class="meta-item" style="flex-direction: column; gap: 4px; background: rgba(239, 68, 68, 0.05); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.1);">
+                    <span class="meta-label" style="font-size: 11px; color: var(--error);">Lockout Expiration:</span>
+                    <span class="meta-value" style="font-size: 11.5px; color: var(--error);">@Model.User.LockoutEnd.Value.ToEgyptTime().ToString("g")</span>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Tabs Content -->
+    <div class="tabs-card">
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="switchDetailsTab(event, 'tab-bookings')">
+                <i class="fas fa-ticket"></i> Bookings (@Model.Bookings.Count)
+            </button>
+            <button class="tab-btn" onclick="switchDetailsTab(event, 'tab-payments')">
+                <i class="fas fa-credit-card"></i> Payments (@Model.Payments.Count)
+            </button>
+            <button class="tab-btn" onclick="switchDetailsTab(event, 'tab-reviews')">
+                <i class="fas fa-star"></i> Reviews (@Model.Reviews.Count)
+            </button>
+            <button class="tab-btn" onclick="switchDetailsTab(event, 'tab-activity')">
+                <i class="fas fa-clipboard-list"></i> Activity Logs (@Model.AuditLogs.Count)
+            </button>
+        </div>
+
+        <div class="tab-content">
+            <!-- Bookings Panel -->
+            <div id="tab-bookings" class="tab-panel active">
+                @if (Model.Bookings.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="details-table">
+                        <thead>
+                            <tr>
+                                <th>Booking Ref</th>
+                                <th>Event</th>
+                                <th>Booking Date</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var booking in Model.Bookings)
+                            {
+                                var statusClass = booking.Status switch
+                                {
+                                    BookingStatus.Confirmed => "success",
+                                    BookingStatus.Pending => "warning",
+                                    BookingStatus.Cancelled => "danger",
+                                    BookingStatus.Refunded => "warning",
+                                    _ => ""
+                                };
+
+                                <tr>
+                                    <td style="font-family: monospace; font-weight: 700;">@booking.BookingReference</td>
+                                    <td style="font-weight: 600;">@(booking.Event?.Title ?? "Unknown Event")</td>
+                                    <td>@booking.BookingDate.ToEgyptTime().ToString("dd MMM yyyy")</td>
+                                    <td style="font-weight: 700;">@booking.TotalAmount.ToString("N2") EGP</td>
+                                    <td>
+                                        <span class="status-badge @statusClass">@booking.Status</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <i class="fas fa-ticket-simple"></i>
+                        <p style="margin-top: 10px; font-weight: 500;">No bookings found for this user.</p>
+                    </div>
+                }
+            </div>
+
+            <!-- Payments Panel -->
+            <div id="tab-payments" class="tab-panel">
+                @if (Model.Payments.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="details-table">
+                        <thead>
+                            <tr>
+                                <th>Txn Ref</th>
+                                <th>Method</th>
+                                <th>Paid Date</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var payment in Model.Payments)
+                            {
+                                var statusClass = payment.Status switch
+                                {
+                                    PaymentStatus.Completed => "success",
+                                    PaymentStatus.Pending => "warning",
+                                    PaymentStatus.Failed => "danger",
+                                    PaymentStatus.Refunded => "warning",
+                                    _ => ""
+                                };
+
+                                <tr>
+                                    <td style="font-family: monospace; font-weight: 600;">@(payment.TransactionId ?? "N/A")</td>
+                                    <td style="font-weight: 500; text-transform: uppercase;">@payment.Method</td>
+                                    <td>@payment.PaymentDate.ToEgyptTime().ToString("dd MMM yyyy, hh:mm tt")</td>
+                                    <td style="font-weight: 700; color: var(--primary-dark)">@payment.Amount.ToString("N2") EGP</td>
+                                    <td>
+                                        <span class="status-badge @statusClass">@payment.Status</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <i class="fas fa-wallet"></i>
+                        <p style="margin-top: 10px; font-weight: 500;">No payment transactions found.</p>
+                    </div>
+                }
+            </div>
+
+            <!-- Reviews Panel -->
+            <div id="tab-reviews" class="tab-panel">
+                @if (Model.Reviews.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="details-table">
+                        <thead>
+                            <tr>
+                                <th>Event</th>
+                                <th>Rating</th>
+                                <th>Comment</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var review in Model.Reviews)
+                            {
+                                <tr>
+                                    <td style="font-weight: 600; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@(review.Event?.Title ?? "Unknown Event")</td>
+                                    <td>
+                                        <span style="color: #fbbf24; font-weight: 700;">
+                                            @review.Rating <i class="fas fa-star" style="font-size: 11px;"></i>
+                                        </span>
+                                    </td>
+                                    <td style="font-style: italic; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="@review.Comment">
+                                        "@(string.IsNullOrWhiteSpace(review.Comment) ? "No comment" : review.Comment)"
+                                    </td>
+                                    <td>
+                                        @if (review.IsHidden)
+                                        {
+                                            <span class="status-badge danger">Hidden</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="status-badge success">Visible</span>
+                                        }
+                                    </td>
+                                    <td style="font-size: 12px; color: var(--text-light);">@review.CreatedAt.ToEgyptTime().ToString("yyyy-MM-dd")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <i class="fas fa-star-half-stroke"></i>
+                        <p style="margin-top: 10px; font-weight: 500;">No reviews written by this user.</p>
+                    </div>
+                }
+            </div>
+
+            <!-- Activity Logs Panel -->
+            <div id="tab-activity" class="tab-panel">
+                @if (Model.AuditLogs.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="details-table">
+                        <thead>
+                            <tr>
+                                <th>Action</th>
+                                <th>Table</th>
+                                <th>Entity ID</th>
+                                <th>Date</th>
+                                <th>IP Address</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var log in Model.AuditLogs)
+                            {
+                                var badgeClass = log.Action.ToLower() switch
+                                {
+                                    "insert" => "success",
+                                    "update" => "warning",
+                                    "delete" => "danger",
+                                    _ => ""
+                                };
+
+                                <tr>
+                                    <td>
+                                        <span class="status-badge @badgeClass">@log.Action</span>
+                                    </td>
+                                    <td style="font-weight: 600;">@log.TableName</td>
+                                    <td style="font-family: monospace; font-size: 12px;">@log.EntityId</td>
+                                    <td>@log.ChangedAt.ToEgyptTime().ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                    <td style="font-size: 12px; font-family: monospace;">@(log.IpAddress ?? "System")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <i class="fas fa-timeline"></i>
+                        <p style="margin-top: 10px; font-weight: 500;">No system logs associated with this user.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function switchDetailsTab(evt, tabId) {
+            // Remove active class from all buttons and panels
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+
+            // Set current active
+            evt.currentTarget.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+    </script>
+}

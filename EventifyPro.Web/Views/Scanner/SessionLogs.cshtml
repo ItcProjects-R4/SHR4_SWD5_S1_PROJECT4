@@ -1,0 +1,110 @@
+@model EventifyPro.Web.ViewModels.Scanner.SessionLogsViewModel
+@{
+    ViewData["Title"] = $"Session Scan Logs - {Model.EventTitle}";
+}
+
+<div class="bg-animation">
+    <div class="bg-blob blob-1"></div>
+    <div class="bg-blob blob-2"></div>
+    <div class="bg-blob blob-3"></div>
+</div>
+
+<div class="page-header">
+    <div class="container">
+        <h1>Session <span class="gradient-text">Scan Logs</span></h1>
+        <p>Review all tickets verified during your active scanning shift for <strong>@Model.EventTitle</strong>.</p>
+    </div>
+</div>
+
+<div class="container" style="padding-top: 40px; padding-bottom: 80px;">
+    @if (TempData["ScannerError"] != null)
+    {
+        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--error); color: var(--error); padding: 16px 20px; border-radius: 12px; margin-bottom: 30px; font-weight: 600;">
+            <i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i> @TempData["ScannerError"]
+        </div>
+    }
+
+    <div class="checkout-card" style="margin-bottom: 24px; padding: 30px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+            <h3><i class="fas fa-history"></i> Verification Log</h3>
+            <a href="/Scanner" class="btn-primary btn-small">
+                <i class="fas fa-qrcode"></i> Back to Scanner
+            </a>
+        </div>
+
+        @if (!Model.Logs.Data.Any())
+        {
+            <div class="empty-state" style="padding: 60px 20px;">
+                <i class="fas fa-clipboard-list"></i>
+                <h3>No Scans Yet</h3>
+                <p>No tickets have been verified during this session.</p>
+            </div>
+        }
+        else
+        {
+            <div class="scan-list" style="max-height: none; overflow-y: visible;">
+                @foreach (var log in Model.Logs.Data)
+                {
+                    var (statusClass, iconClass) = log.ScanResult.ToLower() switch
+                    {
+                        "valid" => ("success", "fa-check-circle"),
+                        "alreadyused" => ("warning", "fa-exclamation-circle"),
+                        _ => ("error", "fa-times-circle")
+                    };
+
+                    var statusLabel = log.ScanResult.ToLower() switch
+                    {
+                        "valid" => "Valid",
+                        "alreadyused" => "Already Used",
+                        _ => "Invalid / Denied"
+                    };
+
+                    <div class="scan-item @statusClass" style="margin-bottom: 12px; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <i class="fas @iconClass" style="font-size: 20px;"></i>
+                            <div>
+                                <h5 style="font-size: 15px; font-weight: 700; color: var(--text);">
+                                    @if (log.TicketId.HasValue)
+                                    {
+                                        <span>Ticket EVT-@log.TicketId.Value</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Raw Data: @(log.RawQRData ?? "Unknown Code")</span>
+                                    }
+                                </h5>
+                                <p style="font-size: 12px; color: var(--text-light); margin-top: 4px;">
+                                    Scanned at @log.ScannedAt.ToEgyptTime().ToString("hh:mm:ss tt")
+                                </p>
+                            </div>
+                        </div>
+                        <span class="status-tag @log.ScanResult.ToLower()" style="text-transform: uppercase;">
+                            @statusLabel
+                        </span>
+                    </div>
+                }
+            </div>
+
+            @if (Model.Logs.TotalPages > 1)
+            {
+                <div class="pagination-container" style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 30px;">
+                    @if (Model.Logs.HasPreviousPage)
+                    {
+                        <a href="/Scanner/SessionLogs?eventId=@Model.EventId&sessionStart=@Model.SessionStart.ToString("o")&page=@(Model.Logs.PageNumber - 1)" class="btn-outline btn-small" style="text-decoration: none;">
+                            <i class="fas fa-chevron-left"></i> Prev
+                        </a>
+                    }
+                    <span style="font-weight: 600; color: var(--text-light);">
+                        Page @Model.Logs.PageNumber of @Model.Logs.TotalPages
+                    </span>
+                    @if (Model.Logs.HasNextPage)
+                    {
+                        <a href="/Scanner/SessionLogs?eventId=@Model.EventId&sessionStart=@Model.SessionStart.ToString("o")&page=@(Model.Logs.PageNumber + 1)" class="btn-outline btn-small" style="text-decoration: none;">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </a>
+                    }
+                </div>
+            }
+        }
+    </div>
+</div>

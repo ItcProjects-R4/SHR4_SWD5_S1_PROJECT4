@@ -19,3 +19,8 @@ global using EventifyPro.DAL.AppDatabase;
 global using EventifyPro.DAL.Configurations;
 global using EventifyPro.DAL.Repositories.Implementation;
 global using EventifyPro.DAL.Repositories.Interfaces;
+global using System.Security.Claims;
+global using System.Text.Json;
+global using Eventify.Domain.Interfaces;
+global using Microsoft.AspNetCore.Http;
+global using Microsoft.EntityFrameworkCore.ChangeTracking;

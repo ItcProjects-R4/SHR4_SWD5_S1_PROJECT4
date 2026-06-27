@@ -1,4 +1,4 @@
-﻿namespace Eventify.Domain.Entities;
+namespace Eventify.Domain.Entities;
 
 /// <summary>
 /// Represents a category of tickets for an event with pricing and availability.
@@ -9,7 +9,7 @@
 /// Each type has its own pricing, quantity limit, and optional sale period. The RowVersion property
 /// supports optimistic concurrency to prevent overselling of tickets.
 /// </remarks>
-public class TicketType
+public class TicketType : AuditableEntity
 {
     /// <summary>
     /// Gets or sets the unique identifier for the ticket type.
@@ -52,9 +52,6 @@ public class TicketType
     /// </summary>
     /// <value>The row version used for concurrency control.</value>
     public byte[] RowVersion { get; set; } = [];
-
-    public DateTime CreatedAt { get; set; }
-    public DateTime? UpdatedAt { get; set; }
 
     // Navigation
     public Event Event { get; set; } = null!;

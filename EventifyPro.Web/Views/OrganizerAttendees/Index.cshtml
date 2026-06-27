@@ -1,0 +1,336 @@
+@model IEnumerable<EventifyPro.Web.ViewModels.Organizer.OrganizerAttendeeViewModel>
+@{
+    Layout = "_OrganizerLayout";
+    ViewData["Title"] = "Event Attendees";
+    ViewData["HeaderTitle"] = $"Attendees for: {ViewBag.EventTitle}";
+    ViewData["HeaderSubtitle"] = "View all successful bookings and guest details for this event.";
+    
+    int eventId = ViewBag.EventId;
+}
+
+@section Styles {
+    <style>
+        .table-card {
+            background: white;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            margin-top: 24px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .data-table th {
+            background: var(--bg);
+            padding: 16px 24px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid var(--border);
+        }
+        .data-table td {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14.5px;
+            color: var(--text);
+            vertical-align: middle;
+        }
+        .data-table tbody tr:hover {
+            background: var(--soft-purple);
+        }
+
+        .attendee-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .attendee-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--gradient);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        .attendee-name {
+            font-weight: 700;
+            color: var(--text);
+        }
+        .attendee-email {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 2px;
+        }
+
+        .ticket-badge {
+            background: rgba(124, 58, 237, 0.1);
+            color: var(--primary);
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 700;
+            display: inline-block;
+            margin-bottom: 4px;
+        }
+
+        .badge-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .filter-input:focus {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+        }
+
+        @@media print {
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            .sidebar, .dashboard-header, .header-actions, .filter-panel, .alert-banner, button {
+                display: none !important;
+            }
+            .dashboard-layout {
+                display: block !important;
+            }
+            .dashboard-main {
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .table-card {
+                box-shadow: none !important;
+                border: none !important;
+                margin-top: 0 !important;
+            }
+            .data-table th, .data-table td {
+                padding: 10px 12px !important;
+                border-bottom: 1px solid #ccc !important;
+            }
+        }
+    </style>
+}
+
+<div class="header-actions">
+    <a href="/Events/OrganizerIndex" class="btn-secondary" style="display: inline-flex; align-items: center; gap: 8px;">
+        <i class="fas fa-arrow-left"></i> Back to Events
+    </a>
+</div>
+
+<div class="filter-panel" style="background: white; border: 1px solid var(--border); border-radius: 20px; padding: 20px 24px; margin-bottom: 28px; margin-top: 24px; display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; box-shadow: var(--shadow-sm);">
+    <form method="get" action="/OrganizerAttendees/Index" class="filter-left" style="display: flex; gap: 16px; align-items: center; flex: 1;">
+        <input type="hidden" name="eventId" value="@eventId" />
+        <input type="text" name="searchTerm" class="filter-input" placeholder="Search by name, email, or order ID..." value="@Context.Request.Query["searchTerm"]" style="padding: 10px 16px; border-radius: 10px; border: 1px solid var(--border); font-family: inherit; font-size: 14px; outline: none; transition: var(--transition); min-width: 280px;" />
+        <button type="submit" class="btn-secondary">
+            <i class="fas fa-search"></i> Search
+        </button>
+        @if (!string.IsNullOrEmpty(Context.Request.Query["searchTerm"]))
+        {
+            <a href="/OrganizerAttendees/Index?eventId=@eventId" class="btn-secondary" style="border: none; background: transparent; color: var(--error) !important; box-shadow: none;">Clear</a>
+        }
+    </form>
+    <div style="display: flex; gap: 12px; align-items: center;">
+        <button class="btn-secondary" onclick="window.print()" style="display: inline-flex; align-items: center; gap: 8px;">
+            <i class="fas fa-print"></i> Print List
+        </button>
+        <div class="dropdown" style="position: relative; display: inline-block;">
+            <button type="button" class="btn-primary" onclick="toggleExportDropdown()" style="display: inline-flex; align-items: center; gap: 8px;">
+                <i class="fas fa-download"></i> Export <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
+            </button>
+            <div id="exportDropdownMenu" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 8px; background: white; border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-md); z-index: 100; min-width: 140px; overflow: hidden;">
+                <a href="/OrganizerAttendees/ExportAttendees?eventId=@eventId&format=csv" style="display: block; padding: 12px 16px; font-size: 13.5px; color: var(--text); text-decoration: none; transition: var(--transition);" onmouseover="this.style.background='var(--soft-purple)'" onmouseout="this.style.background='transparent'"><i class="fas fa-file-csv" style="color: #10b981; margin-right: 8px;"></i> CSV</a>
+                <a href="/OrganizerAttendees/ExportAttendees?eventId=@eventId&format=excel" style="display: block; padding: 12px 16px; font-size: 13.5px; color: var(--text); text-decoration: none; transition: var(--transition);" onmouseover="this.style.background='var(--soft-purple)'" onmouseout="this.style.background='transparent'"><i class="fas fa-file-excel" style="color: #3b82f6; margin-right: 8px;"></i> Excel</a>
+                <a href="/OrganizerAttendees/ExportAttendees?eventId=@eventId&format=pdf" style="display: block; padding: 12px 16px; font-size: 13.5px; color: var(--text); text-decoration: none; transition: var(--transition);" onmouseover="this.style.background='var(--soft-purple)'" onmouseout="this.style.background='transparent'"><i class="fas fa-file-pdf" style="color: #ef4444; margin-right: 8px;"></i> PDF</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="table-card">
+    @if (Model != null && Model.Any())
+    {
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Booking Reference</th>
+                    <th>Attendee</th>
+                    <th>Tickets Purchased</th>
+                    <th>Check-in Status</th>
+                    <th>Amount Paid</th>
+                    <th>Booking Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var booking in Model)
+                {
+                    <tr>
+                        <td>
+                            <span style="font-family: monospace; font-weight: 600; color: var(--primary-dark);">#@booking.BookingId.ToString("D6")</span>
+                            <br />
+                            <span class="badge-success" style="margin-top: 6px; display: inline-block;">Completed</span>
+                        </td>
+                        <td>
+                            <div class="attendee-info">
+                                <div class="attendee-avatar" style="@(!string.IsNullOrEmpty(booking.ProfileImageUrl) ? "background: transparent; overflow: hidden; padding: 0;" : "")">
+                                    @if (!string.IsNullOrEmpty(booking.ProfileImageUrl))
+                                    {
+                                        <img src="@booking.ProfileImageUrl" alt="@booking.AttendeeName" style="width: 100%; height: 100%; object-fit: cover;" />
+                                    }
+                                    else
+                                    {
+                                        @(booking.AttendeeName.Length > 0 ? booking.AttendeeName.Substring(0, 1).ToUpper() : "A")
+                                    }
+                                </div>
+                                <div>
+                                    <div class="attendee-name">@booking.AttendeeName</div>
+                                    <div class="attendee-email">@booking.AttendeeEmail</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            @if (booking.Tickets != null && booking.Tickets.Any())
+                            {
+                                var groupedTickets = booking.Tickets.GroupBy(t => t.TicketTypeName);
+                                foreach (var group in groupedTickets)
+                                {
+                                    <div class="ticket-badge">@group.Count()x @group.Key</div>
+                                }
+                            }
+                            else
+                            {
+                                <span>No Tickets</span>
+                            }
+                        </td>
+                        <td>
+                            @if (booking.Tickets != null && booking.Tickets.Any())
+                            {
+                                foreach (var ticket in booking.Tickets)
+                                {
+                                    <div style="margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
+                                        @if (ticket.IsUsed)
+                                        {
+                                            <span class="badge-success" style="padding: 2px 8px; font-size: 10px; display: inline-flex; align-items: center; gap: 4px;" title="Scanned at @ticket.UsedAt?.ToEgyptTime().ToString("yyyy-MM-dd HH:mm")">
+                                                <i class="fas fa-check-circle"></i> Scanned
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span style="background: rgba(239, 68, 68, 0.1); color: var(--error); padding: 2px 8px; border-radius: 50px; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                                                <i class="fas fa-clock"></i> Pending
+                                            </span>
+                                        }
+                                        <span style="font-size: 11px; color: var(--text-light); font-family: monospace;">#@ticket.TicketId.ToString("D5")</span>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <span style="font-style: italic; color: var(--text-light); font-size: 12px;">N/A</span>
+                            }
+                        </td>
+                        <td>
+                            <span style="font-weight: 600;">@booking.TotalAmount.ToString("0.00") EGP</span>
+                        </td>
+                        <td>
+                            @booking.BookingDate.ToEgyptTime().ToString("MMM dd, yyyy HH:mm")
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        @if (ViewBag.TotalPages > 1)
+        {
+            <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-top: 1px solid var(--border); background: var(--bg); border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;">
+                <div style="font-size: 13.5px; color: var(--text-light);">
+                    Showing @(((int)ViewBag.CurrentPage - 1) * 10 + 1) to @Math.Min((int)ViewBag.CurrentPage * 10, (int)ViewBag.TotalCount) of @ViewBag.TotalCount entries
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    @if (ViewBag.CurrentPage > 1)
+                    {
+                        <a href="/OrganizerAttendees/Index?eventId=@eventId&searchTerm=@ViewBag.SearchTerm&pageNumber=@(ViewBag.CurrentPage - 1)" class="btn-secondary" style="padding: 6px 12px; font-size: 13px;">Previous</a>
+                    }
+                    else
+                    {
+                        <span class="btn-secondary" style="padding: 6px 12px; font-size: 13px; opacity: 0.5; cursor: not-allowed; pointer-events: none;">Previous</span>
+                    }
+
+                    @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                    {
+                        if (i == ViewBag.CurrentPage)
+                        {
+                            <span class="btn-primary" style="padding: 6px 12px; font-size: 13px; cursor: default; border-radius: 8px; border: none; color: white;">@i</span>
+                        }
+                        else
+                        {
+                            <a href="/OrganizerAttendees/Index?eventId=@eventId&searchTerm=@ViewBag.SearchTerm&pageNumber=@i" class="btn-secondary" style="padding: 6px 12px; font-size: 13px; border-radius: 8px;">@i</a>
+                        }
+                    }
+
+                    @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+                    {
+                        <a href="/OrganizerAttendees/Index?eventId=@eventId&searchTerm=@ViewBag.SearchTerm&pageNumber=@(ViewBag.CurrentPage + 1)" class="btn-secondary" style="padding: 6px 12px; font-size: 13px;">Next</a>
+                    }
+                    else
+                    {
+                        <span class="btn-secondary" style="padding: 6px 12px; font-size: 13px; opacity: 0.5; cursor: not-allowed; pointer-events: none;">Next</span>
+                    }
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div style="text-align: center; padding: 60px 20px;">
+            <div style="width: 80px; height: 80px; background: var(--soft-purple); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: var(--primary); font-size: 32px;">
+                <i class="fas fa-users"></i>
+            </div>
+            <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 8px;">No Attendees Yet</h3>
+            <p style="color: var(--text-light); margin-bottom: 24px; max-width: 400px; margin-left: auto; margin-right: auto;">
+                There are no completed bookings for this event yet. Once attendees purchase tickets, they will appear here.
+            </p>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        function toggleExportDropdown() {
+            const menu = document.getElementById('exportDropdownMenu');
+            if (menu) {
+                if (menu.style.display === 'none' || !menu.style.display) {
+                    menu.style.display = 'block';
+                } else {
+                    menu.style.display = 'none';
+                }
+            }
+        }
+
+        window.addEventListener('click', function(e) {
+            const dropdown = document.querySelector('.dropdown');
+            if (dropdown && !dropdown.contains(e.target)) {
+                const menu = document.getElementById('exportDropdownMenu');
+                if (menu) menu.style.display = 'none';
+            }
+        });
+    </script>
+}

@@ -1,0 +1,597 @@
+@model IEnumerable<Eventify.Domain.Entities.Review>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Manage Reviews";
+    ViewData["HeaderTitle"] = "Manage Reviews 🛡️";
+    ViewData["HeaderSubtitle"] = "Read, hide, or delete attendee feedback reviews.";
+
+    var searchTerm = Context.Request.Query["searchTerm"].ToString();
+    var ratingFilter = Context.Request.Query["ratingFilter"].ToString();
+    var hiddenFilter = Context.Request.Query["hiddenFilter"].ToString();
+}
+
+@section Styles {
+    <style>
+        .reviews-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+        }
+        .review-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+            position: relative;
+        }
+        .review-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .star-rating {
+            color: #fbbf24;
+            font-size: 14px;
+            display: flex;
+            gap: 2px;
+        }
+
+        .status-badge {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .status-badge.visible {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+        .status-badge.hidden {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+
+        .moderation-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: auto;
+            padding-top: 16px;
+            border-top: 1px dashed var(--border);
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .btn-action.approve {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+        .btn-action.approve:hover {
+            background: var(--success);
+            color: white;
+        }
+        .btn-action.flag {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+        .btn-action.flag:hover {
+            background: var(--warning);
+            color: white;
+        }
+        .btn-action.delete {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+        .btn-action.delete:hover {
+            background: var(--error);
+            color: white;
+        }
+
+        /* Search Panel */
+        .filter-panel {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 20px 24px;
+            margin-bottom: 28px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+            box-shadow: var(--shadow-sm);
+        }
+        .filter-input {
+            padding: 10px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            transition: var(--transition);
+        }
+        .filter-input:focus {
+            border-color: var(--primary);
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 28px;
+            border-radius: 50px;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+            background: var(--gradient);
+            color: var(--white);
+            box-shadow: 0 8px 25px rgba(124, 58, 237, 0.35);
+            text-decoration: none;
+        }
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(124, 58, 237, 0.5);
+        }
+        .btn-small {
+            padding: 8px 18px;
+            font-size: 13px;
+        }
+
+        /* Floating Bulk Bar */
+        .bulk-bar {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 700px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 16px 24px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+            z-index: 999;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            opacity: 0;
+            pointer-events: none;
+        }
+        .bulk-bar.active {
+            bottom: 24px;
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .bulk-bar-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .bulk-bar-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .bulk-bar-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        .btn-bulk {
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-bulk.approve {
+            background: var(--success);
+            color: white;
+        }
+        .btn-bulk.approve:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        .btn-bulk.delete {
+            background: var(--error);
+            color: white;
+        }
+        .btn-bulk.delete:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        .btn-bulk.cancel {
+            background: var(--soft-purple);
+            color: var(--primary);
+        }
+        .btn-bulk.cancel:hover {
+            background: var(--light-purple);
+        }
+    </style>
+}
+
+<!-- Filter Panel -->
+<form method="get" class="filter-panel">
+    <div style="display: flex; gap: 10px; align-items: center; flex: 1; min-width: 250px;">
+        <i class="fas fa-search" style="color: var(--text-light);"></i>
+        <input type="text" name="searchTerm" value="@searchTerm" placeholder="Search by comment or event title..." class="filter-input" style="flex: 1;" />
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <span style="font-size: 13px; font-weight: 600; color: var(--text-light);">Rating:</span>
+        <select name="ratingFilter" class="filter-input" onchange="this.form.submit()">
+            <option value="">All Ratings</option>
+            <option value="5" selected="@(ratingFilter == "5")">5 Stars</option>
+            <option value="4" selected="@(ratingFilter == "4")">4 Stars</option>
+            <option value="3" selected="@(ratingFilter == "3")">3 Stars</option>
+            <option value="2" selected="@(ratingFilter == "2")">2 Stars</option>
+            <option value="1" selected="@(ratingFilter == "1")">1 Star</option>
+        </select>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <span style="font-size: 13px; font-weight: 600; color: var(--text-light);">Status:</span>
+        <select name="hiddenFilter" class="filter-input" onchange="this.form.submit()">
+            <option value="">All Reviews</option>
+            <option value="false" selected="@(hiddenFilter == "false")">Visible Only</option>
+            <option value="true" selected="@(hiddenFilter == "true")">Hidden Only</option>
+        </select>
+    </div>
+    <button type="submit" class="btn-primary btn-small">
+        <i class="fas fa-filter"></i> Filter
+    </button>
+    @if (!string.IsNullOrEmpty(searchTerm) || !string.IsNullOrEmpty(ratingFilter) || !string.IsNullOrEmpty(hiddenFilter))
+    {
+        <a href="/Admin/Reviews" class="btn-secondary btn-small">
+            <i class="fas fa-times"></i> Clear
+        </a>
+    }
+</form>
+
+<!-- Reviews Grid Controls -->
+@if (Model.Any())
+{
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 8px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" id="selectAllReviews" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary);" />
+            <label for="selectAllReviews" style="font-size: 14px; font-weight: 700; color: var(--text); cursor: pointer; user-select: none;">Select All Reviews</label>
+        </div>
+        <div id="selectionCount" style="font-size: 13.5px; font-weight: 600; color: var(--text-light); display: none;">
+            <span id="checkedCount">0</span> selected
+        </div>
+    </div>
+}
+
+<!-- Reviews Grid -->
+@if (Model.Any())
+{
+    <div class="reviews-grid">
+        @foreach (var review in Model)
+        {
+            <div class="review-card">
+                <!-- Status Badge -->
+                @if (review.IsHidden)
+                {
+                    <span class="status-badge hidden">Hidden</span>
+                }
+                else
+                {
+                    <span class="status-badge visible">Visible</span>
+                }
+
+                <!-- Reviewer Meta -->
+                <div style="display: flex; align-items: center; gap: 12px; margin-top: 4px;">
+                    <input type="checkbox" class="review-checkbox" value="@review.Id" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary); flex-shrink: 0;" />
+                    <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--soft-purple); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; border: 1px solid var(--border); flex-shrink: 0;">
+                        @(review.User?.FullName?.Substring(0, Math.Min(2, review.User.FullName.Length)).ToUpper() ?? "US")
+                    </div>
+                    <div>
+                        <h4 style="font-size: 14px; font-weight: 700;">
+                            @if (!string.IsNullOrEmpty(review.UserId))
+                            {
+                                <a href="@Url.Action("UserDetails", "AdminUsers", new { id = review.UserId, returnUrl = Context.Request.Path + Context.Request.QueryString })" class="user-details-link" style="color: var(--primary); text-decoration: none;">@(review.User?.FullName ?? "Anonymous User")</a>
+                            }
+                            else
+                            {
+                                @(review.User?.FullName ?? "Anonymous User")
+                            }
+                        </h4>
+                        <p style="font-size: 11px; color: var(--text-light);">Reviewed on @review.CreatedAt.ToEgyptTime().ToString("MMM dd, yyyy")</p>
+                    </div>
+                </div>
+
+                <!-- Star Rating -->
+                <div class="star-rating">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        if (i <= review.Rating)
+                        {
+                            <i class="fas fa-star"></i>
+                        }
+                        else
+                        {
+                            <i class="far fa-star"></i>
+                        }
+                    }
+                </div>
+
+                <!-- Event Details -->
+                <div>
+                    <h5 style="font-size: 13px; font-weight: 700; color: var(--primary-dark)">
+                        <i class="fas fa-calendar-alt" style="margin-right: 6px;"></i> @(review.Event?.Title ?? "Unknown Event")
+                    </h5>
+                </div>
+
+                <!-- Comment Content -->
+                <div style="font-size: 13.5px; line-height: 1.6; color: var(--text-light); background: var(--soft-purple); padding: 14px; border-radius: 12px; border: 1px solid var(--border); flex-grow: 1; font-style: italic;">
+                    "@(string.IsNullOrWhiteSpace(review.Comment) ? "No comment text provided." : review.Comment)"
+                </div>
+
+                <!-- Moderation Action Controls -->
+                <div class="moderation-actions">
+                    @if (review.IsHidden)
+                    {
+                        <form asp-controller="AdminReviews" asp-action="ApproveReview" method="post" style="flex: 1;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="reviewId" value="@review.Id" />
+                            <input type="hidden" name="searchTerm" value="@searchTerm" />
+                            <input type="hidden" name="ratingFilter" value="@ratingFilter" />
+                            <input type="hidden" name="hiddenFilter" value="@hiddenFilter" />
+                            <input type="hidden" name="page" value="@ViewBag.PageNumber" />
+                            <button type="submit" class="btn-action approve">
+                                <i class="fas fa-check"></i> Approve
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form asp-controller="AdminReviews" asp-action="FlagReview" method="post" style="flex: 1;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="reviewId" value="@review.Id" />
+                            <input type="hidden" name="searchTerm" value="@searchTerm" />
+                            <input type="hidden" name="ratingFilter" value="@ratingFilter" />
+                            <input type="hidden" name="hiddenFilter" value="@hiddenFilter" />
+                            <input type="hidden" name="page" value="@ViewBag.PageNumber" />
+                            <button type="submit" class="btn-action flag">
+                                <i class="fas fa-eye-slash"></i> Hide
+                            </button>
+                        </form>
+                    }
+
+                    <form asp-controller="AdminReviews" asp-action="DeleteReview" method="post" style="flex: 1;" onsubmit="return confirm('Are you sure you want to permanently delete this review?')">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="reviewId" value="@review.Id" />
+                        <input type="hidden" name="searchTerm" value="@searchTerm" />
+                        <input type="hidden" name="ratingFilter" value="@ratingFilter" />
+                        <input type="hidden" name="hiddenFilter" value="@hiddenFilter" />
+                        <input type="hidden" name="page" value="@ViewBag.PageNumber" />
+                        <button type="submit" class="btn-action delete">
+                            <i class="fas fa-trash-alt"></i> Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Pagination Controls -->
+    @if (ViewBag.TotalPages > 1)
+    {
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 24px; flex-wrap: wrap; gap: 16px; padding: 0 0 24px;">
+            <div style="font-size: 13px; color: var(--text-light); font-weight: 500;">
+                Showing Page <b>@ViewBag.PageNumber</b> of <b>@ViewBag.TotalPages</b> (@ViewBag.TotalCount total reviews)
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                @if (ViewBag.PageNumber > 1)
+                {
+                    <a href="@Url.Action("Reviews", new { page = ViewBag.PageNumber - 1, searchTerm = searchTerm, ratingFilter = ratingFilter, hiddenFilter = hiddenFilter })" class="btn-primary btn-small" style="background: var(--soft-purple); color: var(--primary); box-shadow: none; border: 1px solid var(--border); padding: 8px 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-chevron-left"></i> Prev
+                    </a>
+                }
+                else
+                {
+                    <span class="btn-primary btn-small" style="background: var(--border); color: var(--text-light); box-shadow: none; cursor: not-allowed; border: 1px solid var(--border); opacity: 0.6; padding: 8px 14px; display: inline-flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-chevron-left"></i> Prev
+                    </span>
+                }
+
+                @{
+                    int startPage = Math.Max(1, ViewBag.PageNumber - 2);
+                    int endPage = Math.Min(ViewBag.TotalPages, ViewBag.PageNumber + 2);
+                }
+                @if (startPage > 1)
+                {
+                    <a href="@Url.Action("Reviews", new { page = 1, searchTerm = searchTerm, ratingFilter = ratingFilter, hiddenFilter = hiddenFilter })" class="btn-primary btn-small" style="background: var(--soft-purple); color: var(--primary); box-shadow: none; border: 1px solid var(--border); padding: 8px 14px; text-decoration: none;">1</a>
+                    if (startPage > 2)
+                    {
+                        <span style="align-self: center; color: var(--text-light); margin: 0 4px;">...</span>
+                    }
+                }
+                @for (int i = startPage; i <= endPage; i++)
+                {
+                    if (i == ViewBag.PageNumber)
+                    {
+                        <span class="btn-primary btn-small" style="box-shadow: none; padding: 8px 14px; color: white; background: var(--gradient);">@i</span>
+                    }
+                    else
+                    {
+                        <a href="@Url.Action("Reviews", new { page = i, searchTerm = searchTerm, ratingFilter = ratingFilter, hiddenFilter = hiddenFilter })" class="btn-primary btn-small" style="background: var(--soft-purple); color: var(--primary); box-shadow: none; border: 1px solid var(--border); padding: 8px 14px; text-decoration: none;">@i</a>
+                    }
+                }
+                @if (endPage < ViewBag.TotalPages)
+                {
+                    if (endPage < ViewBag.TotalPages - 1)
+                    {
+                        <span style="align-self: center; color: var(--text-light); margin: 0 4px;">...</span>
+                    }
+                    <a href="@Url.Action("Reviews", new { page = ViewBag.TotalPages, searchTerm = searchTerm, ratingFilter = ratingFilter, hiddenFilter = hiddenFilter })" class="btn-primary btn-small" style="background: var(--soft-purple); color: var(--primary); box-shadow: none; border: 1px solid var(--border); padding: 8px 14px; text-decoration: none;">@ViewBag.TotalPages</a>
+                }
+
+                @if (ViewBag.PageNumber < ViewBag.TotalPages)
+                {
+                    <a href="@Url.Action("Reviews", new { page = ViewBag.PageNumber + 1, searchTerm = searchTerm, ratingFilter = ratingFilter, hiddenFilter = hiddenFilter })" class="btn-primary btn-small" style="background: var(--soft-purple); color: var(--primary); box-shadow: none; border: 1px solid var(--border); padding: 8px 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </a>
+                }
+                else
+                {
+                    <span class="btn-primary btn-small" style="background: var(--border); color: var(--text-light); box-shadow: none; cursor: not-allowed; border: 1px solid var(--border); opacity: 0.6; padding: 8px 14px; display: inline-flex; align-items: center; gap: 6px;">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </span>
+                }
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div style="text-align: center; padding: 48px; color: var(--text-light); background: white; border-radius: 20px; border: 1px solid var(--border);">
+        <i class="fas fa-comment-slash" style="font-size: 44px; color: var(--accent); margin-bottom: 16px;"></i>
+        <h3 style="font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 4px;">No Reviews Found</h3>
+        <p style="font-size: 14px;">We couldn't find any reviews matching your search criteria.</p>
+    </div>
+}
+
+<!-- Floating Bulk Actions Bar -->
+<div id="bulkActionsBar" class="bulk-bar">
+    <div class="bulk-bar-content">
+        <div class="bulk-bar-info">
+            <i class="fas fa-info-circle" style="color: var(--primary); font-size: 18px;"></i>
+            <span>Selected <b id="bulkCount">0</b> reviews</span>
+        </div>
+        <div class="bulk-bar-buttons">
+            <button type="button" onclick="submitBulkAction('Approve')" class="btn-bulk approve">
+                <i class="fas fa-check"></i> Approve Selected
+            </button>
+            <button type="button" onclick="submitBulkAction('Delete')" class="btn-bulk delete">
+                <i class="fas fa-trash-alt"></i> Delete Selected
+            </button>
+            <button type="button" onclick="clearSelection()" class="btn-bulk cancel">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden Bulk Forms -->
+<form id="bulkApproveForm" asp-controller="AdminReviews" asp-action="BulkApproveReviews" method="post" style="display: none;">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="searchTerm" value="@searchTerm" />
+    <input type="hidden" name="ratingFilter" value="@ratingFilter" />
+    <input type="hidden" name="hiddenFilter" value="@hiddenFilter" />
+    <input type="hidden" name="page" value="@ViewBag.PageNumber" />
+    <div id="bulkApproveIdsContainer"></div>
+</form>
+
+<form id="bulkDeleteForm" asp-controller="AdminReviews" asp-action="BulkDeleteReviews" method="post" style="display: none;">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="searchTerm" value="@searchTerm" />
+    <input type="hidden" name="ratingFilter" value="@ratingFilter" />
+    <input type="hidden" name="hiddenFilter" value="@hiddenFilter" />
+    <input type="hidden" name="page" value="@ViewBag.PageNumber" />
+    <div id="bulkDeleteIdsContainer"></div>
+</form>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const selectAllReviews = document.getElementById("selectAllReviews");
+            const reviewCheckboxes = document.querySelectorAll(".review-checkbox");
+            const bulkActionsBar = document.getElementById("bulkActionsBar");
+            const bulkCount = document.getElementById("bulkCount");
+            const checkedCount = document.getElementById("checkedCount");
+            const selectionCount = document.getElementById("selectionCount");
+
+            function updateSelectionState() {
+                const checkedBoxes = document.querySelectorAll(".review-checkbox:checked");
+                const count = checkedBoxes.length;
+
+                if (count > 0) {
+                    bulkActionsBar.classList.add("active");
+                    bulkCount.innerText = count;
+                    if (checkedCount) checkedCount.innerText = count;
+                    if (selectionCount) selectionCount.style.display = "block";
+                } else {
+                    bulkActionsBar.classList.remove("active");
+                    if (selectionCount) selectionCount.style.display = "none";
+                }
+
+                if (selectAllReviews) {
+                    selectAllReviews.checked = count === reviewCheckboxes.length && reviewCheckboxes.length > 0;
+                }
+            }
+
+            if (selectAllReviews) {
+                selectAllReviews.addEventListener("change", function () {
+                    reviewCheckboxes.forEach(cb => cb.checked = selectAllReviews.checked);
+                    updateSelectionState();
+                });
+            }
+
+            reviewCheckboxes.forEach(cb => {
+                cb.addEventListener("change", updateSelectionState);
+            });
+
+            window.clearSelection = function () {
+                reviewCheckboxes.forEach(cb => cb.checked = false);
+                if (selectAllReviews) selectAllReviews.checked = false;
+                updateSelectionState();
+            };
+
+            window.submitBulkAction = function (action) {
+                const checkedBoxes = document.querySelectorAll(".review-checkbox:checked");
+                if (checkedBoxes.length === 0) return;
+
+                const confirmationText = action === 'Delete'
+                    ? `Are you sure you want to permanently delete all ${checkedBoxes.length} selected reviews?`
+                    : `Are you sure you want to approve all ${checkedBoxes.length} selected reviews?`;
+
+                window.confirmAction(confirmationText, function() {
+                    const formId = action === 'Approve' ? 'bulkApproveForm' : 'bulkDeleteForm';
+                    const containerId = action === 'Approve' ? 'bulkApproveIdsContainer' : 'bulkDeleteIdsContainer';
+                    
+                    const form = document.getElementById(formId);
+                    const container = document.getElementById(containerId);
+                    container.innerHTML = '';
+
+                    checkedBoxes.forEach(cb => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'reviewIds';
+                        input.value = cb.value;
+                        container.appendChild(input);
+                    });
+
+                    form.submit();
+                });
+            };
+        });
+    </script>
+}

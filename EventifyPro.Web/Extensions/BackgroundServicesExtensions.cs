@@ -1,5 +1,3 @@
-using EventifyPro.Web.BackgroundServices;
-
 namespace EventifyPro.Web.Extensions;
 
 /// <summary>
@@ -12,11 +10,12 @@ public static class BackgroundServicesExtensions
     /// </summary>
     public static IServiceCollection AddApplicationBackgroundServices(this IServiceCollection services)
     {
-        services.AddHostedService<OutboxProcessor>();
         services.AddHostedService<EventReminderProcessor>();
         services.AddHostedService<WeeklyDigestProcessor>();
         services.AddHostedService<PostEventProcessor>();
         services.AddHostedService<PendingBookingExpirationWorker>();
+        services.AddHostedService<UnconfirmedUsersCleanupWorker>();
+        services.AddHostedService<WaitingListExpirationProcessor>();
 
         return services;
     }

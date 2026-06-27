@@ -100,4 +100,18 @@ public record BookingDetailDto
     /// Gets or sets the list of booking items included in this booking.
     /// </summary>
     public List<BookingItemResponseDto> Items { get; init; } = [];
+
+    // Timeline Tracking Properties
+    public DateTime? PaymentDate { get; init; }
+    public DateTime? TicketsGeneratedDate { get; init; }
+    public DateTime EventStartDate { get; init; }
+    public DateTime EventEndDate { get; init; }
+    public string EventLocation { get; init; } = string.Empty;
+    public string EventCity { get; init; } = string.Empty;
+    public string EventDescription { get; init; } = string.Empty;
+    public DateTime? TicketScannedDate { get; init; }
+    public bool IsPaymentConfirmed { get; init; }
+    public bool AreTicketsGenerated { get; init; }
+    public bool IsEventPassed { get; init; }
+    public bool IsTicketScanned { get; init; }
 }

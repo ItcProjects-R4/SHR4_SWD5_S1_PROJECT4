@@ -1,0 +1,567 @@
+@model EventifyPro.Web.ViewModels.Organizer.OrganizerPayoutsViewModel
+@{
+    Layout = "_OrganizerLayout";
+    ViewData["Title"] = "Organizer Payouts";
+    ViewData["HeaderTitle"] = "Payouts & Financials 💳";
+    ViewData["HeaderSubtitle"] = "View your earnings, link accounts, and request withdrawals.";
+}
+
+@section Styles {
+    <style>
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 24px;
+            border-radius: 20px;
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: var(--soft-purple);
+            border-radius: 50%;
+            transform: translate(40px, -40px);
+            opacity: 0.5;
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 22px;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 1;
+            transition: var(--transition);
+        }
+
+        .icon-green { background: linear-gradient(135deg, #10b981, #34d399); }
+        .icon-blue { background: linear-gradient(135deg, #3b82f6, #60a5fa); }
+        .icon-orange { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+
+        .stat-info {
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-info p {
+            font-size: 13px;
+            color: var(--text-light);
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+
+        .stat-info h3 {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 6px;
+            color: var(--text);
+        }
+
+        .payouts-layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            margin-bottom: 28px;
+        }
+
+        @@media (max-width: 992px) {
+            .payouts-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .table-card {
+            background: white;
+            padding: 28px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            overflow-x: auto;
+        }
+
+        .table-card h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            padding: 14px 12px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .data-table td {
+            padding: 16px 12px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+            color: var(--text);
+        }
+
+        .data-table tbody tr:hover {
+            background: var(--soft-purple);
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 700;
+            display: inline-block;
+            text-transform: uppercase;
+        }
+
+        .status-badge.completed {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .status-badge.pending {
+            background: rgba(245, 158, 11, 0.1);
+            color: #d97706;
+        }
+
+        .status-badge.rejected {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+
+        .sidebar-card {
+            background: white;
+            padding: 28px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .sidebar-card h3 {
+            font-size: 16px;
+            font-weight: 700;
+            border-bottom: 1px dashed var(--border);
+            padding-bottom: 12px;
+            color: var(--primary-dark);
+        }
+
+        .bank-details-box {
+            background: var(--soft-purple);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .bank-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        /* Modal styling */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-card {
+            background: white;
+            border-radius: 24px;
+            padding: 32px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(226, 232, 240, 0.5);
+            transform: scale(0.85) translateY(20px);
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .modal-overlay.active .modal-card {
+            transform: scale(1) translateY(0);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 14.5px;
+            color: var(--text);
+            background: var(--bg);
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+            background: white;
+        }
+
+        .alert-success, .alert-error {
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            font-weight: 600;
+            font-size: 14.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+    </style>
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert-success">
+        <i class="fas fa-check-circle"></i>
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert-error">
+        <i class="fas fa-exclamation-circle"></i>
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon icon-green">
+            <i class="fas fa-coins"></i>
+        </div>
+        <div class="stat-info">
+            <p>Total Earnings</p>
+            <h3>EGP @Model.TotalEarnings.ToString("N2")</h3>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon icon-blue">
+            <i class="fas fa-wallet"></i>
+        </div>
+        <div class="stat-info">
+            <p>Available Balance</p>
+            <h3>EGP @Model.AvailableBalance.ToString("N2")</h3>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon icon-orange">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-info">
+            <p>Pending Balance</p>
+            <h3>EGP @Model.PendingBalance.ToString("N2")</h3>
+        </div>
+    </div>
+</div>
+
+<div class="payouts-layout">
+    <!-- Payout History -->
+    <div class="table-card">
+        <h3>Payout History</h3>
+        @if (Model.PayoutHistory.Any())
+        {
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Transaction ID</th>
+                        <th>Amount</th>
+                        <th>Date Requested</th>
+                        <th>Method</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var payout in Model.PayoutHistory)
+                    {
+                        <tr>
+                            <td style="font-family: monospace; font-weight: 700; color: var(--primary-dark);">#PAY-@payout.Id</td>
+                            <td style="font-weight: 700;">EGP @payout.Amount.ToString("N2")</td>
+                            <td>@payout.RequestedAt.ToEgyptTime().ToString("MMM dd, yyyy HH:mm")</td>
+                            <td>@payout.Method</td>
+                            <td>
+                                <span class="status-badge @payout.Status.ToLower()">
+                                    <i class="fas fa-circle" style="font-size: 5px; margin-right: 4px; vertical-align: middle;"></i> @payout.Status
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div style="text-align: center; padding: 48px; color: var(--text-light);">
+                <i class="fas fa-receipt" style="font-size: 40px; margin-bottom: 12px; color: var(--accent);"></i>
+                <p>No payout requests found.</p>
+            </div>
+        }
+    </div>
+
+    <!-- Payout Options & Trigger -->
+    <div class="sidebar-card">
+        <div>
+            <h3>Connected Method</h3>
+            @if (Model.IsBankAccountConnected)
+            {
+                <div class="bank-details-box">
+                    <div class="bank-icon">
+                        <i class="fas fa-university"></i>
+                    </div>
+                    <div style="flex-grow: 1;">
+                        <h4 style="font-size: 14px; font-weight: 700; color: var(--text);">Bank Account</h4>
+                        <p style="font-size: 11px; color: var(--text-light); margin-top: 2px;">Account ending in ****@Model.BankAccountLast4</p>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                    <button type="button" class="btn-secondary btn-small" onclick="openConnectBankModal()" style="flex-grow: 1;">
+                        <i class="fas fa-edit"></i> Edit Bank
+                    </button>
+                    
+                    <form asp-controller="OrganizerPayouts" asp-action="DisconnectBank" method="post" style="display: inline-block;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn-secondary btn-small" style="color: var(--error); border-color: rgba(239, 68, 68, 0.2);" onclick="return confirm('Are you sure you want to disconnect this bank account?');">
+                            <i class="fas fa-unlink"></i> Disconnect
+                        </button>
+                    </form>
+                </div>
+            }
+            else
+            {
+                <div style="text-align: center; padding: 20px; background: var(--bg); border: 1px dashed var(--border); border-radius: 12px; margin-top: 14px;">
+                    <i class="fas fa-university" style="font-size: 24px; color: var(--text-light); margin-bottom: 8px;"></i>
+                    <p style="font-size: 12px; color: var(--text-light); margin-bottom: 12px;">Link your bank account to start requesting payouts.</p>
+                    <button type="button" class="btn-primary btn-small" onclick="openConnectBankModal()" style="width: 100%;">
+                        <i class="fas fa-link"></i> Link Bank Account
+                    </button>
+                </div>
+            }
+        </div>
+
+        <div>
+            <h3>Withdrawals</h3>
+            @if (Model.IsBankAccountConnected)
+            {
+                @if (Model.AvailableBalance > 0m)
+                {
+                    <button type="button" class="btn-primary" onclick="openPayoutModal()" style="width: 100%; margin-top: 10px; border-radius: 12px;">
+                        <i class="fas fa-arrow-circle-up"></i> Request Payout
+                    </button>
+                }
+                else
+                {
+                    <button type="button" class="btn-primary" disabled style="width: 100%; margin-top: 10px; border-radius: 12px; opacity: 0.5; cursor: not-allowed;" title="Available balance must be greater than zero.">
+                        <i class="fas fa-arrow-circle-up"></i> Request Payout
+                    </button>
+                }
+            }
+            else
+            {
+                <button type="button" class="btn-primary" disabled style="width: 100%; margin-top: 10px; border-radius: 12px; opacity: 0.5; cursor: not-allowed;" title="Please connect a bank account first.">
+                    <i class="fas fa-arrow-circle-up"></i> Connect Bank to Withdraw
+                </button>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Request Payout Modal -->
+<div id="payoutModal" class="modal-overlay">
+    <div class="modal-card">
+        <h3 style="font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 8px;">Request Payout</h3>
+        <p style="font-size: 13.5px; color: var(--text-light); margin-bottom: 24px;">Submit a withdrawal request to transfer your available balance to your connected bank account.</p>
+
+        <form asp-controller="OrganizerPayouts" asp-action="RequestPayout" method="post">
+            @Html.AntiForgeryToken()
+            <div class="form-group">
+                <label class="form-label">Available Balance</label>
+                <div style="font-size: 22px; font-weight: 800; color: var(--success);">EGP @Model.AvailableBalance.ToString("N2")</div>
+            </div>
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label for="amountInput" class="form-label">Withdrawal Amount (EGP) <span style="color: var(--error);">*</span></label>
+                <input id="amountInput" name="amount" type="number" step="0.01" max="@Model.AvailableBalance" min="1.00" class="form-control" required />
+            </div>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button type="button" class="btn-secondary" onclick="closePayoutModal()" style="border-radius: 12px; padding: 10px 20px;">Cancel</button>
+                <button type="submit" class="btn-primary" style="border-radius: 12px; padding: 10px 20px;">Submit Request</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Connect Bank Modal -->
+<div id="connectBankModal" class="modal-overlay">
+    <div class="modal-card">
+        <h3 style="font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 8px;">Link Bank Account</h3>
+        <p style="font-size: 13.5px; color: var(--text-light); margin-bottom: 20px;">Provide your bank account details for direct deposit withdrawals.</p>
+
+        <form asp-controller="OrganizerPayouts" asp-action="ConnectBank" method="post">
+            @Html.AntiForgeryToken()
+            
+            <div class="form-group">
+                <label class="form-label">Account Holder Full Name <span style="color: var(--error);">*</span></label>
+                <input name="bankAccountName" type="text" class="form-control" placeholder="e.g., John Smith" required />
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Bank Name <span style="color: var(--error);">*</span></label>
+                <input name="bankName" type="text" class="form-control" placeholder="e.g., Commercial International Bank (CIB)" required />
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Bank Account Number (IBAN) <span style="color: var(--error);">*</span></label>
+                <input name="bankAccountNumber" type="text" class="form-control" placeholder="e.g., EG000000000000000000000000" required />
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Swift/Routing Code <span style="color: var(--error);">*</span></label>
+                <input name="bankRoutingNumber" type="text" class="form-control" placeholder="e.g., COBIEGCXXX" required />
+            </div>
+            
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button type="button" class="btn-secondary" onclick="closeConnectBankModal()" style="border-radius: 12px; padding: 10px 20px;">Cancel</button>
+                <button type="submit" class="btn-primary" style="border-radius: 12px; padding: 10px 20px;">Save Details</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const payoutModal = document.getElementById('payoutModal');
+        const connectBankModal = document.getElementById('connectBankModal');
+        const amountInput = document.getElementById('amountInput');
+
+        function openPayoutModal() {
+            payoutModal.classList.add('active');
+            amountInput.focus();
+        }
+
+        function closePayoutModal() {
+            payoutModal.classList.remove('active');
+            amountInput.value = '';
+        }
+
+        function openConnectBankModal() {
+            connectBankModal.classList.add('active');
+        }
+
+        function closeConnectBankModal() {
+            connectBankModal.classList.remove('active');
+        }
+
+        // Close modals on escape
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                if (payoutModal.classList.contains('active')) {
+                    closePayoutModal();
+                }
+                if (connectBankModal.classList.contains('active')) {
+                    closeConnectBankModal();
+                }
+            }
+        });
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            if (event.target == payoutModal) {
+                closePayoutModal();
+            }
+            if (event.target == connectBankModal) {
+                closeConnectBankModal();
+            }
+        }
+    </script>
+}

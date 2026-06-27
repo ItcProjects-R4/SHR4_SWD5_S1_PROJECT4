@@ -20,7 +20,7 @@ public record TicketTypeUpdateDto
     /// <summary>
     /// Gets or sets the price of the ticket.
     /// </summary>
-    [Required, Range(typeof(decimal), "0.01", "79228162514264337593543950335", ErrorMessage = "Price must be greater than 0")]
+    [Required, Range(typeof(decimal), "0.00", "79228162514264337593543950335", ErrorMessage = "Price must be greater than or equal to 0")]
     public decimal Price { get; init; }
 
     /// <summary>

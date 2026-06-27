@@ -1,0 +1,301 @@
+@model IEnumerable<Eventify.Domain.Entities.Event>
+@{
+    Layout = "_OrganizerLayout";
+    var scanner = (Eventify.Domain.Entities.ApplicationUser)ViewBag.Scanner;
+    var assignedEventIds = (List<int>)ViewBag.AssignedEventIds;
+    ViewData["Title"] = "Assign Events to Scanner";
+    ViewData["HeaderTitle"] = "Assign Scanner to Events 📱";
+    ViewData["HeaderSubtitle"] = $"Select which events {scanner.FullName} is authorized to scan tickets for.";
+}
+
+@section Styles {
+    <style>
+        .assign-card {
+            background: white;
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .scanner-info-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .scanner-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--gradient);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .scanner-details h4 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .scanner-details p {
+            font-size: 13px;
+            color: var(--text-light);
+        }
+
+        .events-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .event-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 20px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--bg);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .event-item:hover {
+            border-color: var(--primary-light);
+            background: rgba(124, 58, 237, 0.02);
+        }
+
+        .event-item.selected {
+            border-color: var(--primary);
+            background: rgba(124, 58, 237, 0.05);
+        }
+
+        .checkbox-container {
+            position: relative;
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+
+        .checkbox-container input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+
+        .checkbox-custom {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 24px;
+            width: 24px;
+            background-color: white;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            transition: var(--transition);
+        }
+
+        .checkbox-container input:checked ~ .checkbox-custom {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .checkbox-custom:after {
+            content: "";
+            position: absolute;
+            display: none;
+        }
+
+        .checkbox-container input:checked ~ .checkbox-custom:after {
+            display: block;
+        }
+
+        .checkbox-container .checkbox-custom:after {
+            left: 8px;
+            top: 4px;
+            width: 5px;
+            height: 10px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        .event-info {
+            flex-grow: 1;
+        }
+
+        .event-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .event-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 12.5px;
+            color: var(--text-light);
+            flex-wrap: wrap;
+        }
+
+        .event-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-published {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .badge-draft {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .badge-rejected {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+
+        .info-text {
+            background: rgba(124, 58, 237, 0.08);
+            color: var(--primary-dark);
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 13.5px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-top: 24px;
+            line-height: 1.5;
+        }
+
+        .form-actions {
+            margin-top: 32px;
+            display: flex;
+            gap: 16px;
+            justify-content: flex-end;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+}
+
+<div class="assign-card">
+    <div class="scanner-info-header">
+        <div class="scanner-avatar">
+            @(scanner.FullName.Length > 0 ? scanner.FullName.Substring(0, 1).ToUpper() : "S")
+        </div>
+        <div class="scanner-details">
+            <h4>@scanner.FullName</h4>
+            <p>@scanner.Email</p>
+        </div>
+    </div>
+
+    <form asp-controller="OrganizerScanners" asp-action="AssignEvents" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="id" value="@scanner.Id" />
+
+        <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--text);">Select Assigned Events</h3>
+
+        @if (Model != null && Model.Any())
+        {
+            <div class="events-grid">
+                @foreach (var ev in Model)
+                {
+                    var isChecked = assignedEventIds.Contains(ev.Id);
+                    <label class="event-item @(isChecked ? "selected" : "")" id="event-item-@ev.Id">
+                        <div class="checkbox-container">
+                            <input type="checkbox" name="selectedEventIds" value="@ev.Id" @(isChecked ? "checked" : "") onchange="toggleEventSelection(@ev.Id, this)" />
+                            <span class="checkbox-custom"></span>
+                        </div>
+                        <div class="event-info">
+                            <div class="event-title">@ev.Title</div>
+                            <div class="event-meta">
+                                <span><i class="far fa-calendar"></i> @ev.StartDate.ToEgyptTime().ToString("MMM dd, yyyy")</span>
+                                <span><i class="fas fa-map-marker-alt"></i> @ev.City</span>
+                                <span>
+                                    @if (ev.Status == Eventify.Domain.Enums.EventStatus.Published)
+                                    {
+                                        <span class="badge badge-published">Published</span>
+                                    }
+                                    else if (ev.Status == Eventify.Domain.Enums.EventStatus.Draft || ev.Status == Eventify.Domain.Enums.EventStatus.PendingReview)
+                                    {
+                                        <span class="badge badge-draft">@ev.Status.ToString()</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-rejected">@ev.Status.ToString()</span>
+                                    }
+                                </span>
+                            </div>
+                        </div>
+                    </label>
+                }
+            </div>
+        }
+        else
+        {
+            <div style="text-align: center; padding: 40px 20px; border: 1px dashed var(--border); border-radius: 12px; margin-bottom: 24px;">
+                <i class="fas fa-calendar-times" style="font-size: 32px; color: var(--text-light); margin-bottom: 12px;"></i>
+                <h4 style="font-weight: 700; margin-bottom: 4px;">No Events Available</h4>
+                <p style="color: var(--text-light); font-size: 13.5px;">Create and publish events first before assigning scanner accounts.</p>
+            </div>
+        }
+
+        <div class="info-text">
+            <i class="fas fa-info-circle" style="font-size: 20px; margin-top: 2px; flex-shrink: 0;"></i>
+            <div>
+                <strong>Event Validation Security:</strong> Scanners will only be able to see and scan tickets for the selected events. If no events are selected, the scanner will not be authorized to scan for any event.
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <a asp-controller="OrganizerScanners" asp-action="Index" class="btn-secondary">Cancel</a>
+            <button type="submit" class="btn-primary">
+                <i class="fas fa-check-circle"></i> Save Assignments
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        function toggleEventSelection(eventId, checkbox) {
+            const container = document.getElementById('event-item-' + eventId);
+            if (container) {
+                if (checkbox.checked) {
+                    container.classList.add('selected');
+                } else {
+                    container.classList.remove('selected');
+                }
+            }
+        }
+    </script>
+}

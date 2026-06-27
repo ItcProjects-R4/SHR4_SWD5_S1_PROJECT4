@@ -1,14 +1,3 @@
-using Eventify.Domain.Constants;
-using Eventify.Domain.Entities;
-using Eventify.Domain.Enums;
-using EventifyPro.DAL.AppDatabase;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace EventifyPro.DAL.Seeders;
 
@@ -113,6 +102,25 @@ public static class DataSeeder
                 var errors = string.Join(" | ", createResult.Errors.Select(e => e.Description));
                 throw new InvalidOperationException($"Failed to seed organizer user: {errors}");
             }
+        }
+
+        // 1.5 Seed Organizer Profile (required for admin approval flow)
+        if (!await context.OrganizerProfiles.AnyAsync(p => p.UserId == organizer.Id))
+        {
+            var organizerProfile = new OrganizerProfile
+            {
+                UserId = organizer.Id,
+                OrganizationName = "Premium Events Co.",
+                BusinessPhone = "+201234567890",
+                WebsiteUrl = "https://eventifypro.com",
+                CommercialRegister = "CR-12345",
+                TaxNumber = "TX-98765",
+                IsVerified = true,
+                VerifiedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow
+            };
+            await context.OrganizerProfiles.AddAsync(organizerProfile);
+            await context.SaveChangesAsync();
         }
 
         // 2. Seed Categories (Check existence for each category by Name)
@@ -291,7 +299,10 @@ Take a peaceful walk through the creative expressions of modern artists and expe
 
         // 4. Automatically publish any existing unpublished events to ensure they show up on the browse page
         var unpublishedEvents = await context.Events
-            .Where(e => e.Status != EventStatus.Published)
+            .Where(e => e.Status != EventStatus.Published 
+                     && e.Status != EventStatus.Cancelled 
+                     && e.Status != EventStatus.Rejected 
+                     && e.Status != EventStatus.Completed)
             .ToListAsync();
 
         if (unpublishedEvents.Any())
@@ -385,6 +396,47 @@ Lace up your sneakers and join us for a healthy morning full of positive energy.
         {
             ev.IsFeatured = true;
         }
+        await context.SaveChangesAsync();
+    }
+
+    public static async Task SeedSystemSettingsAsync(IServiceProvider serviceProvider)
+    {
+        using var scope = serviceProvider.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<EventifyDbContext>();
+
+        var defaultSettings = new Dictionary<string, string>
+        {
+            { "PlatformName", "Eventify Pro" },
+            { "SupportEmail", "eventifypro.eg@gmail.com" },
+            { "SupportWhatsApp", "01064665247" },
+            { "TicketCommissionRate", "5.0" },
+            { "EnableMaintenanceMode", "false" },
+            { "MaxTicketsPerBooking", "10" },
+            { "AllowedUploadExtensions", ".jpg,.jpeg,.png,.pdf" },
+            { "RequireTwoFactorForAdmins", "true" },
+            { "PasswordMinLength", "8" },
+            { "RequirePasswordUppercase", "true" },
+            { "RequirePasswordDigits", "true" },
+            { "SessionTimeoutMinutes", "30" },
+            { "MaxFailedLoginsBeforeLockout", "5" },
+            { "AdminIpWhitelist", "*" },
+            { "GeminiApiKey", "" }
+        };
+
+        foreach (var setting in defaultSettings)
+        {
+            if (!await context.SystemSettings.AnyAsync(s => s.Key == setting.Key))
+            {
+                await context.SystemSettings.AddAsync(new SystemSetting
+                {
+                    Key = setting.Key,
+                    Value = setting.Value,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                });
+            }
+        }
+
         await context.SaveChangesAsync();
     }
 }

@@ -49,4 +49,9 @@ public record OrganizerDashboardDto
     /// Gets or sets the revenue data grouped by month.
     /// </summary>
     public Dictionary<string, decimal> RevenueByMonth { get; init; } = [];
+
+    /// <summary>
+    /// Gets or sets the number of attendees waiting on waiting list.
+    /// </summary>
+    public int WaitingListCount { get; init; }
 }

@@ -8,12 +8,14 @@ public class RefundService : IRefundService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly IOutboxService _outboxService;
+    private readonly IWaitingListService _waitingListService;
 
-    public RefundService(IUnitOfWork unitOfWork, IMapper mapper, IOutboxService outboxService)
+    public RefundService(IUnitOfWork unitOfWork, IMapper mapper, IOutboxService outboxService, IWaitingListService waitingListService)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _outboxService = outboxService;
+        _waitingListService = waitingListService;
     }
 
     /// <inheritdoc />
@@ -58,22 +60,59 @@ public class RefundService : IRefundService
 
         // 5. Update payment status if fully refunded
         var newTotalRefunded = totalRefunded + dto.Amount;
-        if (newTotalRefunded >= payment.Amount)
+        var booking = await _unitOfWork.Bookings.GetByIdWithDetailsAsync(payment.BookingId, cancellationToken);
+        if (booking is not null)
         {
-            payment.Status = PaymentStatus.Refunded;
-            payment.UpdatedAt = DateTime.UtcNow;
-            _unitOfWork.Payments.Update(payment);
-
-            // Update booking status
-            var booking = await _unitOfWork.Bookings.GetByIdAsync(payment.BookingId, cancellationToken);
-            if (booking is not null)
+            if (newTotalRefunded >= payment.Amount)
             {
+                payment.Status = PaymentStatus.Refunded;
+                payment.UpdatedAt = DateTime.UtcNow;
+                _unitOfWork.Payments.Update(payment);
+
                 booking.Status = BookingStatus.Refunded;
                 _unitOfWork.Bookings.Update(booking);
+
+                // Release ticket capacity and update SoldQuantity in TicketTypes
+                var eventWithTicketTypes = await _unitOfWork.Events.GetByIdWithTicketTypesAsync(booking.EventId, cancellationToken);
+                if (eventWithTicketTypes != null)
+                {
+                    foreach (var item in booking.Items)
+                    {
+                        var ticketType = eventWithTicketTypes.TicketTypes.FirstOrDefault(tt => tt.Id == item.TicketTypeId);
+                        if (ticketType != null)
+                        {
+                            ticketType.SoldQuantity = Math.Max(0, ticketType.SoldQuantity - item.Quantity);
+                            _unitOfWork.TicketTypes.Update(ticketType);
+                        }
+                    }
+                }
             }
+
+            // Add Refund Status Notification
+            var eventEntity = await _unitOfWork.Events.GetByIdAsync(booking.EventId, cancellationToken);
+            var eventTitle = eventEntity?.Title ?? "your event";
+            var refundNotification = new Notification
+            {
+                UserId = booking.UserId,
+                Title = "Refund Processed",
+                Message = $"Refund of {dto.Amount:N2} EGP for '{eventTitle}' has been processed back to your original payment method.",
+                Type = NotificationType.RefundStatus,
+                IsRead = false,
+                RedirectUrl = "/Attendee/Bookings",
+                CreatedAt = DateTime.UtcNow
+            };
+            await _unitOfWork.Notifications.AddAsync(refundNotification, cancellationToken);
         }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        if (newTotalRefunded >= payment.Amount && booking is not null)
+        {
+            foreach (var item in booking.Items)
+            {
+                await _waitingListService.NotifyNextAsync(item.TicketTypeId, cancellationToken);
+            }
+        }
 
         return Result<RefundResponseDto>.Success(_mapper.Map<RefundResponseDto>(refund));
     }
@@ -96,6 +135,50 @@ public class RefundService : IRefundService
         return Result<decimal>.Success(total);
     }
 
+    /// <inheritdoc />
+    public async Task<Result<RefundInitiationDetailsDto>> GetRefundInitiationDetailsAsync(int bookingId, string userId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var booking = await _unitOfWork.Bookings.GetByIdWithDetailsAsync(bookingId, cancellationToken);
+            if (booking == null || booking.UserId != userId)
+            {
+                return Result<RefundInitiationDetailsDto>.Failure("Booking not found.");
+            }
+
+            if (booking.Payment == null)
+            {
+                return Result<RefundInitiationDetailsDto>.Failure("No completed payment associated with this booking.");
+            }
+
+            if (booking.Payment.Status != PaymentStatus.Completed)
+            {
+                return Result<RefundInitiationDetailsDto>.Failure("Only completed payments can be refunded.");
+            }
+
+            var totalRefunded = await GetTotalRefundedInternalAsync(booking.Payment.Id, cancellationToken);
+            var maxRefundable = booking.Payment.Amount - totalRefunded;
+
+            if (maxRefundable <= 0)
+            {
+                return Result<RefundInitiationDetailsDto>.Failure("This booking has already been fully refunded.");
+            }
+
+            var dto = new RefundInitiationDetailsDto
+            {
+                BookingId = bookingId,
+                PaymentId = booking.Payment.Id,
+                MaxRefundableAmount = maxRefundable
+            };
+
+            return Result<RefundInitiationDetailsDto>.Success(dto);
+        }
+        catch (Exception ex)
+        {
+            return Result<RefundInitiationDetailsDto>.Failure($"Failed to load refund details: {ex.Message}");
+        }
+    }
+
     private async Task<decimal> GetTotalRefundedInternalAsync(int paymentId, CancellationToken cancellationToken)
     {
         var refunds = await _unitOfWork.Refunds.FindAsync(
@@ -103,4 +186,5 @@ public class RefundService : IRefundService
         return refunds.Sum(r => r.Amount);
     }
 }
+
 

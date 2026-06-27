@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /Admin/
+Disallow: /Dashboard/
+Disallow: /Account/
+Disallow: /Booking/
+Disallow: /Ticket/
+Disallow: /Review/Create
+Disallow: /Payment/
+
+Sitemap: https://eventifypro.com/sitemap.xml

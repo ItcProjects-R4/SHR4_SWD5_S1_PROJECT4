@@ -1,0 +1,332 @@
+@model IReadOnlyList<Eventify.Domain.Entities.PayoutRequest>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Payout Requests";
+    ViewData["HeaderTitle"] = "Payout Requests 💰";
+    ViewData["HeaderSubtitle"] = "Review and process organizer withdrawal requests";
+}
+
+@section Styles {
+    <style>
+        .payouts-container {
+            background: white;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+        .payouts-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+        .payouts-table th, .payouts-table td {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+        .payouts-table th {
+            background: var(--soft-purple);
+            color: var(--primary-dark);
+            font-weight: 700;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .payouts-table tbody tr {
+            transition: var(--transition);
+        }
+        .payouts-table tbody tr:hover {
+            background: rgba(91, 33, 182, 0.02);
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-pending {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        .badge-completed {
+            background: #d1fae5;
+            color: #059669;
+        }
+        .badge-rejected {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        .btn-action {
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+        }
+        .btn-action-primary {
+            background: var(--gradient);
+            color: white;
+            box-shadow: 0 4px 12px rgba(91, 33, 182, 0.2);
+        }
+        .btn-action-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(91, 33, 182, 0.3);
+        }
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            padding: 32px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+            animation: modalScale 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        @@keyframes modalScale {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .modal-header h3 {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--primary-dark);
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-light);
+            transition: var(--transition);
+        }
+        .close-btn:hover {
+            color: var(--error);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 13.5px;
+            color: var(--text);
+        }
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--light-purple);
+        }
+    </style>
+}
+
+<div class="payouts-container">
+    <div class="table-responsive">
+        <table class="payouts-table">
+            <thead>
+                <tr>
+                    <th>Organizer</th>
+                    <th>Requested Amount</th>
+                    <th>Requested At</th>
+                    <th>Method</th>
+                    <th>Status</th>
+                    <th>Reference / Details</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model == null || Model.Count == 0)
+                {
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: var(--text-light); padding: 40px;">
+                            <i class="fas fa-wallet" style="font-size: 40px; margin-bottom: 16px; display: block; color: var(--light-purple);"></i>
+                            No payout requests found.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var payout in Model)
+                    {
+                        <tr>
+                            <td>
+                                <strong style="color: var(--text);">@payout.Organizer.FullName</strong>
+                                <span style="display: block; font-size: 12px; color: var(--text-light);">@payout.Organizer.Email</span>
+                            </td>
+                            <td>
+                                <strong style="color: var(--primary); font-size: 16px;">$@payout.Amount.ToString("N2")</strong>
+                            </td>
+                            <td>
+                                <span style="font-size: 13.5px; color: var(--text-light);">@payout.RequestedAt.ToEgyptTime().ToString("dd MMM yyyy, hh:mm tt")</span>
+                            </td>
+                            <td>
+                                <span style="font-size: 13.5px;">@payout.Method</span>
+                            </td>
+                            <td>
+                                @if (string.Equals(payout.Status, "Pending", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <span class="badge badge-pending"><i class="fas fa-clock"></i> Pending</span>
+                                }
+                                else if (string.Equals(payout.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <span class="badge badge-completed"><i class="fas fa-check-circle"></i> Completed</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-rejected"><i class="fas fa-times-circle"></i> Rejected</span>
+                                }
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(payout.ReferenceNumber))
+                                {
+                                    <span style="display: block; font-size: 13px; font-family: monospace; color: var(--text);">Ref: @payout.ReferenceNumber</span>
+                                }
+                                @if (!string.IsNullOrEmpty(payout.Notes))
+                                {
+                                    <span style="display: block; font-size: 12px; color: var(--text-light); max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="@payout.Notes">
+                                        Note: @payout.Notes
+                                    </span>
+                                }
+                                @if (payout.ProcessedAt.HasValue)
+                                {
+                                    <span style="display: block; font-size: 11px; color: var(--text-light);">Processed: @payout.ProcessedAt.Value.ToEgyptTime().ToString("dd MMM yyyy")</span>
+                                }
+                            </td>
+                            <td>
+                                @if (string.Equals(payout.Status, "Pending", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <button type="button" class="btn-action btn-action-primary" onclick="openPayoutModal(@payout.Id, '@payout.Organizer.FullName', @payout.Amount)">
+                                        <i class="fas fa-cog"></i> Process
+                                    </button>
+                                }
+                                else
+                                {
+                                    <span style="font-size: 12px; color: var(--text-light); font-style: italic;">No actions</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Process Modal -->
+<div id="payoutModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Process Payout Request</h3>
+            <button type="button" class="close-btn" onclick="closePayoutModal()">&times;</button>
+        </div>
+        <form asp-controller="Admin" asp-action="UpdatePayoutStatus" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="requestId" id="modalRequestId" />
+            
+            <div style="margin-bottom: 20px; padding: 12px; background: var(--soft-purple); border-radius: 12px; font-size: 14px;">
+                <p><strong>Organizer:</strong> <span id="modalOrganizerName"></span></p>
+                <p><strong>Amount:</strong> <span id="modalAmount" style="color: var(--primary); font-weight: 700;"></span></p>
+            </div>
+
+            <div class="form-group">
+                <label>Action</label>
+                <select name="status" class="form-control" id="modalStatusSelect" onchange="toggleRefInput()">
+                    <option value="Completed">Approve & Complete</option>
+                    <option value="Rejected">Reject Request</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="refGroup">
+                <label>Reference Number (Transaction/Bank ID) *</label>
+                <input type="text" name="referenceNumber" class="form-control" id="modalRefInput" required placeholder="e.g. TXN987654321" />
+            </div>
+
+            <div class="form-group">
+                <label>Notes / Reason</label>
+                <textarea name="notes" rows="3" class="form-control" placeholder="Add internal notes or rejection reason..."></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+                <button type="button" class="btn-action" style="background: var(--border); color: var(--text);" onclick="closePayoutModal()">Cancel</button>
+                <button type="submit" class="btn-action btn-action-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openPayoutModal(id, name, amount) {
+            document.getElementById('modalRequestId').value = id;
+            document.getElementById('modalOrganizerName').textContent = name;
+            document.getElementById('modalAmount').textContent = '$' + amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('payoutModal').classList.add('active');
+            toggleRefInput();
+        }
+
+        function closePayoutModal() {
+            document.getElementById('payoutModal').classList.remove('active');
+        }
+
+        function toggleRefInput() {
+            const status = document.getElementById('modalStatusSelect').value;
+            const refGroup = document.getElementById('refGroup');
+            const refInput = document.getElementById('modalRefInput');
+            if (status === 'Completed') {
+                refGroup.style.display = 'block';
+                refInput.required = true;
+            } else {
+                refGroup.style.display = 'none';
+                refInput.required = false;
+                refInput.value = '';
+            }
+        }
+    </script>
+}

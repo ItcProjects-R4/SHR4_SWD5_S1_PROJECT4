@@ -1,6 +1,10 @@
+@inject EventifyPro.BLL.Services.Interfaces.ISystemSettingService SystemSettingService
 @{
     Layout = "_Layout";
     ViewData["Title"] = "Help Center";
+    ViewData["MetaDescription"] = "Get technical support and assistance for Eventify Pro. Contact our team, find organizer resources, or get help with ticket purchases.";
+    ViewData["MetaKeywords"] = "Help Center, support, contact us, customer support, Eventify Pro help, ticket help, technical assistance";
+    var supportEmail = await SystemSettingService.GetSettingValueAsync("SupportEmail", "eventifypro.eg@gmail.com");
 }
 
 <section class="page-header footer-page-header">
@@ -26,7 +30,7 @@
                 <div class="help-icon-enhanced"><i class="fas fa-envelope-open-text"></i></div>
                 <h3>Technical Email Support</h3>
                 <p>Have inquiries regarding Organizer payout structures, Paymob integration errors, account verification, or scanning device setups? Drop us a line. Our backend specialists will analyze your logs and assist you directly.</p>
-                <a href="mailto:muhammedmahmoudgoda66@gmail.com" class="help-action-btn">
+                <a href="mailto:@supportEmail" class="help-action-btn">
                     <i class="fas fa-paper-plane"></i> Email Support
                 </a>
             </div>

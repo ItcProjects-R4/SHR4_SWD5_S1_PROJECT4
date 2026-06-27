@@ -1,6 +1,3 @@
-using Eventify.Domain.Enums;
-using EventifyPro.BLL.Services.Interfaces;
-
 namespace EventifyPro.Web.BackgroundServices;
 
 public class PostEventProcessor : BackgroundService
@@ -50,19 +47,17 @@ public class PostEventProcessor : BackgroundService
         CancellationToken cancellationToken)
     {
         var utcNow = DateTime.UtcNow;
-        var dayAgo = utcNow.AddDays(-1);
 
-        // Find events that ended in the last 24 hours (or ended in the past, and we haven't sent feedback yet)
+        // Find published events that have ended
         var finishedEvents = await unitOfWork.DbContext.Events
-            .Where(e => (e.Status == EventStatus.Published || e.Status == EventStatus.Completed)
+            .Where(e => e.Status == EventStatus.Published
                 && !e.IsDeleted 
-                && e.EndDate < utcNow
-                && e.EndDate >= dayAgo)
+                && e.EndDate < utcNow)
             .Include(e => e.Bookings)
                 .ThenInclude(b => b.User)
             .ToListAsync(cancellationToken);
 
-        var baseUrl = configuration["BaseUrl"] ?? "https://localhost:7198";
+        var baseUrl = configuration["BaseUrl"] ?? "https://eventifypro.runasp.net";
 
         foreach (var evt in finishedEvents)
         {
@@ -93,12 +88,22 @@ public class PostEventProcessor : BackgroundService
                         RecipientName = user.FullName,
                         EventTitle = evt.Title,
                         EventId = evt.Id,
-                        FeedbackUrl = $"{baseUrl}/Home/Feedback?eventId={evt.Id}" // Direct feedback link
+                        FeedbackUrl = $"{baseUrl}/Review/Create?eventId={evt.Id}" // Direct review link
                     };
 
                     await outboxService.EnqueueAsync("Email.PostEventFeedback", payload, cancellationToken);
                 }
             }
+
+            // Transition status to Completed
+            evt.Status = EventStatus.Completed;
+            evt.UpdatedAt = DateTime.UtcNow;
+            unitOfWork.DbContext.Events.Update(evt);
+        }
+
+        if (finishedEvents.Count > 0)
+        {
+            await unitOfWork.SaveChangesAsync(cancellationToken);
         }
     }
 }

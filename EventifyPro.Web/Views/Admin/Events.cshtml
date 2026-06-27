@@ -1,0 +1,468 @@
+@model IEnumerable<Eventify.Domain.Entities.Event>
+@using Eventify.Domain.Enums
+@inject Microsoft.AspNetCore.Identity.UserManager<Eventify.Domain.Entities.ApplicationUser> UserManager
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Manage Events";
+    ViewData["HeaderTitle"] = "Manage Events 🛡️";
+    ViewData["HeaderSubtitle"] = "Track, review, or disable platform events.";
+
+    var searchTerm = Context.Request.Query["searchTerm"].ToString();
+    var statusFilter = Context.Request.Query["statusFilter"].ToString();
+}
+
+@section Styles {
+    <style>
+        .event-thumbnail {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            object-fit: cover;
+            border: 1px solid var(--border);
+        }
+
+        .cancelled-event-row {
+            background-color: rgba(239, 68, 68, 0.03) !important;
+            opacity: 0.75;
+        }
+        .cancelled-event-row:hover {
+            background-color: rgba(239, 68, 68, 0.05) !important;
+        }
+        .cancelled-event-row h4 {
+            text-decoration: line-through;
+            color: var(--text-light) !important;
+        }
+
+        .status {
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .status.published {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+        .status.pendingreview {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+        .status.cancelled {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+        .status.completed {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+        .status.draft {
+            background: rgba(107, 114, 128, 0.1);
+            color: var(--text-light);
+        }
+
+        .action-btn {
+            width: 34px;
+            height: 34px;
+            border: none;
+            background: var(--soft-purple);
+            color: var(--primary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-right: 4px;
+            font-size: 13px;
+        }
+        .action-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+        }
+        .action-btn.delete {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+        .action-btn.delete:hover {
+            background: var(--error);
+            color: white;
+        }
+
+        /* Search Panel */
+        .filter-panel {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 20px 24px;
+            margin-bottom: 28px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+            box-shadow: var(--shadow-sm);
+        }
+        .filter-input {
+            padding: 10px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            transition: var(--transition);
+        }
+        .filter-input:focus {
+            border-color: var(--primary);
+        }
+
+        /* Modal styling */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-card {
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 480px;
+            padding: 28px;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+        }
+        .table-card {
+            background: white;
+            padding: 28px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            overflow-x: auto;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+        .data-table th {
+            padding: 14px 18px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .data-table td {
+            padding: 16px 18px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+        .data-table tbody tr {
+            transition: var(--transition);
+        }
+        .data-table tbody tr:hover {
+            background: var(--soft-purple);
+        }
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+    </style>
+}
+
+<!-- Filter Panel -->
+<form method="get" class="filter-panel">
+    <div style="display: flex; gap: 10px; align-items: center; flex: 1; min-width: 250px;">
+        <i class="fas fa-search" style="color: var(--text-light);"></i>
+        <input type="text" name="searchTerm" value="@searchTerm" placeholder="Search events by title or description..." class="filter-input" style="flex: 1;" />
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <span style="font-size: 13px; font-weight: 600; color: var(--text-light);">Status:</span>
+        <select name="statusFilter" class="filter-input" onchange="this.form.submit()">
+            <option value="">All Statuses</option>
+            <option value="pending" selected="@(statusFilter == "pending")">Pending Review</option>
+            <option value="published" selected="@(statusFilter == "published")">Published</option>
+            <option value="completed" selected="@(statusFilter == "completed")">Completed</option>
+            <option value="cancelled" selected="@(statusFilter == "cancelled")">Cancelled</option>
+        </select>
+    </div>
+    <button type="submit" class="btn-primary btn-small">
+        <i class="fas fa-filter"></i> Filter
+    </button>
+    @if (!string.IsNullOrEmpty(searchTerm) || !string.IsNullOrEmpty(statusFilter))
+    {
+        <a href="/Admin/Events" class="btn-secondary btn-small">
+            <i class="fas fa-times"></i> Clear
+        </a>
+    }
+</form>
+
+<!-- Events Table -->
+<div class="table-card">
+    @if (Model.Any())
+    {
+        <table class="data-table">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--border); background: var(--soft-purple);">
+                    <th>Event Details</th>
+                    <th>Organizer</th>
+                    <th>Date / Time</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var ev in Model)
+                {
+                    var statusClass = ev.Status.ToString().ToLower();
+
+                    <tr class="@(ev.Status == EventStatus.Cancelled ? "cancelled-event-row" : "")">
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                @if (!string.IsNullOrEmpty(ev.ImageUrl))
+                                {
+                                    <img src="@ev.ImageUrl" alt="Cover" class="event-thumbnail" />
+                                }
+                                else
+                                {
+                                    <div style="width: 50px; height: 50px; border-radius: 10px; background: var(--soft-purple); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; border: 1px solid var(--border)">
+                                        EV
+                                    </div>
+                                }
+                                <div>
+                                    <h4 style="font-size: 14px; font-weight: 700; color: var(--text);">@ev.Title</h4>
+                                    <p style="font-size: 11px; color: var(--text-light);">Category: @(ev.Category?.Name ?? "Uncategorized")</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div style="font-weight: 600; font-size: 13px;">@(ev.Organizer?.FullName ?? "Unknown Organizer")</div>
+                            <div style="font-size: 11px; color: var(--text-light);">@(ev.Organizer?.Email)</div>
+                        </td>
+                        <td>
+                            <div style="font-weight: 600; font-size: 13px;">@ev.StartDate.ToEgyptTime().ToString("MMM dd, yyyy")</div>
+                            <div style="font-size: 11px; color: var(--text-light);">@ev.StartDate.ToEgyptTime().ToString("hh:mm tt")</div>
+                        </td>
+                        <td>
+                            <div style="font-size: 13px;">@ev.Location</div>
+                            <div style="font-size: 11px; color: var(--text-light);">@ev.City</div>
+                        </td>
+                        <td>
+                            <span class="status @statusClass">
+                                <i class="fas fa-circle" style="font-size: 6px;"></i> @ev.Status.ToString()
+                            </span>
+                        </td>
+                        <td style="text-align: right;">
+                            @if (ev.Status == EventStatus.PendingReview)
+                            {
+                                <form asp-controller="AdminEvents" asp-action="ApproveEvent" asp-route-id="@ev.Id" method="post" style="display: inline;">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="searchTerm" value="@searchTerm" />
+                                    <input type="hidden" name="statusFilter" value="@statusFilter" />
+                                    <input type="hidden" name="page" value="@ViewBag.PageNumber" />
+                                    <button type="submit" class="action-btn" style="background: rgba(16, 185, 129, 0.1); color: var(--success);" title="Approve & Publish Event">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </form>
+                                <button type="button" class="action-btn" style="background: rgba(239, 68, 68, 0.1); color: var(--error);" onclick="openRejectModal(@ev.Id, '@ev.Title.Replace("'", "\\'")')" title="Reject Event">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            }
+                            @if (ev.Status != EventStatus.Cancelled)
+                            {
+                                <button type="button" class="action-btn delete" onclick="openCancelModal(@ev.Id, '@ev.Title.Replace("'", "\\'")')" title="Cancel / Disable Event">
+                                    <i class="fas fa-ban"></i>
+                                </button>
+                            }
+                            <a href="/Events/Details/@ev.Id" target="_blank" class="action-btn" title="View Public Page">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <!-- Pagination Controls -->
+        @if (ViewBag.TotalPages > 1)
+        {
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 24px; flex-wrap: wrap; gap: 16px; padding: 0 24px 24px;">
+                <div style="font-size: 13px; color: var(--text-light); font-weight: 500;">
+                    Showing Page <b>@ViewBag.PageNumber</b> of <b>@ViewBag.TotalPages</b> (@ViewBag.TotalCount total events)
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    @if (ViewBag.PageNumber > 1)
+                    {
+                        <a href="@Url.Action("Events", new { page = ViewBag.PageNumber - 1, searchTerm = ViewBag.SearchTerm, statusFilter = ViewBag.StatusFilter })" class="btn-primary btn-small" style="background: var(--soft-purple); color: var(--primary); box-shadow: none; border: 1px solid var(--border); padding: 8px 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-chevron-left"></i> Prev
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="btn-primary btn-small" style="background: var(--border); color: var(--text-light); box-shadow: none; cursor: not-allowed; border: 1px solid var(--border); opacity: 0.6; padding: 8px 14px; display: inline-flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-chevron-left"></i> Prev
+                        </span>
+                    }
+
+                    @{
+                        int startPage = Math.Max(1, ViewBag.PageNumber - 2);
+                        int endPage = Math.Min(ViewBag.TotalPages, ViewBag.PageNumber + 2);
+                    }
+                    @if (startPage > 1)
+                    {
+                        <a href="@Url.Action("Events", new { page = 1, searchTerm = ViewBag.SearchTerm, statusFilter = ViewBag.StatusFilter })" class="btn-primary btn-small" style="background: var(--soft-purple); color: var(--primary); box-shadow: none; border: 1px solid var(--border); padding: 8px 14px; text-decoration: none;">1</a>
+                        if (startPage > 2)
+                        {
+                            <span style="align-self: center; color: var(--text-light); margin: 0 4px;">...</span>
+                        }
+                    }
+                    @for (int i = startPage; i <= endPage; i++)
+                    {
+                        if (i == ViewBag.PageNumber)
+                        {
+                            <span class="btn-primary btn-small" style="box-shadow: none; padding: 8px 14px; color: white; background: var(--gradient);">@i</span>
+                        }
+                        else
+                        {
+                            <a href="@Url.Action("Events", new { page = i, searchTerm = ViewBag.SearchTerm, statusFilter = ViewBag.StatusFilter })" class="btn-primary btn-small" style="background: var(--soft-purple); color: var(--primary); box-shadow: none; border: 1px solid var(--border); padding: 8px 14px; text-decoration: none;">@i</a>
+                        }
+                    }
+                    @if (endPage < ViewBag.TotalPages)
+                    {
+                        if (endPage < ViewBag.TotalPages - 1)
+                        {
+                            <span style="align-self: center; color: var(--text-light); margin: 0 4px;">...</span>
+                        }
+                        <a href="@Url.Action("Events", new { page = ViewBag.TotalPages, searchTerm = ViewBag.SearchTerm, statusFilter = ViewBag.StatusFilter })" class="btn-primary btn-small" style="background: var(--soft-purple); color: var(--primary); box-shadow: none; border: 1px solid var(--border); padding: 8px 14px; text-decoration: none;">@ViewBag.TotalPages</a>
+                    }
+
+                    @if (ViewBag.PageNumber < ViewBag.TotalPages)
+                    {
+                        <a href="@Url.Action("Events", new { page = ViewBag.PageNumber + 1, searchTerm = ViewBag.SearchTerm, statusFilter = ViewBag.StatusFilter })" class="btn-primary btn-small" style="background: var(--soft-purple); color: var(--primary); box-shadow: none; border: 1px solid var(--border); padding: 8px 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="btn-primary btn-small" style="background: var(--border); color: var(--text-light); box-shadow: none; cursor: not-allowed; border: 1px solid var(--border); opacity: 0.6; padding: 8px 14px; display: inline-flex; align-items: center; gap: 6px;">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </span>
+                    }
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div style="text-align: center; padding: 48px; color: var(--text-light);">
+            <i class="fas fa-calendar-times" style="font-size: 44px; color: var(--accent); margin-bottom: 16px;"></i>
+            <h3 style="font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 4px;">No Events Found</h3>
+            <p style="font-size: 14px;">We couldn't find any events matching your filter criteria.</p>
+        </div>
+    }
+</div>
+
+<!-- Cancel Event Modal -->
+<div id="cancelEventModal" class="modal-overlay" onclick="handleOverlayClick(event)">
+    <div class="modal-card">
+        <button onclick="closeCancelModal()" style="position: absolute; top: 16px; right: 16px; border: none; background: transparent; font-size: 20px; cursor: pointer; color: var(--text-light);">&times;</button>
+        <h3 style="font-size: 18px; font-weight: 800; color: var(--error); margin-bottom: 12px;">Cancel Event</h3>
+        <p id="modalEventTitle" style="font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 20px;">-</p>
+
+        <form asp-controller="AdminEvents" asp-action="DisableEvent" method="post" style="display: flex; flex-direction: column; gap: 16px;">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="modalEventId" name="eventId" />
+            <input type="hidden" name="searchTerm" value="@searchTerm" />
+            <input type="hidden" name="statusFilter" value="@statusFilter" />
+            <input type="hidden" name="page" value="@ViewBag.PageNumber" />
+
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label style="font-size: 12px; font-weight: 700; color: var(--text-light); text-transform: uppercase;">Reason for Cancellation</label>
+                <textarea name="reason" required placeholder="Describe why this event is being cancelled or disabled. This will be sent to the organizer." class="filter-input" style="width: 100%; min-height: 100px; resize: vertical; border: 2px solid var(--border); border-radius: 12px; padding: 12px; font-family: inherit; font-size: 14px; outline: none;"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+                <button type="button" class="btn-primary btn-small" style="background: var(--text-light); box-shadow: none;" onclick="closeCancelModal()">Go Back</button>
+                <button type="submit" class="btn-primary btn-small" style="background: var(--error); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);">Cancel Event</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Reject Event Modal -->
+<div id="rejectEventModal" class="modal-overlay" onclick="handleRejectOverlayClick(event)">
+    <div class="modal-card">
+        <button onclick="closeRejectModal()" style="position: absolute; top: 16px; right: 16px; border: none; background: transparent; font-size: 20px; cursor: pointer; color: var(--text-light);">&times;</button>
+        <h3 style="font-size: 18px; font-weight: 800; color: var(--error); margin-bottom: 12px;">Reject Event</h3>
+        <p id="modalRejectEventTitle" style="font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 20px;">-</p>
+
+        <form asp-controller="AdminEvents" asp-action="RejectEvent" method="post" style="display: flex; flex-direction: column; gap: 16px;">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="modalRejectEventId" name="id" />
+            <input type="hidden" name="searchTerm" value="@searchTerm" />
+            <input type="hidden" name="statusFilter" value="@statusFilter" />
+            <input type="hidden" name="page" value="@ViewBag.PageNumber" />
+
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label style="font-size: 12px; font-weight: 700; color: var(--text-light); text-transform: uppercase;">Reason for Rejection</label>
+                <textarea name="reason" required placeholder="Describe why this event is being rejected. This will be sent to the organizer." class="filter-input" style="width: 100%; min-height: 100px; resize: vertical; border: 2px solid var(--border); border-radius: 12px; padding: 12px; font-family: inherit; font-size: 14px; outline: none;"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+                <button type="button" class="btn-primary btn-small" style="background: var(--text-light); box-shadow: none;" onclick="closeRejectModal()">Go Back</button>
+                <button type="submit" class="btn-primary btn-small" style="background: var(--error); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);">Reject Event</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openCancelModal(eventId, eventTitle) {
+            document.getElementById('modalEventId').value = eventId;
+            document.getElementById('modalEventTitle').innerText = "Are you sure you want to disable \"" + eventTitle + "\"? This action cannot be undone.";
+            document.getElementById('cancelEventModal').classList.add('active');
+        }
+
+        function closeCancelModal() {
+            document.getElementById('cancelEventModal').classList.remove('active');
+        }
+
+        function handleOverlayClick(event) {
+            if (event.target === document.getElementById('cancelEventModal')) {
+                closeCancelModal();
+            }
+        }
+
+        function openRejectModal(eventId, eventTitle) {
+            document.getElementById('modalRejectEventId').value = eventId;
+            document.getElementById('modalRejectEventTitle').innerText = "Are you sure you want to reject \"" + eventTitle + "\"? This will notify the organizer.";
+            document.getElementById('rejectEventModal').classList.add('active');
+        }
+
+        function closeRejectModal() {
+            document.getElementById('rejectEventModal').classList.remove('active');
+        }
+
+        function handleRejectOverlayClick(event) {
+            if (event.target === document.getElementById('rejectEventModal')) {
+                closeRejectModal();
+            }
+        }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeCancelModal();
+                closeRejectModal();
+            }
+        });
+    </script>
+}

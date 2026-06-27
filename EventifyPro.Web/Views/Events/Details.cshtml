@@ -1,0 +1,1010 @@
+@model EventDetailViewModel
+@inject EventifyPro.BLL.Services.Interfaces.ISystemSettingService SystemSettingService
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = $"{Model.Title} - Event Details";
+    var ticketTypes = ViewBag.TicketTypes as IEnumerable<EventifyPro.BLL.DTOs.TicketType.TicketTypeResponseDto> ?? new List<EventifyPro.BLL.DTOs.TicketType.TicketTypeResponseDto>();
+    var commissionRate = await SystemSettingService.GetSettingValueAsync<decimal>("TicketCommissionRate", 5.0m);
+}
+
+@{
+    var activeTickets = ticketTypes.Where(t => t.IsAvailable).ToList();
+    var lowPrice = activeTickets.Any() ? activeTickets.Min(t => t.Price) : 0;
+    var highPrice = activeTickets.Any() ? activeTickets.Max(t => t.Price) : 0;
+    var imageFullUrl = string.IsNullOrEmpty(Model.ImageUrl) 
+        ? (Context.Request.Scheme + "://" + Context.Request.Host + "/Images/default-event.jpg") 
+        : (Model.ImageUrl.StartsWith("http") ? Model.ImageUrl : (Context.Request.Scheme + "://" + Context.Request.Host + Model.ImageUrl));
+}
+
+<script type="application/ld+json">
+{
+  "@@context": "https://schema.org",
+  "@@type": "Event",
+  "name": "@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Model.Title))",
+  "description": "@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Model.Description))",
+  "image": "@imageFullUrl",
+  "startDate": "@Model.StartDate.ToEgyptTime().ToString("o")",
+  "endDate": "@Model.EndDate.ToEgyptTime().ToString("o")",
+  "eventStatus": "https://schema.org/EventScheduled",
+  "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+  "location": {
+    "@@type": "Place",
+    "name": "@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Model.Location))",
+    "address": {
+      "@@type": "PostalAddress",
+      "addressLocality": "@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Model.City))",
+      "addressCountry": "EG"
+    }
+  },
+  "organizer": {
+    "@@type": "Organization",
+    "name": "@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Model.OrganizerName))"
+  },
+  "offers": {
+    "@@type": "AggregateOffer",
+    "priceCurrency": "EGP",
+    "lowPrice": "@lowPrice",
+    "highPrice": "@highPrice",
+    "offerCount": "@ticketTypes.Count()",
+    "availability": "https://schema.org/InStock"
+  }
+}
+</script>
+
+<style>
+    /* Event Details Page Compact & Premium CSS */
+    .event-details-hero {
+        position: relative;
+        min-height: 280px;
+        border-radius: 16px;
+        overflow: hidden;
+        margin-top: 20px;
+        margin-bottom: 30px;
+        background-size: cover;
+        background-position: center;
+        display: flex;
+        align-items: flex-end;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .event-details-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(to top, rgba(10, 5, 30, 0.85) 0%, rgba(30, 15, 60, 0.3) 70%, transparent 100%);
+        z-index: 1;
+    }
+
+    .hero-text-container {
+        position: relative;
+        z-index: 2;
+        padding: 24px 30px;
+        color: var(--white);
+        width: 100%;
+    }
+
+    .hero-meta-badge {
+        background: var(--gradient);
+        color: var(--white);
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-size: 11px;
+        font-weight: 700;
+        margin-bottom: 12px;
+        display: inline-block;
+        box-shadow: 0 4px 10px rgba(124, 58, 237, 0.2);
+    }
+
+    .hero-event-title {
+        font-size: 26px;
+        font-weight: 800;
+        margin-bottom: 8px;
+        line-height: 1.3;
+    }
+
+    .hero-event-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        font-size: 13.5px;
+        opacity: 0.9;
+    }
+
+    .hero-event-meta span {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .hero-event-meta i {
+        color: var(--accent);
+    }
+
+    .details-layout {
+        display: grid;
+        grid-template-columns: 1.25fr 0.75fr;
+        gap: 30px;
+        align-items: start;
+        margin-bottom: 40px;
+    }
+
+    @@media (max-width: 992px) {
+        .details-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .details-block {
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 24px;
+    }
+
+    .details-block-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 10px;
+    }
+
+    .details-block-title i {
+        color: var(--primary);
+    }
+
+    .details-block p {
+        font-size: 14px;
+        line-height: 1.65;
+        color: var(--text);
+    }
+
+    /* Right Sidebar Sticky Card */
+    .sticky-info-card {
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: var(--shadow-sm);
+        position: sticky;
+        top: 100px;
+        overflow: hidden;
+    }
+
+    .sticky-info-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: var(--gradient);
+    }
+
+    .info-card-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .info-card-row:last-of-type {
+        border-bottom: none;
+    }
+
+    .info-card-icon {
+        width: 36px;
+        height: 36px;
+        background: var(--soft-purple);
+        color: var(--primary);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        flex-shrink: 0;
+    }
+
+    .info-card-text h4 {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text-light);
+        text-transform: uppercase;
+        margin-bottom: 2px;
+        letter-spacing: 0.5px;
+    }
+
+    .info-card-text p {
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    /* Ticket Pricing List */
+    .ticket-prices-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 18px;
+    }
+
+    .ticket-price-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 14px;
+        background: var(--soft-purple);
+        border-radius: 10px;
+        border: 1px solid var(--border);
+    }
+
+    .ticket-price-name {
+        font-weight: 700;
+        font-size: 13px;
+        color: var(--primary-dark);
+    }
+
+    .ticket-price-value {
+        font-weight: 800;
+        font-size: 14px;
+        color: var(--primary);
+    }
+
+    .ticket-price-sold-out {
+        color: var(--text-light);
+        font-size: 11px;
+        font-weight: 700;
+        background: #e5e7eb;
+        padding: 2px 8px;
+        border-radius: 6px;
+    }
+
+    /* Mockup Map Styling */
+    .location-map {
+        height: 150px;
+        background: linear-gradient(135deg, #e0e6ed 0%, #b0c2d4 100%);
+        border-radius: 12px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        margin-top: 14px;
+    }
+    .map-pin {
+        font-size: 28px;
+        color: #ef4444;
+        animation: mapBounce 2s infinite;
+        z-index: 1;
+    }
+    .map-overlay {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+        background: rgba(255, 255, 255, 0.96);
+        padding: 10px 14px;
+        border-radius: 8px;
+        box-shadow: var(--shadow-sm);
+        z-index: 2;
+    }
+    .map-overlay h4 {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text);
+        margin: 0 0 2px 0;
+    }
+    .map-overlay p {
+        font-size: 11px;
+        color: var(--text-light);
+        margin: 0 0 4px 0;
+    }
+    @@keyframes mapBounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
+    }
+
+    /* Rating Summary styling */
+    .rating-summary {
+        display: flex;
+        gap: 24px;
+        align-items: center;
+    }
+    .rating-big {
+        text-align: center;
+        min-width: 90px;
+    }
+    .rating-big h1 {
+        font-size: 44px;
+        font-weight: 800;
+        color: var(--primary-dark);
+        margin: 0;
+        line-height: 1;
+    }
+    .stars {
+        color: #fbbf24;
+        font-size: 13px;
+        margin: 4px 0;
+    }
+    .rating-big p {
+        font-size: 11px;
+        color: var(--text-light);
+        margin: 0;
+    }
+    .rating-bars {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    .rating-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
+        color: var(--text-light);
+    }
+    .rating-row .bar {
+        flex-grow: 1;
+        height: 5px;
+        background: #f3f4f6;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+    .rating-row .fill {
+        height: 100%;
+        background: #fbbf24;
+        border-radius: 3px;
+    }
+
+    /* Ticket interactive select option */
+    .ticket-option-card {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        transition: var(--transition);
+        background: var(--white);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .ticket-option-card:hover:not(.sold-out) {
+        border-color: var(--primary-light);
+        background: var(--soft-purple);
+    }
+    .ticket-option-card.selected {
+        border-color: var(--primary);
+        background: var(--soft-purple);
+        box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.1);
+    }
+    .ticket-option-card.sold-out {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    .ticket-opt-details {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        flex-grow: 1;
+        padding-right: 8px;
+    }
+    .ticket-opt-name {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .ticket-opt-name .best-val-badge {
+        font-size: 9px;
+        background: var(--gradient);
+        color: var(--white);
+        padding: 1px 5px;
+        border-radius: 4px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    .ticket-opt-desc {
+        font-size: 11px;
+        color: var(--text-light);
+    }
+    .ticket-opt-price {
+        font-size: 14px;
+        font-weight: 800;
+        color: var(--primary);
+        white-space: nowrap;
+    }
+
+    /* Sidebar Qty Control styling */
+    .qty-control-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 14px;
+        padding: 8px 12px;
+        background: var(--soft-purple);
+        border-radius: 10px;
+        border: 1px solid var(--border);
+    }
+    .qty-label {
+        font-size: 12.5px;
+        font-weight: 700;
+        color: var(--text);
+    }
+    .qty-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .qty-btn {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        border: 1px solid var(--border);
+        background: var(--white);
+        color: var(--primary);
+        font-size: 13px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        transition: var(--transition);
+    }
+    .qty-btn:hover {
+        background: var(--primary);
+        color: var(--white);
+        border-color: var(--primary);
+    }
+    .qty-val {
+        font-size: 14px;
+        font-weight: 800;
+        color: var(--text);
+        width: 18px;
+        text-align: center;
+    }
+
+    /* Invoice styles */
+    .invoice-card {
+        background: #fafafa;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px;
+        margin-top: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .invoice-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11.5px;
+        color: var(--text-light);
+    }
+    .invoice-row strong {
+        color: var(--text);
+    }
+    .invoice-row.invoice-total {
+        border-top: 1px solid var(--border);
+        padding-top: 6px;
+        margin-top: 2px;
+        font-size: 14px;
+        font-weight: 800;
+        color: var(--primary);
+    }
+    .secure-checkout-notice {
+        font-size: 11px;
+        color: var(--text-light);
+        text-align: center;
+        margin-top: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+</style>
+
+<section class="event-details-section" style="padding-top: 100px; padding-bottom: 40px;">
+    <div class="container">
+    
+    @if (TempData["BookingError"] != null)
+    {
+        <div class="alert alert-danger" style="background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 16px; border-radius: 12px; margin-top: 24px; display: flex; align-items: center; gap: 12px; position: relative; z-index: 20;">
+            <i class="fas fa-exclamation-triangle" style="font-size: 20px;"></i>
+            <div>@TempData["BookingError"]</div>
+        </div>
+    }
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success" style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 16px; border-radius: 12px; margin-top: 24px; display: flex; align-items: center; gap: 12px; position: relative; z-index: 20;">
+            <i class="fas fa-check-circle" style="font-size: 20px;"></i>
+            <div>@TempData["SuccessMessage"]</div>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger" style="background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 16px; border-radius: 12px; margin-top: 24px; display: flex; align-items: center; gap: 12px; position: relative; z-index: 20;">
+            <i class="fas fa-exclamation-triangle" style="font-size: 20px;"></i>
+            <div>@TempData["ErrorMessage"]</div>
+        </div>
+    }
+
+    <!-- Event Hero Details -->
+    @if (!string.IsNullOrEmpty(Model.ImageUrl))
+    {
+        <div class="event-details-hero" style="background-image: url('@Model.ImageUrl')">
+            <div class="hero-text-container">
+                <span class="hero-meta-badge">@Model.CategoryName</span>
+                <h1 class="hero-event-title">@Model.Title</h1>
+                <div class="hero-event-meta">
+                    <span><i class="fas fa-calendar-alt"></i> @Model.StartDate.ToEgyptTime().ToString("dddd, MMMM dd, yyyy")</span>
+                    <span><i class="fas fa-map-marker-alt"></i> @Model.City, Egypt</span>
+                    <span><i class="fas fa-user"></i> By @Model.OrganizerName</span>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="event-details-hero" style="background: var(--gradient);">
+            <div class="hero-text-container">
+                <span class="hero-meta-badge" style="background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.3);">@Model.CategoryName</span>
+                <h1 class="hero-event-title">@Model.Title</h1>
+                <div class="hero-event-meta">
+                    <span><i class="fas fa-calendar-alt"></i> @Model.StartDate.ToEgyptTime().ToString("dddd, MMMM dd, yyyy")</span>
+                    <span><i class="fas fa-map-marker-alt"></i> @Model.City, Egypt</span>
+                    <span><i class="fas fa-user"></i> By @Model.OrganizerName</span>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Content Layout Grid -->
+    <div class="details-layout">
+        
+        <!-- Left Side: Description and Details -->
+        <div>
+            <!-- About block -->
+            <div class="details-block">
+                <h3 class="details-block-title">
+                    <i class="fas fa-align-left"></i>
+                    <span>About This Event</span>
+                </h3>
+                <p style="white-space: pre-line;">@Model.Description</p>
+            </div>
+
+            <!-- Location block -->
+            <div class="details-block">
+                <h3 class="details-block-title">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <span>Location</span>
+                </h3>
+                <div class="location-map" id="event-map" style="height: 280px; background: #e0e6ed; display: block; position: relative;">
+                    <!-- Leaflet map will render here -->
+                </div>
+                <div style="margin-top: 10px; text-align: right;">
+                    <a href="https://maps.google.com/?q=@(Uri.EscapeDataString(Model.Location + ", " + Model.City))" target="_blank" class="btn-link" style="font-size: 12px; font-weight: 600; text-decoration: none; color: var(--primary); display: inline-flex; align-items: center; gap: 4px;">
+                        Get Directions in Google Maps <i class="fas fa-external-link-alt" style="font-size: 11px;"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Organizer block -->
+            <div class="details-block">
+                <h3 class="details-block-title">
+                    <i class="fas fa-user-tie"></i>
+                    <span>Event Organizer</span>
+                </h3>
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <div style="width: 50px; height: 50px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; font-weight: 700;">
+                        @Model.OrganizerName.Substring(0, 1).ToUpper()
+                    </div>
+                    <div>
+                        <h4 style="font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 2px 0;">@Model.OrganizerName</h4>
+                        <p style="font-size: 12px; color: var(--text-light); margin: 0;">Verified Eventify Pro Host</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reviews block -->
+            <div class="details-block">
+                <h3 class="details-block-title">
+                    <i class="fas fa-star"></i>
+                    <span>Reviews & Ratings</span>
+                </h3>
+                @if (ViewBag.ReviewsCount > 0)
+                {
+                    <div class="rating-summary">
+                        <div class="rating-big">
+                            <h1>@ViewBag.AverageRating.ToString("F1")</h1>
+                            <div class="stars">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    if (i <= Math.Round((double)ViewBag.AverageRating))
+                                    {
+                                        <i class="fas fa-star"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="far fa-star"></i>
+                                    }
+                                }
+                            </div>
+                            <p>Based on @ViewBag.ReviewsCount reviews</p>
+                        </div>
+                        <div class="rating-bars">
+                            @foreach (var star in new[] { 5, 4, 3, 2, 1 })
+                            {
+                                var percentage = ViewBag.RatingPercentages[star];
+                                <div class="rating-row">
+                                    <span>@star★</span>
+                                    <div class="bar">
+                                        <div class="fill" style="width: @(percentage)%"></div>
+                                    </div>
+                                    <span>@(percentage)%</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Mini Reviews List -->
+                    <div class="mini-reviews-list" style="margin-top: 24px; display: flex; flex-direction: column; gap: 12px; border-top: 1px dashed var(--border); padding-top: 20px;">
+                        <h4 style="font-size: 13px; font-weight: 700; color: var(--text-light); text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px;">Recent Reviews</h4>
+                        @foreach (var review in (ViewBag.Reviews as IEnumerable<EventifyPro.BLL.DTOs.Review.ReviewResponseDto>) ?? new List<EventifyPro.BLL.DTOs.Review.ReviewResponseDto>())
+                        {
+                            <div class="mini-review-item" style="background: #fafafd; border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px;">
+                                <div class="mini-review-header" style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div class="mini-reviewer" style="display: flex; align-items: center; gap: 8px;">
+                                        <img src="https://api.dicebear.com/7.x/initials/svg?seed=@Uri.EscapeDataString(review.UserName)" alt="@review.UserName" style="width: 28px; height: 28px; border-radius: 50%;" />
+                                        <span class="mini-reviewer-name" style="font-size: 13px; font-weight: 700; color: var(--text);">@review.UserName</span>
+                                    </div>
+                                    <div class="mini-review-rating" style="color: #fbbf24; font-size: 10px; display: flex; gap: 2px;">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            if (i <= review.Rating)
+                                            {
+                                                <i class="fas fa-star"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="far fa-star"></i>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(review.Comment))
+                                {
+                                    <div class="mini-review-comment" style="font-size: 12.5px; color: var(--text); line-height: 1.5; font-style: italic; padding-left: 6px; border-left: 2px solid var(--primary-light);">
+                                        "@review.Comment"
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="mini-review-comment" style="font-size: 12px; color: var(--text-light); line-height: 1.5; font-style: italic; padding-left: 6px; border-left: 2px solid var(--border);">
+                                        No written comments provided.
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div style="text-align: center; padding: 30px 20px; color: var(--text-light); background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border);">
+                        <i class="far fa-comment-dots" style="font-size: 40px; margin-bottom: 12px; color: var(--primary); opacity: 0.7;"></i>
+                        <p style="font-size: 15px; font-weight: 600; color: var(--text);">No reviews yet</p>
+                        <p style="font-size: 12.5px; color: var(--text-light); margin-top: 4px;">Be the first to share your experience after attending this event.</p>
+                    </div>
+                }
+
+                <div style="margin-top: 24px; padding-top: 20px; border-top: 1px dashed var(--border); display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                    <a href="/Review/EventReviews?eventId=@Model.Id" class="btn-outline btn-small" style="display: inline-flex; align-items: center; gap: 8px;">
+                        <i class="far fa-comments"></i> See All Reviews
+                    </a>
+                    @if (ViewBag.CanUserReview == true)
+                    {
+                        <a href="/Review/Create?eventId=@Model.Id" class="btn-primary btn-small" style="display: inline-flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-pen"></i> Write Review
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Sidebar Info Box -->
+        <div>
+            <div class="sticky-info-card">
+                <h3 style="font-size: 15px; font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 6px;">Event Information</h3>
+                
+                <div class="info-card-row">
+                    <div class="info-card-icon"><i class="far fa-calendar-alt"></i></div>
+                    <div class="info-card-text">
+                        <h4>Date & Time</h4>
+                        <p>@Model.StartDate.ToEgyptTime().ToString("MMM dd, yyyy @ hh:mm tt")</p>
+                        <p style="font-size: 12px; color: var(--text-light); font-weight: 500; margin-top: 2px;">Ends @Model.EndDate.ToEgyptTime().ToString("MMM dd, yyyy @ hh:mm tt")</p>
+                    </div>
+                </div>
+
+                <div class="info-card-row">
+                    <div class="info-card-icon"><i class="fas fa-map-marked-alt"></i></div>
+                    <div class="info-card-text">
+                        <h4>Venue / Location</h4>
+                        <p>@Model.Location</p>
+                        <p style="font-size: 12px; color: var(--text-light); font-weight: 500; margin-top: 2px;">@Model.City, Egypt</p>
+                    </div>
+                </div>
+
+                <div class="info-card-row">
+                    <div class="info-card-icon"><i class="fas fa-chair"></i></div>
+                    <div class="info-card-text">
+                        <h4>Seats Capacity</h4>
+                        <p>@(Model.MaxCapacity.HasValue ? $"{Model.MaxCapacity.Value} seats" : "Open Capacity")</p>
+                        <p style="font-size: 12px; color: var(--success); font-weight: 600; margin-top: 2px;">Tickets available now</p>
+                    </div>
+                </div>
+
+                <!-- Tickets Selection Form -->
+                <form asp-controller="Events" asp-action="Book" method="post" id="bookingDetailsForm" style="margin-top: 18px;">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="eventId" value="@Model.Id" />
+
+                    <h4 style="font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">Select Tickets</h4>
+                    
+                    @if (ticketTypes.Any())
+                    {
+                        <div class="ticket-select-container">
+                            @{
+                                var ticketTypeList = ticketTypes.ToList();
+                                for (int i = 0; i < ticketTypeList.Count; i++)
+                                {
+                                    var ticketType = ticketTypeList[i];
+                                    <div class="ticket-option-card @(ticketType.IsAvailable ? "" : "sold-out")" style="cursor: default; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 10px;">
+                                        <div class="ticket-opt-details" style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1; padding-right: 8px;">
+                                            <div class="ticket-opt-name" style="font-size: 13px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 6px;">
+                                                @ticketType.Name
+                                                @if (i == 0 && ticketType.IsAvailable)
+                                                {
+                                                    <span class="best-val-badge" style="font-size: 9px; background: var(--gradient); color: var(--white); padding: 1px 5px; border-radius: 4px; font-weight: 700; text-transform: uppercase;">Best Value</span>
+                                                }
+                                            </div>
+                                            <div class="ticket-opt-desc" style="font-size: 11px; color: var(--text-light);">@(string.IsNullOrWhiteSpace(ticketType.Description) ? "Full access pass." : ticketType.Description)</div>
+                                            <span class="ticket-price-label" style="font-size: 13px; font-weight: 800; color: var(--primary); margin-top: 4px; display: block;">@ticketType.Price.ToString("F0") EGP</span>
+                                        </div>
+
+                                        <input type="hidden" name="items[@i].TicketTypeId" value="@ticketType.Id" />
+                                        <input type="hidden" name="items[@i].Quantity" id="qtyInput_@ticketType.Id" value="0" />
+
+                                        @if (ticketType.IsAvailable)
+                                        {
+                                            <div class="quantity-control-sidebar" style="display: flex; align-items: center; gap: 10px; background: var(--soft-purple); padding: 4px 8px; border-radius: 20px; border: 1px solid var(--border);">
+                                                <button type="button" class="qty-btn" onclick="updateSidebarQty(@ticketType.Id, -1, @ticketType.Price, '@ticketType.Name', @ticketType.AvailableQuantity)">−</button>
+                                                <span class="qty-val" id="qtyDisplay_@ticketType.Id">0</span>
+                                                <button type="button" class="qty-btn" onclick="updateSidebarQty(@ticketType.Id, 1, @ticketType.Price, '@ticketType.Name', @ticketType.AvailableQuantity)">+</button>
+                                            </div>
+                                        }
+                                        else if (ticketType.AvailableQuantity <= 0)
+                                        {
+                                            <span style="color: var(--text-light); font-size: 11px; font-weight: 700; background: #e5e7eb; padding: 4px 10px; border-radius: 6px;">SOLD OUT</span>
+                                        }
+                                        else if (ticketType.SaleStartDate.HasValue && DateTime.UtcNow < ticketType.SaleStartDate.Value)
+                                        {
+                                            <span style="color: var(--primary); font-size: 11.5px; font-weight: 700; background: var(--soft-purple); padding: 4px 10px; border-radius: 6px; text-align: right;" title="Sales start on @ticketType.SaleStartDate.Value.ToEgyptTime().ToString("yyyy-MM-dd HH:mm")">
+                                                COMING SOON
+                                            </span>
+                                        }
+                                        else if (ticketType.SaleEndDate.HasValue && DateTime.UtcNow > ticketType.SaleEndDate.Value)
+                                        {
+                                            <span style="color: var(--text-light); font-size: 11px; font-weight: 700; background: #e5e7eb; padding: 4px 10px; border-radius: 6px;">SALES CLOSED</span>
+                                        }
+                                        else
+                                        {
+                                            <span style="color: var(--text-light); font-size: 11px; font-weight: 700; background: #e5e7eb; padding: 4px 10px; border-radius: 6px;">UNAVAILABLE</span>
+                                        }
+                                    </div>
+                                }
+                            }
+                        </div>
+
+                        <!-- Invoice Summary -->
+                        <div class="invoice-card" id="invoiceCard">
+                            <div id="invoiceItemsList" style="display: flex; flex-direction: column; gap: 6px; padding-bottom: 6px;">
+                                <div style="font-size: 11.5px; color: var(--text-light); font-style: italic; text-align: center; padding: 4px 0;">No tickets selected</div>
+                            </div>
+                            <div class="invoice-row" style="margin-top: 4px; border-top: 1px dashed var(--border); padding-top: 8px;">
+                                <span>Subtotal</span>
+                                <strong id="invSubtotal">0.00 EGP</strong>
+                            </div>
+                            <div class="invoice-row">
+                                <span>Service Fee</span>
+                                <strong id="invServiceFee">0.00 EGP</strong>
+                            </div>
+                            <div class="invoice-row invoice-total">
+                                <span>Total Price</span>
+                                <span id="invTotal">0.00 EGP</span>
+                            </div>
+                        </div>
+
+                        <!-- Booking Submit Action -->
+                        <button type="submit" id="checkoutSubmitBtn" class="btn-primary btn-full disabled" disabled style="margin-top: 16px; border-radius: 10px; height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; border: none; cursor: not-allowed; opacity: 0.5;">
+                            <i class="fas fa-shopping-cart"></i> Proceed to Checkout
+                        </button>
+
+                        <div class="secure-checkout-notice">
+                            <i class="fas fa-lock"></i> Secure checkout with Stripe
+                        </div>
+                    }
+                    else
+                    {
+                        <div style="background: var(--soft-purple); padding: 16px; border-radius: 12px; border: 1px dashed var(--border); text-align: center; font-size: 13px; color: var(--text-light); font-weight: 500; margin-top: 12px;">
+                            No ticket classes defined for this event.
+                        </div>
+                    }
+                </form>
+
+                @if (User.Identity?.IsAuthenticated == true && User.IsInRole(RoleNames.Attendee))
+                {
+                    <form asp-controller="Attendee" asp-action="ToggleSave" method="post" style="margin-top: 16px;">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="eventId" value="@Model.Id" />
+                        @if (Model.IsSaved)
+                        {
+                            <button type="submit" class="btn-outline btn-full" style="border-radius: 10px; height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; border: 1px solid var(--primary); color: var(--white); background: var(--primary); cursor: pointer; width: 100%; transition: var(--transition);">
+                                <i class="fas fa-bookmark"></i> Saved Event
+                            </button>
+                        }
+                        else
+                        {
+                            <button type="submit" class="btn-outline btn-full" style="border-radius: 10px; height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; border: 1px solid var(--primary); color: var(--primary); background: transparent; cursor: pointer; width: 100%; transition: var(--transition);">
+                                <i class="far fa-bookmark"></i> Save Event
+                            </button>
+                        }
+                    </form>
+                }
+
+            </div>
+        </div>
+
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        let ticketSelections = {};
+
+        function updateSidebarQty(ticketTypeId, change, price, name, availableQuantity) {
+            const display = document.getElementById(`qtyDisplay_${ticketTypeId}`);
+            const input = document.getElementById(`qtyInput_${ticketTypeId}`);
+            
+            let currentVal = parseInt(display.textContent) || 0;
+            currentVal += change;
+            
+            const maxVal = Math.min(10, availableQuantity);
+            if (currentVal < 0) currentVal = 0;
+            if (currentVal > maxVal) currentVal = maxVal;
+            
+            display.textContent = currentVal;
+            input.value = currentVal;
+            
+            if (currentVal > 0) {
+                ticketSelections[ticketTypeId] = {
+                    name: name,
+                    price: price,
+                    quantity: currentVal
+                };
+            } else {
+                delete ticketSelections[ticketTypeId];
+            }
+            
+            recalculateGrandTotals();
+        }
+        
+        function recalculateGrandTotals() {
+            let subtotal = 0;
+            let listHtml = "";
+            let selectedCount = 0;
+            
+            for (const id in ticketSelections) {
+                const item = ticketSelections[id];
+                const itemCost = item.price * item.quantity;
+                subtotal += itemCost;
+                selectedCount += item.quantity;
+                listHtml += `<div class="invoice-row" style="display: flex; justify-content: space-between; font-size: 11.5px; color: var(--text-light);"><span>${item.name} x${item.quantity}</span><strong>${itemCost.toFixed(2)} EGP</strong></div>`;
+            }
+            
+            if (listHtml === "") {
+                listHtml = `<div style="font-size: 11.5px; color: var(--text-light); font-style: italic; text-align: center; padding: 4px 0;">No tickets selected</div>`;
+            }
+            
+            const commissionRate = @commissionRate.ToString("F2");
+            const fee = subtotal > 0 ? (Math.round(subtotal * (commissionRate / 100.0) * 100) / 100) : 0;
+            const total = subtotal + fee;
+            
+            document.getElementById('invoiceItemsList').innerHTML = listHtml;
+            document.getElementById('invSubtotal').textContent = `${subtotal.toFixed(2)} EGP`;
+            document.getElementById('invServiceFee').textContent = `${fee.toFixed(2)} EGP`;
+            document.getElementById('invTotal').textContent = `${total.toFixed(2)} EGP`;
+            
+            // Toggle checkout button state
+            const submitBtn = document.getElementById('checkoutSubmitBtn');
+            if (submitBtn) {
+                if (selectedCount > 0) {
+                    submitBtn.removeAttribute('disabled');
+                    submitBtn.classList.remove('disabled');
+                    submitBtn.style.opacity = '1';
+                    submitBtn.style.cursor = 'pointer';
+                } else {
+                    submitBtn.setAttribute('disabled', 'disabled');
+                    submitBtn.classList.add('disabled');
+                    submitBtn.style.opacity = '0.5';
+                    submitBtn.style.cursor = 'not-allowed';
+                }
+            }
+        }
+
+        // Initialize Leaflet Map
+        document.addEventListener("DOMContentLoaded", function() {
+            // Load Leaflet css
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+            document.head.appendChild(link);
+
+            // Load Leaflet js
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+            script.onload = function() {
+                initMap();
+            };
+            document.body.appendChild(script);
+
+            function initMap() {
+                const query = encodeURIComponent("@Model.Location, @Model.City, Egypt");
+                const fallbackQuery = encodeURIComponent("@Model.City, Egypt");
+                
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${query}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data.length > 0) {
+                            setupLeaflet(parseFloat(data[0].lat), parseFloat(data[0].lon), "@Model.Location");
+                        } else {
+                            fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${fallbackQuery}`)
+                                .then(res => res.json())
+                                .then(fallbackData => {
+                                    if (fallbackData && fallbackData.length > 0) {
+                                        setupLeaflet(parseFloat(fallbackData[0].lat), parseFloat(fallbackData[0].lon), "@Model.City");
+                                    } else {
+                                        setupLeaflet(30.0444, 31.2357, "Egypt (Default)");
+                                    }
+                                }).catch(() => setupLeaflet(30.0444, 31.2357, "Egypt (Default)"));
+                        }
+                    })
+                    .catch(() => setupLeaflet(30.0444, 31.2357, "Egypt (Default)"));
+            }
+
+            function setupLeaflet(lat, lon, label) {
+                const map = L.map('event-map').setView([lat, lon], 14);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+
+                L.marker([lat, lon]).addTo(map)
+                    .bindPopup(`<strong>${label}</strong><br/>@Model.Location, @Model.City`)
+                    .openPopup();
+            }
+        });
+    </script>
+}

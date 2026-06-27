@@ -1,0 +1,284 @@
+/* ==========================================================================
+   EVENTIFY PRO - PREMIUM UX IMPROVEMENTS & INTERACTIVE MICRO-ACTIONS
+   ========================================================================== */
+
+/* ===== 1. Top Loading Progress Bar ===== */
+#top-loading-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary, #5b21b6) 0%, var(--primary-light, #7c3aed) 50%, var(--accent, #a78bfa) 100%);
+    width: 0%;
+    z-index: 9999999;
+    transition: width 0.4s cubic-bezier(0.1, 0.8, 0.3, 1), opacity 0.3s ease;
+    pointer-events: none;
+    box-shadow: 0 0 10px rgba(124, 58, 237, 0.5), 0 0 5px rgba(124, 58, 237, 0.3);
+}
+
+/* ===== 2. Global Transitions & Click/Hover Feedback ===== */
+/* Buttons Click Feedback */
+.btn-primary, .btn-outline, .btn-ghost, .btn-book, .btn-fav, .btn-event, .sidebar-nav-link, .nav-item, 
+.nav-buttons button, .btn-confirm-yes, .btn-confirm-cancel, .sidebar-header-toggle button {
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease !important;
+}
+
+.btn-primary:active, .btn-outline:active, .btn-ghost:active, .btn-book:active, .btn-fav:active, .btn-event:active, 
+.sidebar-nav-link:active, .nav-item:active, .btn-confirm-yes:active, .btn-confirm-cancel:active, button:active {
+    transform: scale(0.96) !important;
+}
+
+/* Cards & Metric Cards Hover Lift Effects */
+.metric-card, .booking-item-card, .next-event-card, .event-card-large, .event-card {
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease, border-color 0.4s ease !important;
+}
+
+.metric-card:hover, .booking-item-card:hover, .next-event-card:hover, .event-card-large:hover, .event-card:hover {
+    transform: translateY(-5px) !important;
+    box-shadow: 0 16px 32px -4px rgba(91, 33, 182, 0.12), 0 4px 12px -2px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* ===== 3. Button Loading Spinner ===== */
+.btn-loading {
+    position: relative !important;
+    color: transparent !important;
+    pointer-events: none !important;
+}
+
+.btn-loading::after {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    top: 50%;
+    left: 50%;
+    margin-top: -9px;
+    margin-left: -9px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: btn-spin 0.6s linear infinite;
+    z-index: 10;
+}
+
+/* For secondary/outline buttons where the text or primary color is dark, make the spinner match their typical color */
+.btn-outline.btn-loading::after, .btn-ghost.btn-loading::after {
+    border-color: rgba(91, 33, 182, 0.2);
+    border-top-color: var(--primary, #5b21b6);
+}
+
+@keyframes btn-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ===== 4. Back to Top Button ===== */
+.back-to-top-btn {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 46px;
+    height: 46px;
+    background-color: var(--primary, #5b21b6);
+    color: #ffffff !important;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(91, 33, 182, 0.25);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(15px);
+    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), 
+                transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), 
+                visibility 0.3s cubic-bezier(0.16, 1, 0.3, 1), 
+                background-color 0.2s ease;
+    z-index: 99999;
+}
+
+.back-to-top-btn.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.back-to-top-btn:hover {
+    background-color: var(--primary-light, #7c3aed);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(91, 33, 182, 0.35);
+}
+
+.back-to-top-btn:active {
+    transform: scale(0.92) translateY(-4px);
+}
+
+/* ===== 5. Blurry Backdrop Modals ===== */
+.logout-modal, .confirm-modal-overlay, .modal-backdrop, .modal, .modal-dialog {
+    backdrop-filter: blur(5px) !important;
+    -webkit-backdrop-filter: blur(5px) !important;
+}
+
+/* Subtle modal scale-in animation */
+.logout-modal-content, .confirm-modal-card {
+    animation: modal-scale-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modal-scale-in {
+    from {
+        transform: scale(0.9) translateY(10px);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+/* ===== 6. Premium Empty States ===== */
+.elegant-empty-state {
+    text-align: center;
+    padding: 60px 30px;
+    background: var(--white, #ffffff);
+    border: 2px dashed var(--border, #e5e7eb);
+    border-radius: 20px;
+    max-width: 480px;
+    margin: 40px auto;
+    box-shadow: var(--shadow-sm, 0 4px 12px rgba(0,0,0,0.02));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    animation: empty-state-fade 0.5s ease-out;
+}
+
+.elegant-empty-state-icon {
+    font-size: 42px;
+    color: var(--primary, #5b21b6);
+    background: var(--soft-purple, #f5f3ff);
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+    box-shadow: 0 4px 10px rgba(91, 33, 182, 0.05);
+}
+
+.elegant-empty-state h3 {
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--text, #1f1b2e);
+    margin: 0;
+}
+
+.elegant-empty-state p {
+    font-size: 14px;
+    color: var(--text-light, #6b7280);
+    margin: 0 0 8px 0;
+    max-width: 340px;
+    line-height: 1.6;
+}
+
+@keyframes empty-state-fade {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== 7. Event Reviews Page Responsiveness ===== */
+.reviews-layout-grid {
+    grid-template-columns: 0.8fr 1.2fr;
+    gap: 40px;
+}
+
+@media (max-width: 991px) {
+    .reviews-layout-grid {
+        grid-template-columns: 1fr !important;
+        gap: 30px !important;
+    }
+    
+    .review-item {
+        flex-direction: column !important;
+        gap: 16px !important;
+        padding: 20px !important;
+        background: var(--white, #ffffff) !important;
+        border-radius: 16px !important;
+        border: 1px solid var(--border, #e5e7eb) !important;
+        box-shadow: var(--shadow-sm, 0 4px 12px rgba(0,0,0,0.02)) !important;
+    }
+    
+    .review-item img {
+        width: 48px !important;
+        height: 48px !important;
+        margin-bottom: 4px !important;
+    }
+    
+    .review-head {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+        width: 100% !important;
+    }
+    
+    .review-head h4 {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        gap: 8px !important;
+    }
+    
+    .review-head h4 span {
+        margin-left: 0 !important;
+    }
+    
+    .review-item form button {
+        padding: 8px 12px !important;
+        background: var(--soft-purple, #f5f3ff) !important;
+        border-radius: 8px !important;
+    }
+}
+
+/* ===== 8. Dynamic Password Visibility Toggle Button ===== */
+.dynamic-password-toggle-btn {
+    position: absolute !important;
+    right: 12px !important;
+    border: none !important;
+    background: transparent !important;
+    color: var(--text-light, #6b7280) !important;
+    cursor: pointer !important;
+    z-index: 999 !important; /* Ensure it stays on top of the input and overlay labels */
+    font-size: 15px !important;
+    padding: 0 !important;
+    margin: 0 !important; /* Reset default margins */
+    box-sizing: border-box !important;
+    line-height: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    outline: none !important;
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 50% !important;
+    transform: translateY(-50%) !important; /* Vertically center relative to top offset */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    pointer-events: auto !important;
+}
+
+.dynamic-password-toggle-btn:hover {
+    background-color: var(--soft-purple, #f5f3ff) !important;
+    color: var(--primary, #5b21b6) !important;
+}
+
+.dynamic-password-toggle-btn i {
+    pointer-events: none !important;
+}
+

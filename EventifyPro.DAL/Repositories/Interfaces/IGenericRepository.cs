@@ -1,3 +1,5 @@
+using Eventify.Domain.Interfaces;
+
 namespace EventifyPro.DAL.Repositories.Interfaces;
 
 /// <summary>
@@ -19,10 +21,10 @@ public interface IGenericRepository<T> where T : class
     Task<T?> GetByIdAsync(object id, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Returns all entities — use with caution on large tables.
-    /// Uses AsNoTracking for read performance.
+    /// Soft deletes an entity by setting its IsDeleted flag to true.
+    /// Entity must implement ISoftDelete.
     /// </summary>
-    Task<IReadOnlyList<T>> GetAllAsync(CancellationToken cancellationToken = default);
+    void SoftDelete(T entity);
 
     /// <summary>
     /// Filters entities using a DB-translated expression (SQL WHERE clause).

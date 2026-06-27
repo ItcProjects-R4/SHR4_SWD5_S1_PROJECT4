@@ -1,7 +1,3 @@
-using System.Collections.Generic;
-using EventifyPro.Web.ViewModels.Event;
-using EventifyPro.BLL.DTOs.Category;
-
 namespace EventifyPro.Web.ViewModels.Home
 {
     public class HomeIndexViewModel
@@ -10,6 +6,10 @@ namespace EventifyPro.Web.ViewModels.Home
         public IReadOnlyList<LandingFeedbackViewModel> ApprovedFeedback { get; set; } = [];
         public List<CategoryDto> Categories { get; set; } = [];
         public List<EventSummaryViewModel> FeaturedEvents { get; set; } = [];
+        public int TotalTicketsSold { get; set; }
+        public int TotalActiveOrganizers { get; set; }
+        public int TotalSuccessfulEvents { get; set; }
+        public EventSummaryViewModel? HeroEvent { get; set; }
 
         // Authenticated Dashboard Content
         public bool IsAuthenticated { get; set; }

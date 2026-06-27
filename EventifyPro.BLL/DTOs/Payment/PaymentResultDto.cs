@@ -31,6 +31,11 @@ public record PaymentResultDto
     public string Status { get; init; } = string.Empty;
 
     /// <summary>
+    /// Gets or sets the payment currency (e.g., EGP, USD).
+    /// </summary>
+    public string Currency { get; init; } = "EGP";
+
+    /// <summary>
     /// Gets or sets the payment gateway transaction identifier.
     /// </summary>
     public string? TransactionId { get; init; }

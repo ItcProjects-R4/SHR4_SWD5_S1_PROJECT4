@@ -54,4 +54,9 @@ public record ReviewResponseDto
     /// Gets or sets the date and time when the review was last updated.
     /// </summary>
     public DateTime? UpdatedAt { get; init; }
+
+    /// <summary>
+    /// Gets or sets the event organizer identifier.
+    /// </summary>
+    public string OrganizerId { get; init; } = string.Empty;
 }
